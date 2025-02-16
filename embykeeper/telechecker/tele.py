@@ -948,10 +948,10 @@ class ClientsSession:
             self.__class__.watch = asyncio.create_task(self.watchdog())
 
     async def test_network(self, proxy=None):
-        url = "https://www.gstatic.com/generate_204"
+        url = "https://api.telegram.org/bot"
         proxy_str = get_proxy_str(proxy)
         try:
-            async with httpx.AsyncClient(http2=True, proxy=proxy_str) as client:
+            async with httpx.AsyncClient(http2=True, proxy=proxy_str, timeout=5) as client:
                 resp = await client.get(url)
                 if resp.status_code == 204:
                     return True
@@ -964,8 +964,8 @@ class ClientsSession:
                     f"无法连接到您的代理 ({proxy_str}), 您的网络状态可能不好, 敬请注意. 程序将继续运行."
                 )
             return False
-        except httpx.ConnectError:
-            logger.warning(f"无法连接到网络 (Google), 您的网络状态可能不好, 敬请注意. 程序将继续运行.")
+        except (httpx.ConnectError, httpx.ConnectTimeout):
+            logger.warning(f"无法连接到 Telegram 服务器, 您的网络状态可能不好, 敬请注意. 程序将继续运行.")
             return False
         except Exception as e:
             logger.warning(f"检测网络状态时发生错误, 网络检测将被跳过.")
@@ -1077,7 +1077,7 @@ class ClientsSession:
             session_file = Path(self.basedir) / f'{account["phone"]}.session'
             session_string_file = Path(self.basedir) / f'{account["phone"]}.login'
             if not self.quiet:
-                logger.info(f'登录至账号 "{account["phone"]}".')
+                logger.info(f'登录至账号 "{account["phone"]}", 请耐心等待.')
             for _ in range(3):
                 if account.get("api_id", None) is None or account.get("api_hash", None) is None:
                     account.update(random.choice(list(API_KEY.values())))
