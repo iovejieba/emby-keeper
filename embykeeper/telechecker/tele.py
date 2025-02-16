@@ -466,7 +466,7 @@ class Client(pyrogram.Client):
                         continue
 
                 dialogs: List[types.Dialog] = []
-                raw_dialogs = List[raw.types.Dialog] = []
+                raw_dialogs: List[raw.types.Dialog] = []
                 for dialog in r.dialogs:
                     if not isinstance(dialog, raw.types.Dialog):
                         continue
