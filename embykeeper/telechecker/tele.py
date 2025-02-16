@@ -15,7 +15,7 @@ import random
 import sqlite3
 import struct
 import sys
-from typing import AsyncGenerator, Optional, Union
+from typing import AsyncGenerator, List, Optional, Union
 from sqlite3 import OperationalError
 import logging
 import tempfile
@@ -465,13 +465,14 @@ class Client(pyrogram.Client):
                     except RPCError:
                         continue
 
-                dialogs = []
-
+                dialogs: List[types.Dialog] = []
+                raw_dialogs = List[raw.types.Dialog] = []
                 for dialog in r.dialogs:
                     if not isinstance(dialog, raw.types.Dialog):
                         continue
                     try:
                         dialogs.append(types.Dialog._parse(self, dialog, messages, users, chats))
+                        raw_dialogs.append(dialog)
                     except BadRequest:
                         continue
 
@@ -479,9 +480,13 @@ class Client(pyrogram.Client):
                     return
 
                 last = dialogs[-1]
-
-                offset_id = last.top_message.id
-                offset_date = utils.datetime_to_timestamp(last.top_message.date)
+                raw_last: raw.types.Dialog = raw_dialogs[-1]
+                if not last.top_message:
+                    offset_id = raw_last.top_message
+                    offset_date = None
+                else:
+                    offset_id = last.top_message.id
+                    offset_date = utils.datetime_to_timestamp(last.top_message.date)
                 offset_peer = await self.resolve_peer(last.chat.id)
 
                 _, cache = await self.cache.get(cache_id, ((0, 0, raw.types.InputPeerEmpty()), []))
@@ -501,6 +506,7 @@ class Client(pyrogram.Client):
             try:
                 return await super().invoke(query, *args, **kw)
             except OSError:
+                await asyncio.sleep(0.5)
                 continue
         else:
             raise OSError(f'Fail to invoke Telegram function due to network error ({query.__class__.__name__})')
@@ -1054,6 +1060,7 @@ class ClientsSession:
                     logger.warning(
                         f'登录账号 "{account["phone"]}" 时发生网络错误, 将在 3 秒后重试.'
                     )
+                    await asyncio.sleep(1)
                 else:
                     break
                 finally:
@@ -1215,7 +1222,7 @@ class ClientsSession:
 
     async def loginer(self, index, account):
         client = await self.login(index, account, proxy=self.proxy)
-        if isinstance(client, Client):
+        if isinstance(client, Client) and client.me:
             async with self.lock:
                 phone = account["phone"]
                 self.pool[phone] = (client, 1)
