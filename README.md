@@ -139,7 +139,7 @@ docker run -v $(pwd)/embykeeper:/app --rm -it --net=host embykeeper/embykeeper -
     - StarCat (`starcat`): [频道](https://t.me/StarCatEmby) [群组](https://t.me/StarCatEmby) [机器人](https://t.me/StarCatBot)
     - 音海拾贝 (`navidrome`): [频道](https://t.me/navidrom_notify) [群组](https://t.me/navidrom_talk) [机器人](https://t.me/navidrome_bot)
     - July (`july`): [群组](https://t.me/July_emby) [机器人](https://t.me/NASTOOL7_bot)
-    
+
     <!-- #endregion checkiner-beta-sites -->
   - 关服, 无响应, 或已停用签到功能 (默认禁用, 请参考[教程文档](https://emby-keeper.github.io/guide/配置文件#service-子项)启用):
     <!-- #region checkiner-ignored-sites -->
