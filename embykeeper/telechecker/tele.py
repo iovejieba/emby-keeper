@@ -948,12 +948,12 @@ class ClientsSession:
             self.__class__.watch = asyncio.create_task(self.watchdog())
 
     async def test_network(self, proxy=None):
-        url = "https://api.telegram.org/bot"
+        url = "https://telegram.org"
         proxy_str = get_proxy_str(proxy)
         try:
-            async with httpx.AsyncClient(http2=True, proxy=proxy_str, timeout=5) as client:
-                resp = await client.get(url)
-                if resp.status_code == 204:
+            async with httpx.AsyncClient(http2=True, proxy=proxy_str, timeout=20) as client:
+                resp = await client.head(url)
+                if resp.status_code == 404:
                     return True
                 else:
                     logger.warning(f"检测网络状态时发生错误, 网络检测将被跳过.")
