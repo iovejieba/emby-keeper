@@ -953,7 +953,7 @@ class ClientsSession:
         try:
             async with httpx.AsyncClient(http2=True, proxy=proxy_str, timeout=20) as client:
                 resp = await client.head(url)
-                if resp.status_code == 404:
+                if resp.status_code == 200:
                     return True
                 else:
                     logger.warning(f"检测网络状态时发生错误, 网络检测将被跳过.")
