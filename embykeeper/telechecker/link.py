@@ -294,7 +294,7 @@ class Link:
 
     async def gpt(self, prompt: str):
         """向机器人发送智能回答请求."""
-        results = await self.post(f"/gpt {self.instance} {prompt}", timeout=20, name="请求智能回答")
+        results = await self.post(f"/gpt {self.instance} {prompt}", timeout=40, name="请求智能回答")
         if results:
             return results.get("answer", None), results.get("by", None)
         else:
