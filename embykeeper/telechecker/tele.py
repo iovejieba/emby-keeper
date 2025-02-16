@@ -495,6 +495,15 @@ class Client(pyrogram.Client):
 
                     if current >= total:
                         return
+                    
+    async def invoke(self, query, *args, **kw):
+        for _ in range(3):
+            try:
+                return await super().invoke(query, *args, **kw)
+            except OSError:
+                continue
+        else:
+            raise OSError(f'Fail to invoke Telegram function due to network error ({query.__class__.__name__})')
 
     @asynccontextmanager
     async def catch_reply(self, chat_id: Union[int, str], outgoing=False, filter=None):
