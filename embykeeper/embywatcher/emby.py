@@ -197,6 +197,8 @@ class Connector(_Connector):
         session: httpx.AsyncClient = await self._get_session()
         full_auth_header = f'MediaBrowser Token={self.token or ""},Emby UserId={str(uuid.uuid4()).upper()},{self.auth_header}'
         session.headers["X-Emby-Authorization"] = full_auth_header
+        if self.token:
+            session.headers["X-Emby-Token"] = self.token
         for i in range(self.tries):
             url = self.get_url(path, **query)
             try:

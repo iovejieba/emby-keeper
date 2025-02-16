@@ -52,6 +52,8 @@ async def get_random_media(emby: Emby):
         i: Union[Movie, Episode]
         for i in items:
             yield i
+        if not items:
+            break
 
 
 async def set_played(obj: EmbyObject):
@@ -668,7 +670,7 @@ async def watch(
                             except asyncio.TimeoutError:
                                 loggeruser.debug(f"从最近播放中隐藏视频超时.")
             else:
-                loggeruser.warning(f"由于没有成功播放视频, 保活失败, 请重新检查配置.")
+                loggeruser.warning(f"由于没有获取到可播放视频, 保活失败, 请重新检查配置.")
                 return False
         except httpx.HTTPError as e:
             retry += 1
