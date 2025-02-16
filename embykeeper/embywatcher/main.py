@@ -236,7 +236,7 @@ async def play(obj: EmbyObject, loggeruser: Logger, time: float = 10):
         )
 
     def get_playing_data(tick, update=False, stop=False):
-        data= {
+        data = {
             "SubtitleOffset": 0,
             "MaxStreamingBitrate": 420000000,
             "MediaSourceId": str(media_source_id),
@@ -245,7 +245,7 @@ async def play(obj: EmbyObject, loggeruser: Logger, time: float = 10):
             "PlaybackRate": 1,
             "PlaybackStartTimeTicks": datetime.now().timestamp() * 10000000,
             "PositionTicks": tick,
-            "PlaySessionId": play_session_id
+            "PlaySessionId": play_session_id,
         }
         if update:
             data["EventName"] = "timeupdate"
@@ -253,25 +253,29 @@ async def play(obj: EmbyObject, loggeruser: Logger, time: float = 10):
             queue = []
         else:
             queue = [{"Id": str(obj.id), "PlaylistItemId": "playlistItem0"}]
-        data.update({
-            "PlaylistLength": 1,
-            "NowPlayingQueue": queue,
-            "IsMuted": False,
-            "PlaylistIndex": 0,
-            "ItemId": str(obj.id),
-            "RepeatMode": "RepeatNone",
-            "AudioStreamIndex": -1,
-            "PlayMethod": "DirectStream",
-            "CanSeek": True,
-            "IsPaused": True,
-        })
+        data.update(
+            {
+                "PlaylistLength": 1,
+                "NowPlayingQueue": queue,
+                "IsMuted": False,
+                "PlaylistIndex": 0,
+                "ItemId": str(obj.id),
+                "RepeatMode": "RepeatNone",
+                "AudioStreamIndex": -1,
+                "PlayMethod": "DirectStream",
+                "CanSeek": True,
+                "IsPaused": True,
+            }
+        )
         return data
-    
+
     play_headers = {
         "User-Agent": "VLC/3.0.21 LibVLC/3.0.21",
         "X-Playback-Session-Id": play_session_id,
     }
-    task = asyncio.create_task(c.get_stream_noreturn(direct_stream_url or f"/Videos/{obj.id}/stream", headers=play_headers))
+    task = asyncio.create_task(
+        c.get_stream_noreturn(direct_stream_url or f"/Videos/{obj.id}/stream", headers=play_headers)
+    )
     Connector.playing_count += 1
     try:
         await asyncio.sleep(random.uniform(1, 3))
@@ -317,7 +321,9 @@ async def play(obj: EmbyObject, loggeruser: Logger, time: float = 10):
 
     for retry in range(3):
         try:
-            if not is_ok(await c.post("/Sessions/Playing/Stopped", data=get_playing_data(time * 10000000, stop=True))):
+            if not is_ok(
+                await c.post("/Sessions/Playing/Stopped", data=get_playing_data(time * 10000000, stop=True))
+            ):
                 if retry == 2:
                     raise PlayError("尝试停止播放3次后仍然失败")
                 loggeruser.debug(f"停止播放失败，正在进行第 {retry + 1}/3 次尝试")

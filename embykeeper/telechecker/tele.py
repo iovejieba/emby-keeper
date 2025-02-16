@@ -500,7 +500,7 @@ class Client(pyrogram.Client):
 
                     if current >= total:
                         return
-                    
+
     async def invoke(self, query, *args, **kw):
         for _ in range(3):
             try:
@@ -509,7 +509,9 @@ class Client(pyrogram.Client):
                 await asyncio.sleep(0.5)
                 continue
         else:
-            raise OSError(f'Fail to invoke Telegram function due to network error ({query.__class__.__name__})')
+            raise OSError(
+                f"Fail to invoke Telegram function due to network error ({query.__class__.__name__})"
+            )
 
     @asynccontextmanager
     async def catch_reply(self, chat_id: Union[int, str], outgoing=False, filter=None):
@@ -1043,7 +1045,7 @@ class ClientsSession:
             password_callback = lambda: Prompt.ask(" " * 23 + msg1, password=True, console=var.console)
             msg2 = f'请输入 "{account["phone"]}" 的登陆验证码 (按回车确认)'
             code_callback = lambda: Prompt.ask(" " * 23 + msg2, console=var.console)
-            
+
             for _ in range(3):
                 try:
                     await TelethonUtils.start(
@@ -1057,9 +1059,7 @@ class ClientsSession:
                     user_id = me.id
                     user_bot = me.bot
                 except asyncio.IncompleteReadError:
-                    logger.warning(
-                        f'登录账号 "{account["phone"]}" 时发生网络错误, 将在 3 秒后重试.'
-                    )
+                    logger.warning(f'登录账号 "{account["phone"]}" 时发生网络错误, 将在 3 秒后重试.')
                     await asyncio.sleep(1)
                 else:
                     break

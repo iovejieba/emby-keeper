@@ -607,7 +607,7 @@ class BotCheckin(BaseBotCheckin):
                         self.log.debug(f"当前按钮: {', '.join(button_specs)}")
                         answer_content = re.search(r"\[CLICK\]\^(.+?)\^", answer)
                         if not answer_content:
-                            self.log.warning(f'智能回答失败, 为了避免风险签到器将停止.')
+                            self.log.warning(f"智能回答失败, 为了避免风险签到器将停止.")
                             await self.fail()
                             return
                         answer_content = answer_content.group(1)
@@ -627,7 +627,7 @@ class BotCheckin(BaseBotCheckin):
                     elif "[SEND]" in answer:
                         answer_content = re.search(r"\[SEND\]\^(.+?)\^", answer)
                         if not answer_content:
-                            self.log.warning(f'智能回答失败, 为了避免风险签到器将停止.')
+                            self.log.warning(f"智能回答失败, 为了避免风险签到器将停止.")
                             await self.fail()
                             return
                         answer_content = answer_content.group(1)

@@ -135,22 +135,21 @@ class Connector(_Connector):
         hostname = self.url.netloc
         cache_dir = self.basedir / "emby_tokens"
         cache_file = cache_dir / f"{hostname}_{self.username}.json"
-        
+
         if not self.token:
             async with self.cache_lock:
                 cache_dir.mkdir(exist_ok=True, parents=True)
                 if cache_file.exists():
                     try:
                         data = json.loads(cache_file.read_text())
-                        self.token = data['token']
-                        self.userid = data['userid']
+                        self.token = data["token"]
+                        self.userid = data["userid"]
                         self.api_key = self.token
                     except (json.JSONDecodeError, OSError, KeyError) as e:
                         logger.debug(f"读取 Emby Token 缓存失败: {e}")
-        
+
         if not self.token:
             return await self.login()
-            
 
     @async_func
     async def login(self):
@@ -168,15 +167,15 @@ class Connector(_Connector):
                 send_raw=True,
                 format="json",
             )
-            
+
             self.token = data.get("AccessToken", "")
             self.userid = data.get("User", {}).get("Id")
             self.api_key = self.token
-            
+
             hostname = self.url.netloc
             cache_dir = self.basedir / "emby_tokens"
             cache_file = cache_dir / f"{hostname}_{self.username}.json"
-            
+
             async with self.cache_lock:
                 try:
                     cache_data = {
@@ -186,7 +185,7 @@ class Connector(_Connector):
                     cache_file.write_text(json.dumps(cache_data, indent=2))
                 except OSError as e:
                     logger.debug(f"保存 Emby Token 缓存失败: {e}")
-            
+
         finally:
             self.attempt_login = False
 

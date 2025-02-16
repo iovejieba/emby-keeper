@@ -95,11 +95,21 @@ class Link:
                 try:
                     messages = []
                     if photo:
-                        messages.append(await self.client.send_photo(self.bot, photo, caption=cmd, parse_mode=ParseMode.DISABLED))
+                        messages.append(
+                            await self.client.send_photo(
+                                self.bot, photo, caption=cmd, parse_mode=ParseMode.DISABLED
+                            )
+                        )
                     elif file:
-                        messages.append(await self.client.send_document(self.bot, file, caption=cmd, parse_mode=ParseMode.DISABLED))
+                        messages.append(
+                            await self.client.send_document(
+                                self.bot, file, caption=cmd, parse_mode=ParseMode.DISABLED
+                            )
+                        )
                     else:
-                        messages.append(await self.client.send_message(self.bot, cmd, parse_mode=ParseMode.DISABLED))
+                        messages.append(
+                            await self.client.send_message(self.bot, cmd, parse_mode=ParseMode.DISABLED)
+                        )
                     self.log.debug(f"[gray50]-> {cmd}[/]")
                     results = await asyncio.wait_for(future, timeout=timeout)
                 except asyncio.CancelledError:
