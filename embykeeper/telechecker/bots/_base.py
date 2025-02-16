@@ -580,14 +580,14 @@ class BotCheckin(BaseBotCheckin):
             if buttons:
                 prompt += (
                     f"你可选: {', '.join(button_specs)} 中的一个作为回答.\n"
-                    "形式为: [CLICK]<XXX>\n"
+                    "形式为: [CLICK]^XXX^, 其中XXX为回答\n"
                 )
             prompt += (
-                "如果您认为不应该进行任何操作, 请输出 '[NO_RESP]', 禁止输出其他内容..\n"
+                "如果您认为不应该进行任何操作, 请输出 [NO_RESP], 禁止输出其他内容..\n"
                 "如果这是一个指令, 请输出您需要发送或点击的内容.\n"
-                "形式为: [SEND]<XXX>\n"
+                "形式为: [SEND]^XXX^, 其中XXX为内容\n"
                 "不要说明这是一个指令, 不要说明需要发送文本消息, 仅仅按上述形式输出.\n"
-                "如果这是一个状态, 请输出 '[IS_STATUS]', 禁止输出其他内容."
+                "如果这是一个状态, 请输出 [IS_STATUS], 禁止输出其他内容."
             )
             for _ in range(3):
                 answer, by = await Link(self.client).gpt(prompt)
@@ -597,15 +597,20 @@ class BotCheckin(BaseBotCheckin):
                         self.log.info(f"智能回答认为无需进行操作, 为了避免风险签到器将停止.")
                         await self.fail()
                         return
-                    if "[IS_STATUS]" in answer:
+                    elif "[IS_STATUS]" in answer:
                         self.log.info(
                             f"智能回答认为这是一条状态信息, 无需进行操作, 为了避免风险签到器将停止."
                         )
                         await self.fail()
                         return
-                    if buttons and "[CLICK]" in answer:
+                    elif buttons and "[CLICK]" in answer:
                         self.log.debug(f"当前按钮: {', '.join(button_specs)}")
-                        answer_content = re.search(r"\[CLICK\]<(.+?)>", answer)
+                        answer_content = re.search(r"\[CLICK\]\^(.+?)\^", answer)
+                        if not answer_content:
+                            self.log.warning(f'智能回答失败, 为了避免风险签到器将停止.')
+                            await self.fail()
+                            return
+                        answer_content = answer_content.group(1)
                         b, s = process.extractOne(answer_content, buttons, scorer=fuzz.partial_ratio)
                         if s < 70:
                             self.log.info(f"找不到对应回答的按钮, 正在重试.")
@@ -619,8 +624,13 @@ class BotCheckin(BaseBotCheckin):
                             self.log.warning(f'智能回答点击了按钮 "{b}", 为了避免风险签到器将停止.')
                             await self.fail()
                             return
-                    if "[SEND]" in answer:
-                        answer_content = re.search(r"\[CLICK\]<(.+?)>", answer)
+                    elif "[SEND]" in answer:
+                        answer_content = re.search(r"\[SEND\]\^(.+?)\^", answer)
+                        if not answer_content:
+                            self.log.warning(f'智能回答失败, 为了避免风险签到器将停止.')
+                            await self.fail()
+                            return
+                        answer_content = answer_content.group(1)
                         await message.reply(answer_content)
                         self.log.warning(f'智能回答回复了 "{answer_content}", 为了避免风险签到器将停止.')
                         await self.fail()
