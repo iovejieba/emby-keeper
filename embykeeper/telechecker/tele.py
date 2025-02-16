@@ -1028,22 +1028,29 @@ class ClientsSession:
             password_callback = lambda: Prompt.ask(" " * 23 + msg1, password=True, console=var.console)
             msg2 = f'请输入 "{account["phone"]}" 的登陆验证码 (按回车确认)'
             code_callback = lambda: Prompt.ask(" " * 23 + msg2, console=var.console)
-
-            try:
-                await TelethonUtils.start(
-                    client,
-                    phone=account["phone"],
-                    password=password_callback,
-                    code_callback=code_callback,
-                )
-                session_string = StringSession.save(client.session)
-                me = await client.get_me()
-                user_id = me.id
-                user_bot = me.bot
-            except RuntimeError:
+            
+            for _ in range(3):
+                try:
+                    await TelethonUtils.start(
+                        client,
+                        phone=account["phone"],
+                        password=password_callback,
+                        code_callback=code_callback,
+                    )
+                    session_string = StringSession.save(client.session)
+                    me = await client.get_me()
+                    user_id = me.id
+                    user_bot = me.bot
+                except asyncio.IncompleteReadError:
+                    logger.warning(
+                        f'登录账号 "{account["phone"]}" 时发生网络错误, 将在 3 秒后重试.'
+                    )
+                else:
+                    break
+                finally:
+                    await client.disconnect()
+            else:
                 return None
-            finally:
-                await client.disconnect()
 
         session = StringSession(session_string)
         Dt = Storage.SESSION_STRING_FORMAT
@@ -1222,6 +1229,7 @@ class ClientsSession:
                         await self.pool[phone]
                         await self.lock.acquire()
                     if isinstance(self.pool[phone], asyncio.Task):
+                        await self.done.put(None)
                         continue
                     client, ref = self.pool[phone]
                     ref += 1
