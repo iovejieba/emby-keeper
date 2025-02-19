@@ -44,6 +44,7 @@ from pyrogram.errors import (
     PhoneNumberBanned,
     BadRequest,
     AuthKeyDuplicated,
+    MessageIdInvalid,
 )
 from pyrogram.storage.storage import Storage
 from pyrogram.handlers import (
@@ -585,7 +586,7 @@ class Client(pyrogram.Client):
             if click:
                 try:
                     await message.click(click)
-                except TimeoutError:
+                except (TimeoutError, MessageIdInvalid):
                     if noanswer:
                         pass
                     else:
