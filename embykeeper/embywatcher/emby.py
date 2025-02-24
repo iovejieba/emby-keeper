@@ -6,8 +6,8 @@ from urllib.parse import urlencode, urlunparse
 import uuid
 import warnings
 
-import httpx
 from loguru import logger
+from curl_cffi.requests import AsyncSession, Response, RequestsError
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -21,7 +21,6 @@ from embykeeper.utils import get_proxy_str
 from .. import __version__
 
 logger = logger.bind(scheme="embywatcher")
-
 
 class Connector(_Connector):
     """重写的 Emby 连接器, 以支持代理."""
@@ -62,7 +61,8 @@ class Connector(_Connector):
                                     logger.debug("销毁了 Emby Session")
                                     async with await self._get_session_lock():
                                         counter[s] = 0
-                                        await self._sessions[s].aclose()
+                                        session: AsyncSession = self._sessions[s]
+                                        await session.close()
                                         self._sessions[s] = None
                                         self._session_uses[s] = None
                             else:
@@ -72,10 +72,11 @@ class Connector(_Connector):
                     except (TypeError, KeyError):
                         pass
         except asyncio.CancelledError:
+            s: AsyncSession
             for s in self._sessions.values():
                 if s:
                     try:
-                        await asyncio.wait_for(s.aclose(), 1)
+                        await asyncio.wait_for(s.close(), 1)
                     except asyncio.TimeoutError:
                         pass
 
@@ -86,23 +87,19 @@ class Connector(_Connector):
             async with await self._get_session_lock():
                 session = self._sessions.get(loop_id)
                 if not session:
-
                     proxy = get_proxy_str(self.proxy)
-
+                    
                     cookies = {}
                     if self.cf_clearance:
                         cookies["cf_clearance"] = self.cf_clearance
 
-                    timeout = httpx.Timeout(connect=10.0, read=None, write=10.0, pool=10.0)
-
-                    session = httpx.AsyncClient(
-                        http2=True,
+                    session = AsyncSession(
                         headers=self.headers,
                         cookies=cookies,
                         proxy=proxy,
-                        verify=False,
-                        follow_redirects=True,
-                        timeout=timeout,
+                        timeout=10.0,
+                        impersonate="chrome",
+                        allow_redirects=True,
                     )
                     self._sessions[loop_id] = session
                     self._session_uses[loop_id] = 1
@@ -193,7 +190,7 @@ class Connector(_Connector):
     async def _req(self, method, path, params={}, **query):
         query.pop("format", None)
         await self.login_if_needed()
-        session: httpx.AsyncClient = await self._get_session()
+        session: AsyncSession = await self._get_session()
         full_auth_header = f'MediaBrowser Token={self.token or ""},Emby UserId={str(uuid.uuid4()).upper()},{self.auth_header}'
         session.headers["X-Emby-Authorization"] = full_auth_header
         if self.token:
@@ -201,19 +198,19 @@ class Connector(_Connector):
         for i in range(self.tries):
             url = self.get_url(path, **query)
             try:
-                resp = await method(url, **params)
-            except httpx.HTTPError as e:
+                resp: Response = await method(url, **params)
+            except RequestsError as e:
                 logger.debug(f'连接 "{url}" 失败, 即将重连: {e.__class__.__name__}: {e}')
             else:
                 if self.attempt_login and resp.status_code == 401:
-                    raise httpx.HTTPError("用户名密码错误")
+                    raise RequestsError("用户名密码错误")
                 if await self._process_resp(resp):
                     return resp
             await asyncio.sleep(random.random() * i + 0.2)
-        raise httpx.HTTPError("无法连接到服务器.")
+        raise RequestsError("无法连接到服务器.")
 
     @async_func
-    async def _process_resp(self, resp):
+    async def _process_resp(self, resp: Response):
         if (not resp or resp.status_code == 401) and self.username:
             await self.login()
             return False
@@ -226,14 +223,14 @@ class Connector(_Connector):
 
     @staticmethod
     @async_func
-    async def resp_to_json(resp: httpx.Response):
+    async def resp_to_json(resp: Response):
         try:
-            return json.loads(await resp.aread())
+            return json.loads(resp.content)
         except json.JSONDecodeError:
-            raise httpx.HTTPError(
+            raise RequestsError(
                 'Unexpected JSON output (status: {}): "{}"'.format(
                     resp.status_code,
-                    (await resp.aread()).decode(),
+                    resp.content,
                 )
             )
 
@@ -241,8 +238,8 @@ class Connector(_Connector):
     async def get(self, path, **query):
         try:
             session = await self._get_session()
-            resp: httpx.Response = await self._req(session.get, path, **query)
-            return resp.status_code, (await resp.aread()).decode()
+            resp = await self._req(session.get, path, **query)
+            return resp.status_code, resp.content.decode()
         finally:
             await self._end_session()
 
@@ -263,11 +260,11 @@ class Connector(_Connector):
                 params = {"json": data}
             else:
                 params = {"data": json.dumps(data)}
-            resp: httpx.Response = await self._req(session.post, path, params=params, **query)
+            resp = await self._req(session.post, path, params=params, **query)
             if return_json:
                 return await Connector.resp_to_json(resp)
             else:
-                return resp.status_code, (await resp.aread()).decode()
+                return resp.status_code, resp.content.decode()
         finally:
             await self._end_session()
 
@@ -276,13 +273,14 @@ class Connector(_Connector):
         try:
             session = await self._get_session()
             url = self.get_url(path)
+            resp: Response
             async with session.stream(
                 "GET",
                 url,
-                timeout=httpx.Timeout(connect=10.0, read=None, write=10.0, pool=10.0),
+                timeout=10.0,
                 **query,
             ) as resp:
-                async for _ in resp.aiter_bytes(chunk_size=4096):
+                async for _ in resp.aiter_content(chunk_size=4096):
                     await asyncio.sleep(random.uniform(5, 10))
         finally:
             await self._end_session()

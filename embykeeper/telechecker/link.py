@@ -245,7 +245,7 @@ class Link:
         cmd = f"/captcha {self.instance} {site}"
         if url:
             cmd += f" {url}"
-        results = await self.post(cmd, timeout=240, name="请求跳过验证码")
+        results = await self.post(cmd, timeout=120, name="请求跳过验证码")
         if results:
             return results.get("token", None)
         else:
@@ -256,29 +256,29 @@ class Link:
         cmd = f"/captcha {self.instance} {site}"
         if url:
             cmd += f" {url}"
-        results = await self.post(cmd, timeout=240, name="请求跳过验证码")
+        results = await self.post(cmd, timeout=120, name="请求跳过验证码")
         if results:
             return results.get("content", None)
         else:
             return None
 
-    async def resocks(self):
+    async def wssocks(self):
         """向机器人发送逆向 Socks 代理隧道监听请求."""
-        cmd = f"/resocks {self.instance}"
+        cmd = f"/wssocks {self.instance}"
         results = await self.post(cmd, timeout=20, name="请求新建代理隧道以跳过验证码")
         if results:
-            return results.get("id", None), results.get("host", None), results.get("key", None)
+            return results.get("url", None), results.get("token", None)
         else:
-            return None, None, None
+            return None, None
 
-    async def captcha_resocks(self, resocks_id: str, url: str, user_agent: str = None):
+    async def captcha_wssocks(self, token: str, url: str, user_agent: Optional[str] = None):
         """向机器人发送通过代理隧道进行验证码解析请求."""
-        cmd = f"/captcha_resocks {self.instance} {resocks_id} {url}"
+        cmd = f"/captcha_wssocks {self.instance} {token} {url}"
         if user_agent:
-            cmd += f" {user_agent}"
-        results = await self.post(cmd, timeout=240, name="请求跳过验证码")
+            cmd += f' {user_agent}'
+        results = await self.post(cmd, timeout=120, name="请求跳过验证码")
         if results:
-            return results.get("cf_clearance", None), results.get("result", None)
+            return results.get("cf_clearance", None), results.get("useragent", None)
         else:
             return None, None
 

@@ -12,17 +12,17 @@ import warnings
 import json
 import urllib.parse
 
-import httpx
 from loguru import logger
 from dateutil import parser
 from urllib.parse import urlparse
 from faker import Faker
+from curl_cffi.requests import RequestsError
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     from embypy.objects import Episode, Movie
 
-from ..utils import show_exception, next_random_datetime, truncate_str
+from ..utils import get_proxy_str, show_exception, next_random_datetime, truncate_str
 from ..var import debug
 from .emby import Emby, Connector, EmbyObject
 
@@ -243,7 +243,7 @@ async def play(obj: EmbyObject, loggeruser: Logger, time: float = 10):
             "SubtitleStreamIndex": -1,
             "VolumeLevel": 100,
             "PlaybackRate": 1,
-            "PlaybackStartTimeTicks": datetime.now().timestamp() * 10000000,
+            "PlaybackStartTimeTicks": int(datetime.now().timestamp() // 10 * 10 * 10000000),
             "PositionTicks": tick,
             "PlaySessionId": play_session_id,
         }
@@ -264,7 +264,7 @@ async def play(obj: EmbyObject, loggeruser: Logger, time: float = 10):
                 "AudioStreamIndex": -1,
                 "PlayMethod": "DirectStream",
                 "CanSeek": True,
-                "IsPaused": True,
+                "IsPaused": False,
             }
         )
         return data
@@ -281,7 +281,6 @@ async def play(obj: EmbyObject, loggeruser: Logger, time: float = 10):
         await asyncio.sleep(random.uniform(1, 3))
 
         resp = await c.post("Sessions/Playing", data=get_playing_data(0))
-
         if not is_ok(resp):
             raise PlayError("无法开始播放")
         t = time
@@ -300,7 +299,7 @@ async def play(obj: EmbyObject, loggeruser: Logger, time: float = 10):
             payload = get_playing_data(tick, update=True)
             try:
                 resp = await asyncio.wait_for(c.post("/Sessions/Playing/Progress", data=payload), 10)
-            except (httpx.HTTPError, asyncio.TimeoutError) as e:
+            except Exception as e:
                 loggeruser.debug(f"播放状态设定错误: {e}")
                 progress_errors += 1
             else:
@@ -332,17 +331,17 @@ async def play(obj: EmbyObject, loggeruser: Logger, time: float = 10):
             else:
                 loggeruser.info(f"播放完成, 共 {time:.0f} 秒.")
                 return True
-        except httpx.HTTPError as e:
+        except Exception as e:
             if retry == 2:
                 raise PlayError(f"由于连接错误或服务器错误无法停止播放: {e}")
             loggeruser.debug(f"停止播放时发生连接错误或服务器错误，正在进行第 {retry + 1}/3 次尝试: {e}")
             await asyncio.sleep(1)
 
 
-async def get_cf_clearance(config, url, user_agent=None):
+async def get_cf_clearance(config, url, user_agent=None, proxy=None):
     from embykeeper.telechecker.link import Link
     from embykeeper.telechecker.tele import ClientsSession
-    from embykeeper.resocks import Resocks
+    from embykeeper.wssocks import WSSocks
 
     server_info_url = f"{url.rstrip('/')}"
     telegrams = config.get("telegram", [])
@@ -350,19 +349,25 @@ async def get_cf_clearance(config, url, user_agent=None):
         logger.warning(f"未设置 Telegram 账号, 无法为 Emby 站点使用验证码解析.")
     async with ClientsSession.from_config(config) as clients:
         async for tg in clients:
-            rid, host, key = await Link(tg).resocks()
-            if not rid:
-                return None
-            resocks = Resocks(config["basedir"])
+            ws_url, token = await Link(tg).wssocks()
+            if not token:
+                logger.warning(f"反向代理服务器申请失败.")
+                return None, None
+            proxy_str = get_proxy_str(proxy)
+            wssocks = WSSocks(config["basedir"], proxy_str=proxy_str)
             try:
-                if not await resocks.start(host, key):
-                    logger.warning(f"连接到反向代理服务器失败.")
-                    return None
-                cf_clearance, _ = await Link(tg).captcha_resocks(rid, server_info_url, user_agent)
+                connector_token = "".join(random.choices(string.ascii_letters + string.digits, k=16))
+                output = await wssocks.start(ws_url, token, connector_token, proxy)
+                if output:
+                    logger.warning(f"连接到反向代理服务器失败:\n{output}")
+                    return None, None
+                cf_clearance, useragent = await Link(tg).captcha_wssocks(
+                    connector_token, server_info_url, user_agent=user_agent
+                )
             finally:
-                resocks.stop()
-            return cf_clearance
-    return None
+                wssocks.stop()
+            return cf_clearance, useragent
+    return None, None
 
 
 def get_device_uuid():
@@ -488,9 +493,9 @@ async def login(config, continuous=None, per_site=None):
         logger.info(f'登录账号: "{a["username"]}" 至服务器: "{a["url"]}"')
 
         info = None
+        cf_clearance = None
+        useragent = None
         for _ in range(3):
-            cf_clearance = None
-
             device_id = a.get("device_id", None)
             basedir = Path(config["basedir"])
             if not device_id:
@@ -506,27 +511,29 @@ async def login(config, continuous=None, per_site=None):
                         device_id_file.write_text(device_id)
                     except OSError as e:
                         logger.debug(f"保存 device_id 文件失败: {e}")
-
+            
             if not a["password"]:
                 logger.warning(f'Emby "{a["url"]}" 未设置密码, 可能导致登陆失败.')
 
             hostname = urlparse(a["url"]).netloc
+
             headers, auth_header = await get_fake_headers(
                 basedir=basedir,
                 hostname=hostname,
-                ua=a.get("ua", None),
+                ua=useragent or a.get("ua", None),
                 device=a.get("device", None),
                 client=a.get("client", None),
                 client_version=a.get("client_version", None),
                 device_id=device_id,
             )
 
+            proxy = config.get("proxy", None) if a.get("use_proxy", True) else None
             emby = Emby(
                 url=a["url"],
                 username=a["username"],
                 password=a["password"],
                 jellyfin=a.get("jellyfin", False),
-                proxy=config.get("proxy", None) if a.get("use_proxy", True) else None,
+                proxy=proxy,
                 headers=headers,
                 basedir=basedir,
                 auth_header=auth_header,
@@ -534,23 +541,40 @@ async def login(config, continuous=None, per_site=None):
             )
             try:
                 info = await emby.info()
-            except httpx.HTTPError as e:
+            except Exception as e:
                 if "Unexpected JSON output" in str(e):
                     if "cf-wrapper" in str(e) or "Enable JavaScript and cookies to continue" in str(e):
                         if a.get("cf_challenge", False):
+                            if cf_clearance:
+                                logger.warning(f'Emby "{a["url"]}" 验证码解析后依然有验证而跳过.')
+                                break
                             logger.info(f'Emby "{a["url"]}" 已启用 Cloudflare 保护, 即将请求解析.')
-                            cf_clearance = await get_cf_clearance(config, a["url"], a.get("ua", None))
-                            if not cf_clearance:
-                                logger.warning(f'Emby "{a["url"]}" 验证码解析失败而跳过.')
+                            if proxy:
+                                if proxy.get("scheme") != "socks5":
+                                    logger.warning(f'Emby "{a["url"]}" 验证码解析仅支持 SOCKS5 代理，由于当前代理协议不支持而不使用代理。')
+                                    proxy = None
+                                else:
+                                    logger.info(f'Emby "{a["url"]}" 验证码解析将使用代理, 可能导致解析失败, 若失败请使用 "use_proxy = false" 以禁用该站点的代理.')
+                            try:
+                                cf_clearance, useragent = await get_cf_clearance(config, a["url"], proxy=proxy)
+                                if not cf_clearance:
+                                    logger.warning(f'Emby "{a["url"]}" 验证码解析失败而跳过.')
+                                    break
+                            except Exception as e:
+                                logger.warning(f'Emby "{a["url"]}" 验证码解析错误而跳过.')
+                                show_exception(e, regular=False)
                                 break
                         else:
                             if config.get("proxy", None):
                                 logger.warning(
                                     f'Emby "{a["url"]}" 已启用 Cloudflare 保护, 请尝试浏览器以同样的代理访问: {a["url"]} 以解除 Cloudflare IP 限制, 然后再次运行.'
                                 )
+                                logger.warning(
+                                    f'或者, 高级用户可以使用 "cf_challenge = true" 配置项以允许尝试解析验证码.'
+                                )
                             else:
                                 logger.warning(
-                                    f'Emby "{a["url"]}" 已启用 Cloudflare 保护, 请使用 "cf_challenge" 配置项以允许尝试解析验证码.'
+                                    f'Emby "{a["url"]}" 已启用 Cloudflare 保护, 请使用 "cf_challenge = true" 配置项以允许尝试解析验证码.'
                                 )
                             break
                     else:
@@ -647,7 +671,7 @@ async def watch(
 
                         loggeruser.bind(log=True).info(prompt)
                         return True
-                    except httpx.HTTPError as e:
+                    except RequestsError as e:
                         retry += 1
                         if retry > retries:
                             loggeruser.warning(f"超过最大重试次数, 保活失败: {e}.")
@@ -678,7 +702,7 @@ async def watch(
             else:
                 loggeruser.warning(f"由于没有获取到可播放视频, 保活失败, 请重新检查配置.")
                 return False
-        except httpx.HTTPError as e:
+        except RequestsError as e:
             retry += 1
             if retry > retries:
                 loggeruser.warning(f"超过最大重试次数, 保活失败: {e}.")
@@ -772,7 +796,7 @@ async def watch_multiple(
                             loggeruser.info(f"等待 {rt:.0f} 秒后播放下一个.")
                             await asyncio.sleep(rt)
                             break
-                    except httpx.HTTPError as e:
+                    except RequestsError as e:
                         retry += 1
                         if retry > retries:
                             loggeruser.warning(f"超过最大重试次数, 保活失败: {e}.")
@@ -803,7 +827,7 @@ async def watch_multiple(
             else:
                 loggeruser.warning(f"由于没有成功播放视频, 保活失败, 请重新检查配置.")
                 return False
-        except httpx.HTTPError as e:
+        except RequestsError as e:
             retry += 1
             if retry > retries:
                 loggeruser.warning(f"超过最大重试次数, 保活失败: {e}.")
@@ -859,7 +883,7 @@ async def watch_continuous(emby: Emby, loggeruser: Logger, stream: bool = False,
                                 loggeruser.info(f"已从最近播放中隐藏该视频.")
                         except asyncio.TimeoutError:
                             loggeruser.debug(f"从最近播放中隐藏视频超时.")
-        except httpx.HTTPError as e:
+        except RequestsError as e:
             rt = random.uniform(30, 60)
             loggeruser.info(f"连接失败, 等待 {rt:.0f} 秒后重试: {e}.")
             await asyncio.sleep(rt)

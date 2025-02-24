@@ -22,11 +22,11 @@ versions = TTLCache(maxsize=128, ttl=600)
 lock = asyncio.Lock()
 
 
-async def refresh_version(connector):
+async def refresh_version(proxy_url: str = None):
     async with nonblocking(lock):
         for data_url in cdn_urls:
             url = f"{data_url}/version"
-            async with httpx.AsyncClient(http2=True, follow_redirects=True) as client:
+            async with httpx.AsyncClient(http2=True, proxy=proxy_url, follow_redirects=True) as client:
                 try:
                     resp = await client.get(url)
                     if resp.status_code == 200:
@@ -85,7 +85,7 @@ async def get_datas(basedir: Path, names: Union[Iterable[str], str], proxy: dict
                         logger.debug(f"正在尝试 URL: {url}")
                         proxy_url = get_proxy_str(proxy) if proxy else None
                         async with httpx.AsyncClient(
-                            http2=True, proxy=proxy_url, verify=False, follow_redirects=True
+                            http2=True, proxy=proxy_url, follow_redirects=True
                         ) as client:
                             try:
                                 resp = await client.get(url)
@@ -107,7 +107,7 @@ async def get_datas(basedir: Path, names: Union[Iterable[str], str], proxy: dict
                                     yield basedir / name
                                     break
                                 elif resp.status_code in (403, 404) and not version_matching:
-                                    await refresh_version(connector=None)
+                                    await refresh_version(proxy_url)
                                     if name in versions:
                                         logger.debug(f'解析版本 "{name}" -> "{versions[name]}"')
                                         name = versions[name]
