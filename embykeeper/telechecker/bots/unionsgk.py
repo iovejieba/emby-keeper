@@ -10,7 +10,6 @@ class UnionSGKCheckin(BotCheckin):
     name = "银联社工库"
     bot_username = "unionpaysgkbot"
     bot_checkin_cmd = "/start"
-    additional_auth = ["prime"]
     bot_checked_keywords = ["今日已签到"]
 
     async def message_handler(self, client, message: Message):

@@ -10,7 +10,6 @@ class Carll2SGKCheckin(BotCheckin):
     name = "Carll 社工库 2"
     bot_username = "Carllnet2_bot"
     bot_checkin_cmd = "/qd"
-    additional_auth = ["prime"]
 
     async def message_handler(self, client, message: Message):
         if message.caption and "欢迎使用" in message.caption and message.reply_markup:

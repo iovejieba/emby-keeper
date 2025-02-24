@@ -7,4 +7,3 @@ class BitSGKCheckin(BotCheckin):
     name = "Bit 社工库"
     bot_username = "BitSGKBot"
     bot_checkin_cmd = "签到"
-    additional_auth = ["prime"]

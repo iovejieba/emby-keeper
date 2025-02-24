@@ -10,7 +10,6 @@ class MiniSGKCheckin(BotCheckin):
     name = "迷你世界社工库"
     bot_username = "mnsjsgkbot"
     bot_checkin_cmd = "/sign"
-    additional_auth = ["prime"]
 
     async def message_handler(self, client, message: Message):
         if message.reply_markup and message.reply_markup.inline_keyboard:
