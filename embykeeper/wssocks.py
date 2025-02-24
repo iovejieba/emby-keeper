@@ -84,8 +84,8 @@ class WSSocks:
         await self.ensure_binary()
         return subprocess.Popen(
             [str(self.executable_path), *args],
-            # stdout=subprocess.PIPE,
-            # stderr=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         )
 
     async def start(self, host: str, token: str, connector_token: str, proxy_dict: dict = None) -> bool:

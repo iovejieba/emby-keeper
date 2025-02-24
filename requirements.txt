@@ -7,8 +7,6 @@ appdirs
 loguru
 faker
 aiofiles
-aiohttp
-aiohttp-socks
 python-dateutil
 ddddocr>=1.5.5
 embypyfix
@@ -34,3 +32,4 @@ socksio
 telethon
 psutil
 xpinyin
+curl_cffi
