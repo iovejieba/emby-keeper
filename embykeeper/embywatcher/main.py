@@ -17,6 +17,7 @@ from dateutil import parser
 from urllib.parse import urlparse
 from faker import Faker
 from curl_cffi.requests import RequestsError
+from embypy.objects import User
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -492,7 +493,8 @@ async def login(config, continuous=None, per_site=None):
             continue
         logger.info(f'登录账号: "{a["username"]}" 至服务器: "{a["url"]}"')
 
-        info = None
+        user = None
+        last_login = None
         cf_clearance = None
         useragent = None
         for _ in range(3):
@@ -540,7 +542,18 @@ async def login(config, continuous=None, per_site=None):
                 cf_clearance=cf_clearance,
             )
             try:
-                info = await emby.info()
+                p = await emby.get_views()
+                await asyncio.sleep(random.uniform(0.1, 0.3))
+                user: User = await emby.get_user()
+                last_login = user.object_dict.get("LastLoginDate", None)
+                await asyncio.sleep(random.uniform(0.1, 0.3))
+                await emby.get_display_preferences()
+                await asyncio.sleep(random.uniform(0.1, 0.3))
+                await emby.get_resume_items(media_types=['Video'])
+                await asyncio.sleep(random.uniform(0.1, 0.3))
+                await emby.get_resume_items(media_types=['Audio'])
+                await asyncio.sleep(random.uniform(0.1, 0.3))
+                
             except Exception as e:
                 if "Unexpected JSON output" in str(e):
                     if "cf-wrapper" in str(e) or "Enable JavaScript and cookies to continue" in str(e):
@@ -579,19 +592,24 @@ async def login(config, continuous=None, per_site=None):
                             break
                     else:
                         logger.error(f'Emby ({a["url"]}) 连接错误或服务器错误, 请重新检查配置: {e}')
+                        show_exception(e)
                         break
                 else:
                     logger.error(f'Emby ({a["url"]}) 连接错误或服务器错误, 请重新检查配置: {e}')
+                    show_exception(e)
                     break
             else:
                 break
         else:
             logger.warning(f'Emby "{a["url"]}" 验证码解析次数过多而跳过.')
 
-        if info:
-            loggeruser = logger.bind(server=info["ServerName"], username=a["username"])
+        if user:
+            loggeruser = logger.bind(server=a["url"], username=a["username"])
             loggeruser.info(
-                f'成功连接至服务器 "{a["url"]}" ({"Jellyfin" if a.get("jellyfin", False) else "Emby"} {info["Version"]}).'
+                f'成功连接至服务器 "{a["url"]}" ({"Jellyfin" if a.get("jellyfin", False) else "Emby"}).'
+            )
+            loggeruser.info(
+                f'上次登陆时间: {last_login}.'
             )
             yield (
                 emby,

@@ -195,6 +195,13 @@ class Connector(_Connector):
         session.headers["X-Emby-Authorization"] = full_auth_header
         if self.token:
             session.headers["X-Emby-Token"] = self.token
+
+        # Convert boolean values in params to lowercase strings
+        if params:
+            for key, value in params.items():
+                if isinstance(value, bool):
+                    params[key] = str(value).lower()
+
         for i in range(self.tries):
             url = self.get_url(path, **query)
             try:
@@ -363,3 +370,73 @@ class Emby(_Emby):
             **kw,
         )
         return await self.process(resp)
+
+
+    @async_func
+    async def get_views(self, path="/Users/{UserId}/Items", include_external_content=False, **kw):
+        resp = await self.connector.getJson(
+            path,
+            format="json",
+            IncludeExternalContent=include_external_content,
+            **kw,
+        )
+        return await self.process(resp)
+    
+    @async_func
+    async def get_user(self, path="/Users/{UserId}", **kw):
+        resp = await self.connector.getJson(
+            path,
+            format="json",
+            **kw,
+        )
+        return await self.process(resp)
+    
+    @async_func
+    async def get_display_preferences(self, path="/DisplayPreferences/usersettings?client=emby&userId={UserId}", **kw):
+        resp = await self.connector.getJson(
+            path,
+            format="json",
+            **kw,
+        )
+        return await self.process(resp)
+    
+    @async_func
+    async def get_resume_items(self, path="/Users/{UserId}/Items/Resume", enable_image_types=None, fields=None, limit=12, media_types=None, **kw):
+        if not enable_image_types:
+            enable_image_types = ["Primary", "Backdrop", "Thumb"]
+        if not fields:
+            fields = ["PrimaryImageAspectRatio", "BasicSyncInfo" , "ProductionYear", "CanDelete"]
+        if not media_types:
+            media_types = ["Video"]
+        resp = await self.connector.getJson(
+            path,
+            format="json",
+            EnableImageTypes=','.join(enable_image_types),
+            Fields=','.join(fields),
+            Limit=limit,
+            MediaTypes=','.join(media_types),
+            Recursive="true",
+            **kw,
+        )
+        return await self.process(resp)
+    
+    @async_func
+    async def get_latest_items(self, path="/Users/{UserId}/Items/Latest", enable_image_types=None, fields=None, limit=16, media_types=None, group_id=None, **kw):
+        if not enable_image_types:
+            enable_image_types = ["Primary", "Backdrop", "Thumb"]
+        if not fields:
+            fields = ["PrimaryImageAspectRatio", "BasicSyncInfo" , "ProductionYear", "Status", "EndDate", "CanDelete"]
+        if not media_types:
+            media_types = ["Video"]
+        resp = await self.connector.getJson(
+            path,
+            format="json",
+            EnableImageTypes=','.join(enable_image_types),
+            Fields=','.join(fields),
+            GroupItems="true",
+            Limit=limit,
+            ParentId=group_id,
+            **kw,
+        )
+        return await self.process(resp)
+    
