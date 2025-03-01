@@ -803,7 +803,10 @@ class Emby:
         failed_reasons = {"invalid": 0, "no_length": 0, "wrong_type": 0, "short_length": 0}
 
         while True:
-            for iid, item in self.items.items():
+            shuffled_items = list(self.items.items())
+            random.shuffle(shuffled_items)
+            
+            for iid, item in shuffled_items:
                 try:
                     if iid in failed_items:
                         failed_reasons["invalid"] += 1
