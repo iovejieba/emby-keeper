@@ -26,11 +26,11 @@ concurrency = 1
 [[emby.account]] # 第 1 个账号
 
 # 站点域名和端口:
-url = "https://lopez.biz:443"
+url = "https://www.sherman-brown.com:443"
 
 # 用户名和密码:
-username = "john28"
-password = ")DK*Sb#n7L"
+username = "wendymurphy"
+password = "EAD%2ZLb6X"
 
 # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 time = [300, 600]
@@ -59,9 +59,9 @@ time = [300, 600]
 # enabled = false
 
 [[emby.account]] # 第 2 个账号
-url = "https://www.hernandez.biz:443"
-username = "geraldking"
-password = "_C+NsKoJ*2"
+url = "https://www.beck.com:443"
+username = "ginapalmer"
+password = "wV*C2MFcXm"
 time = [300, 600]
 
 # ================================================================================
@@ -94,7 +94,7 @@ concurrency = 1
 [[telegram.account]] # 第 1 个账号
 
 # 带国家区号的账户手机号, 一般为 "+86..."
-phone = "+8616117991274"
+phone = "+8614494548400"
 
 # 启用机器人签到系列功能, 默认启用, 设置为 false 以禁用:
 checkiner = true
@@ -106,7 +106,7 @@ monitor = false
 messager = false
 
 [[telegram.account]] # 第 2 个账号
-phone = "+8619637201832"
+phone = "+8613832851623"
 checkiner = true
 monitor = false
 messager = false
@@ -114,7 +114,7 @@ messager = false
 # ================================================================================
 # 站点相关设置
 # 当您需要禁用某些站点时, 请将该段取消注释并修改.
-# 该部分内容是根据 Embykeeper 7.0.0 生成的.
+# 该部分内容是根据 Embykeeper 7.0.1 生成的.
 # 详见: https://emby-keeper.github.io/guide/配置文件#site-子项
 # ================================================================================
 
@@ -197,17 +197,18 @@ concurrency = 1
 [[subsonic.account]] # 第 1 个账号
 
 # 站点域名和端口:
-url = "https://www.carney.com:443"
+url = "https://www.scott.info:443"
 
 # 用户名和密码:
-username = "valenciabenjamin"
-password = "0f8*t0Qv1%"
+username = "karenevans"
+password = "$307uG%Yq5"
 
 # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 time = [300, 600]
 
 [[subsonic.account]] # 第 2 个账号
-url = "https://www.williams-wallace.com:443"
-username = "amberchapman"
-password = "Q4Mr#k3*$0"
+url = "https://little-davila.com:443"
+username = "tylerbrown"
+password = "f^)2nMhlxN"
 time = [300, 600]
+
