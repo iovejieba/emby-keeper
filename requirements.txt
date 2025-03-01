@@ -34,3 +34,4 @@ curl_cffi
 pymongo
 pydantic
 watchfiles
+python-socks[asyncio]
