@@ -74,6 +74,7 @@ class ClientsSession:
             if not entry:
                 return
             try:
+                client: Client
                 client, ref = entry
             except TypeError:
                 return
@@ -263,6 +264,16 @@ class ClientsSession:
                 else:
                     session_str_key = f"telegram.session_str.{account.get_config_key()}"
                     session_str = cache.get(session_str_key)
+                old_login_file = config.basedir / f"{account.phone}.login"
+                if not session_str and old_login_file.exists():
+                    try:
+                        session_str = old_login_file.read_text().strip()
+                        cache.set(session_str_key, session_str)
+                        old_login_file.unlink()  # Delete old file after migration
+                        session_str_src = "cache"
+                        logger.info(f'从旧登录文件迁移账号 "{account.phone}" 的登录凭据至缓存.')
+                    except Exception as e:
+                        logger.warning(f'读取旧版本登录文件时发生错误, 请重新登陆.')
                 if session_str:
                     session_str_src = "cache"
                 if session_str:

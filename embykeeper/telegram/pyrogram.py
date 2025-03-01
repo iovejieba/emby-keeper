@@ -190,7 +190,7 @@ class Dispatcher(dispatcher.Dispatcher):
             except TimeoutError:
                 logger.info("网络不稳定, 可能遗漏消息.")
             except Exception as e:
-                logger.error("更新控制器错误.")
+                logger.warning("更新控制器错误.")
                 show_exception(e, regular=False)
 
 
@@ -395,6 +395,8 @@ class Client(pyrogram.Client):
                 last_error = e
                 await asyncio.sleep(0.5)
                 continue
+            except sqlite3.ProgrammingError as e: # Cannot operate on a closed database. The client is stopping.
+                raise asyncio.CancelledError() from None
         else:
             raise OSError(
                 f"Fail to invoke Telegram function due to network error "

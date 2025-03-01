@@ -260,7 +260,8 @@ class CheckinerManager:
         """Run checkins for all enabled accounts without scheduling"""
         accounts = [a for a in config.telegram.account if a.enabled and a.checkiner]
         tasks = [
-            self.run_account(RunContext.prepare("运行全部签到器"), account, instant) for account in accounts
+            asyncio.create_task(self.run_account(RunContext.prepare("运行全部签到器"), account, instant))
+            for account in accounts
         ]
         try:
             await asyncio.gather(*tasks)
