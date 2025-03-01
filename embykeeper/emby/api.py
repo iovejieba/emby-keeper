@@ -601,7 +601,7 @@ class Emby:
             except EmbyRequestError as e:
                 raise EmbyPlayError(f"无法开始播放: {e}")
             t = time
-            
+
             last_report_t = t
             progress_errors = 0
             report_interval = 5  # Start with 5 seconds
@@ -807,7 +807,7 @@ class Emby:
         while True:
             shuffled_items = list(self.items.items())
             random.shuffle(shuffled_items)
-            
+
             for iid, item in shuffled_items:
                 try:
                     if iid in failed_items:
