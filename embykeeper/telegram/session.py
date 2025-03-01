@@ -293,7 +293,7 @@ class ClientsSession:
                         phone_number=account.phone,
                         session_string=session_str,
                         in_memory=self.in_memory,
-                        proxy=self.proxy.model_dump(),
+                        proxy=self.proxy.model_dump() if self.proxy else None,
                         workdir=str(self.basedir),
                         sleep_threshold=30,
                         workers=64,

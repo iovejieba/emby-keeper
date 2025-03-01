@@ -601,7 +601,7 @@ class Emby:
             except EmbyRequestError as e:
                 raise EmbyPlayError(f"无法开始播放: {e}")
             t = time
-            n_report = 0
+            
             last_report_t = t
             progress_errors = 0
             report_interval = 5  # Start with 5 seconds
@@ -648,10 +648,12 @@ class Emby:
                 show_exception(e)
 
         try:
+            final_percentage = random.uniform(0.95, 1.0)
+            final_tick = int((time * final_percentage) // 10 * 10 * 10000000)
             await self._request(
                 method="POST",
                 path="/Sessions/Playing/Progress",
-                json=get_playing_data(0, stop=True),
+                json=get_playing_data(final_tick, stop=True),
             )
             self.log.info(f"播放完成, 共 {time:.0f} 秒.")
             return True
