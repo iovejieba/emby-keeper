@@ -33,3 +33,4 @@ xpinyin
 curl_cffi
 pymongo
 pydantic
+watchfiles
