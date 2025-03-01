@@ -347,8 +347,7 @@ def format_errors(e: ValidationError) -> str:
 
         loc_str = " -> ".join(str(loc) for loc in location)
 
-        # 生成错误消息的键
-        error_key = (tuple(location[1:]) if len(location) > 1 else tuple()) + (msg,)
+        error_key = (() if len(location) <= 1 else tuple(location[1:])) + (msg,)
 
         # 检查是否有相关的别名字段
         if location[0] in reverse_aliases:
