@@ -15,13 +15,14 @@ from typer import Typer, Exit
 from . import var, __url__, __name__, __version__
 from .schema import ProxyConfig
 
+
 def get_path_frame(e, path):
     """获取指定路径下的最后一个错误栈帧.
-    
+
     Args:
         e: 异常对象
         path: 要搜索的路径
-        
+
     Returns:
         FrameSummary: 找到的栈帧, 如果未找到则返回 None
     """
@@ -38,10 +39,10 @@ def get_path_frame(e, path):
 
 def get_last_frame(e):
     """获取异常的最后一个栈帧.
-    
+
     Args:
         e: 异常对象
-        
+
     Returns:
         FrameSummary: 最后一个栈帧, 如果未找到则返回 None
     """
@@ -55,10 +56,10 @@ def get_last_frame(e):
 
 def get_cls_fullpath(c):
     """获取类的完整路径名称.
-    
+
     Args:
         c: 类对象
-        
+
     Returns:
         str: 类的完整路径名称, 包含模块名
     """
@@ -70,11 +71,11 @@ def get_cls_fullpath(c):
 
 def format_exception(e, regular=True):
     """格式化异常信息为可读字符串.
-    
+
     Args:
         e: 异常对象
         regular: 是否为常规异常 (如网络错误等), 影响不同日志等级下提示信息的格式
-        
+
     Returns:
         str: 格式化后的异常信息
     """
@@ -103,7 +104,7 @@ def format_exception(e, regular=True):
 
 def show_exception(e, regular=True):
     """显示异常信息.
-    
+
     Args:
         e: 异常对象
         regular: 是否为常规异常 (如网络错误等), 影响不同日志等级下提示信息的格式
@@ -142,6 +143,7 @@ class AsyncTyper(Typer):
             return async_func
 
         return decorator
+
 
 class AsyncTaskPool:
     """一个用于批量等待异步任务的管理器, 支持在等待时添加任务."""
@@ -185,7 +187,7 @@ class AsyncTaskPool:
 
 class AsyncCountPool(dict):
     """一个异步安全的 ID 分配器.
-    
+
     Args:
         base: ID 起始数
     """
@@ -207,7 +209,7 @@ class AsyncCountPool(dict):
 def to_iterable(var: Union[Iterable, Any]):
     """
     将任何变量变为可迭代变量.
-    
+
     Note:
         None 将变为空数组.
         非可迭代变量将变为仅有该元素的长度为 1 的数组.
@@ -414,6 +416,7 @@ def get_proxy_str(proxy: Optional[ProxyConfig] = None):
         proxy_str = None
     return proxy_str
 
+
 def deep_update(base_dict, update_dict):
     """递归地更新字典"""
     for key, value in update_dict.items():
@@ -422,6 +425,7 @@ def deep_update(base_dict, update_dict):
         else:
             base_dict[key] = value
     return base_dict
+
 
 class ProxyBase:
     """
@@ -458,6 +462,7 @@ class ProxyBase:
     @property
     def _noproxy(self, oga=object.__getattribute__):
         import inspect
+
         base = oga(self, "__class__")
         for cls in inspect.getmro(base):
             if hasattr(cls, "__noproxy__"):
@@ -563,7 +568,8 @@ class ProxyBase:
 
     def __rpow__(self, ob):
         return pow(ob, self.__subject__)
-    
+
+
 class Proxy(ProxyBase):
     def __init__(self, val):
         self.set(val)
@@ -571,25 +577,27 @@ class Proxy(ProxyBase):
     def set(self, val):
         self.__subject__ = val
 
+
 class FuncProxy(ProxyBase):
     __noproxy__ = ("_func", "_args", "_kw")
-    
+
     def __init__(self, func, *args, **kw):
         self._func = func
         self._args = args
         self._kw = kw
-        
+
     @property
     def __subject__(self):
         return self._func(*self._args, **self._kw)
 
+
 class CachedFuncProxy(FuncProxy):
     __noproxy__ = ("_cached_value",)
-    
+
     def __init__(self, func, *args, **kw):
         super().__init__(func, *args, **kw)
         self._cached_value = None
-    
+
     @property
     def __subject__(self):
         if self._cached_value is None:

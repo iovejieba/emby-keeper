@@ -14,7 +14,8 @@ from ..lock import pornemby_alert
 from . import Monitor
 
 
-QA_CACHE_KEY = 'monitor.pornemby.answer.qa'
+QA_CACHE_KEY = "monitor.pornemby.answer.qa"
+
 
 class _PornembyAnswerResultMonitor(Monitor):
     name = "Pornemby 问题答案"
@@ -62,13 +63,13 @@ class _PornembyAnswerAnswerMonitor(Monitor):
     async def update_cache(self, to_date=None):
         if not to_date:
             to_date = datetime.fromtimestamp(cache.get(f"{QA_CACHE_KEY}.timestamp", 0))
-            
+
         if not to_date:
             self.log.info("首次使用 Pornemby 科举, 正在缓存问题答案历史.")
         else:
             self.log.info(f"正在更新问题答案历史缓存.")
             self.log.debug(f"上一次问题答案历史写入于 {to_date.strftime('%Y-%m-%d %H:%M')}.")
-        
+
         count = 0
         qs = 0
         finished = False

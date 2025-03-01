@@ -12,6 +12,7 @@ from .session import ClientsSession
 
 logger = logger.bind(scheme="telenotifier")
 
+
 class TelegramStream(io.TextIOWrapper):
     """消息推送处理器类"""
 
@@ -19,7 +20,7 @@ class TelegramStream(io.TextIOWrapper):
         super().__init__(io.BytesIO(), line_buffering=True)
         self.account = account
         self.instant = instant
-        
+
         self.queue = asyncio.Queue()
         self.watch = asyncio.create_task(self.watchdog())
 
@@ -35,7 +36,7 @@ class TelegramStream(io.TextIOWrapper):
                 show_exception(e)
             else:
                 if not result:
-                    logger.warning(f'推送消息到 Telegram 失败.')
+                    logger.warning(f"推送消息到 Telegram 失败.")
             finally:
                 self.queue.task_done()
 

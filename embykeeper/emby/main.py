@@ -87,7 +87,7 @@ class EmbyManager:
             return ctx.finish(RunStatus.ERROR, "异常错误")
 
     def get_spec(self, a: EmbyAccount):
-        return f'{a.username}@{a.name or a.url.host}'
+        return f"{a.username}@{a.name or a.url.host}"
 
     async def _watch_main(self, accounts: List[EmbyAccount], instant: bool = False):
         if not accounts:
@@ -156,7 +156,9 @@ class EmbyManager:
         if len(accounts) == 1:
             logger.bind(log=True).info(f"保活成功: {', '.join(successful_accounts)}.")
         else:
-            logger.bind(log=True).info(f"保活成功 ({len(tasks)}/{len(tasks)}): {', '.join(successful_accounts)}.")
+            logger.bind(log=True).info(
+                f"保活成功 ({len(tasks)}/{len(tasks)}): {', '.join(successful_accounts)}."
+            )
         return ctx.finish(RunStatus.SUCCESS, f"保活成功")
 
     async def run_all(self, instant: bool = False):
@@ -214,4 +216,3 @@ class EmbyManager:
             logger.info("没有需要执行的 Emby 保活任务")
 
         await asyncio.gather(*tasks)
-        

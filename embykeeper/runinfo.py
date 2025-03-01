@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 
 _running_runs: Dict[str, RunContext] = {}
 
+
 class RunStatus(IntEnum):
     CATAGORY = auto()
     PENDING = auto()
@@ -266,7 +267,7 @@ class RunContext(BaseModel):
         status: RunStatus = RunStatus.CATAGORY,
     ):
         """获取现有任务或创建新任务"""
-        
+
         if run_id:
             existing = cls.get(run_id)
             if existing:
@@ -275,4 +276,3 @@ class RunContext(BaseModel):
         if status:
             ctx.set(status)
         return ctx
-    

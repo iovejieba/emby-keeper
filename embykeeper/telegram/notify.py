@@ -45,7 +45,7 @@ async def start_notifier():
                     if a["phone"] == notifier:
                         account = a
                         break
-        
+
     if account:
         logger.info(f'计划任务的关键消息将通过 Embykeeper Bot 发送至 "{account.phone}" 账号.')
         stream_log = TelegramStream(

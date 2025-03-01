@@ -11,14 +11,15 @@ from .api import Subsonic, SubsonicConnectError, SubsonicRequestError
 
 logger = logger.bind(scheme="subsonic")
 
+
 class SubsonicPlayer:
     def __init__(self, account: SubsonicAccount):
         self.a = account
         self.cf_clearance = None
         self.useragent = None
-        
+
         self.log = logger.bind(server=self.a.name or self.hostname, username=self.a.username)
-        
+
     @property
     def proxy(self):
         return config.proxy if self.a.use_proxy else None
@@ -26,7 +27,7 @@ class SubsonicPlayer:
     @property
     def hostname(self):
         return self.a.url.host
-    
+
     async def login(self):
         """登录账号."""
         client = Subsonic(
@@ -46,7 +47,7 @@ class SubsonicPlayer:
                 )
                 return client
             else:
-                self.log.error(f'服务器登陆错误, 请重新检查配置: {info.error_message}')
+                self.log.error(f"服务器登陆错误, 请重新检查配置: {info.error_message}")
                 return None
         except SubsonicConnectError as e:
             self.log.warning(f"服务器登陆错误, 无法连接: {e}")
@@ -54,7 +55,7 @@ class SubsonicPlayer:
         except SubsonicRequestError as e:
             self.log.warning(f"服务器登陆错误, 服务器异常: {e}")
             return None
-    
+
     async def play(self, client: Subsonic):
         """模拟连续播放音频直到达到指定总时长."""
 
@@ -64,9 +65,7 @@ class SubsonicPlayer:
             else:
                 req_time = self.a.time
         except TypeError:
-            self.log.warning(
-                f"无法解析 time 配置, 请检查配置: {self.a.time} (应该为数字或两个数字的数组)."
-            )
+            self.log.warning(f"无法解析 time 配置, 请检查配置: {self.a.time} (应该为数字或两个数字的数组).")
             return False
 
         played_time = 0
@@ -127,6 +126,3 @@ class SubsonicPlayer:
                 await asyncio.sleep(1)
                 continue
         return True
-
-
-    

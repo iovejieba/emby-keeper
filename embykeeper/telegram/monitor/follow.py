@@ -25,7 +25,7 @@ class FollowMonitor(Monitor):
             self.log.info(f"开始监视: {self.name}.")
             await self.failed.wait()
             self.log.error(f"发生错误, 不再监视: {self.name}.")
-            
+
             return False
 
     async def message_handler(self, client: Client, message: Message):

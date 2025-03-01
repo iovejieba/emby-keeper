@@ -18,6 +18,7 @@ app = AsyncTyper(
     context_settings={"help_option_names": ["-h", "--help"]},
 )
 
+
 def version(flag):
     if flag:
         print(__version__)
@@ -273,24 +274,24 @@ async def main(
         subsonic = True
         monitor = True
         messager = True
-    
+
     if follow:
         from .telegram.debug import follower
 
         return await follower()
-    
+
     if top:
         from .topper import topper
 
         if not (var.console.is_terminal and var.console.is_interactive):
             logger.warning("在非交互模式下启用底栏可能会导致显示异常.")
         asyncio.create_task(topper())
-    
+
     if play:
         from .emby.main import EmbyManager
 
         return await EmbyManager().play_url(play)
-    
+
     if save:
         from .telegram.debug import saver
 
@@ -323,33 +324,33 @@ async def main(
         checkin_man = None
         if checkiner:
             from .telegram.checkin_main import CheckinerManager
-        
+
             checkin_man = CheckinerManager()
-        
+
         monitor_man = None
         if monitor:
             from .telegram.monitor_main import MonitorManager
-        
+
             monitor_man = MonitorManager()
-            
+
         message_man = None
         if messager:
             from .telegram.message_main import MessageManager
-        
+
             message_man = MessageManager()
-            
+
         emby_man = None
         if emby:
             from .emby.main import EmbyManager
-        
+
             emby_man = EmbyManager()
-            
+
         subsonic_man = None
         if subsonic:
             from .subsonic.main import SubsonicManager
-        
+
             subsonic_man = SubsonicManager()
-        
+
         pool = AsyncTaskPool()
         if instant and not debug_cron:
             if checkin_man:
@@ -363,7 +364,7 @@ async def main(
         streams = None
         if config.notifier.enabled:
             from .telegram.notify import start_notifier
-            
+
             streams = await start_notifier()
         if not once:
             if checkin_man:
@@ -394,7 +395,7 @@ async def main(
                 await asyncio.gather(*[stream.join() for stream in streams])
     finally:
         from .runinfo import RunContext
-        
+
         RunContext.cancel_all()
 
 

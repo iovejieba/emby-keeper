@@ -11,9 +11,10 @@ from .var import console
 from .log import pad
 from . import __url__
 
+
 async def convert_session(accounts: List[TelegramAccount]):
     from .telegram.session import ClientsSession
-    
+
     for a in accounts:
         success = False
         async with ClientsSession([a]) as clients:
@@ -26,9 +27,10 @@ async def convert_session(accounts: List[TelegramAccount]):
                 a.enabled = False
     return accounts
 
+
 async def interactive_config():
     from tomlkit import item
-    
+
     cfg = Config()
     config.set(cfg)
     pad = " " * 23
@@ -38,8 +40,7 @@ async def interactive_config():
     logger.info(f"若您需要更加高级的配置, 请使用右上角的 Config 按钮以修改配置文件.")
 
     mongodb_url = Prompt.ask(
-        pad + "请输入 MongoDB 连接地址 [dark_green](mongodb://user:pass@host:port)[/]",
-        console=console
+        pad + "请输入 MongoDB 连接地址 [dark_green](mongodb://user:pass@host:port)[/]", console=console
     )
     cfg.mongodb = mongodb_url
 
@@ -47,7 +48,7 @@ async def interactive_config():
     while True:
         if len(telegram_accounts) > 0:
             logger.info(
-                f'您当前填写了 {len(telegram_accounts)} 个 Telegram 账号信息: '
+                f"您当前填写了 {len(telegram_accounts)} 个 Telegram 账号信息: "
                 f'{", ".join([t.phone for t in telegram_accounts])}'
             )
             more = Confirm.ask(pad + "是否继续添加?", default=False, console=console)
@@ -69,7 +70,7 @@ async def interactive_config():
     if telegram_accounts:
         logger.info(f"即将尝试登录各账户并存储凭据, 请耐心等待.")
         await convert_session(telegram_accounts)
-    
+
     emby_accounts = cfg.emby.account
     while True:
         if len(emby_accounts) > 0:
@@ -170,9 +171,10 @@ async def interactive_config():
     else:
         return False
 
+
 async def prepare_config(env_config: str):
     from tomlkit import item
-    
+
     cfg = ConfigManager.load_env_config(env_config)
     cfg = ConfigManager.validate_config(cfg)
     config.set(cfg)
@@ -209,6 +211,7 @@ async def prepare_config(env_config: str):
             return False
     else:
         return True
+
 
 async def public_entrypoint():
     env_config = os.environ.get(f"EK_CONFIG", None)

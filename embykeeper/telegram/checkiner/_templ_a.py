@@ -33,7 +33,9 @@ class TemplateACheckin(BotCheckin):
                         pass
                     else:
                         if self.use_button_answer:
-                            if answer.message and not any(ignore in answer.message for ignore in self.bot_text_ignore_answer):
+                            if answer.message and not any(
+                                ignore in answer.message for ignore in self.bot_text_ignore_answer
+                            ):
                                 await self.on_text(Message(id=0, text=answer.message), answer.message)
                     return
             else:

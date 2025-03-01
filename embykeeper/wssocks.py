@@ -10,6 +10,7 @@ from .schema import ProxyConfig
 from .utils import get_proxy_str
 from .config import config
 
+
 class WSSocks:
     BASE_URL = "https://github.com/zetxtech/wssocks/releases/download/v1.4.2"
 
@@ -27,7 +28,7 @@ class WSSocks:
         },
     }
 
-    def __init__(self, proxy = None):
+    def __init__(self, proxy=None):
         """Initialize WSSocks handler
 
         Args:
@@ -37,7 +38,7 @@ class WSSocks:
         self.machine = platform.machine()
         self.process: Optional[subprocess.Popen] = None
         self._proxy = proxy
-     
+
     @property
     def proxy_str(self):
         return get_proxy_str(self._proxy or config.proxy)
@@ -58,15 +59,15 @@ class WSSocks:
 
     async def download(self) -> None:
         """Download wssocks binary asynchronously"""
-        
+
         url = self.get_download_url()
         temp_path = config.basedir / self.PLATFORM_MAPPING[self.system][self.machine]
-        
+
         # Download file to temporary path using httpx
-        async with httpx.AsyncClient(proxy = self.proxy_str, http2=True, follow_redirects=True) as client:
+        async with httpx.AsyncClient(proxy=self.proxy_str, http2=True, follow_redirects=True) as client:
             response = await client.get(url)
             response.raise_for_status()
-            
+
             # Write response content to file
             with open(temp_path, "wb") as f:
                 f.write(response.content)
@@ -103,12 +104,12 @@ class WSSocks:
         """
         if self.process and self.process.poll() is None:
             raise RuntimeError("WSSocks is already running")
-        
+
         args = ["client", "-u", host, "-r", "-t", token, "-T", "1", "-c", connector_token, "-d", "-E"]
         proxy_str = get_proxy_str(proxy)
         if proxy_str:
             args.extend(["-x", proxy_str])
-        
+
         self.process = await self.execute(*args)
 
         await asyncio.sleep(3)

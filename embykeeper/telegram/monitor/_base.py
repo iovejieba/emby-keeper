@@ -154,7 +154,7 @@ class Monitor:
             self.sem = asyncio.Semaphore(self.trigger_sim)
         else:
             self.sem = None
-            
+
     def get_filter(self):
         """设定要监控的目标."""
         filter = filters.all
@@ -232,7 +232,7 @@ class Monitor:
         except UserNotParticipant:
             self.log.info(f'跳过监控: 尚未加入群组 "{chat.title}".')
             return self.ctx.finish(RunStatus.IGNORE, "未加入群组")
-        
+
         if self.additional_auth:
             for a in self.additional_auth:
                 if not await Link(self.client).auth(a, log_func=self.log.info):
@@ -251,10 +251,10 @@ class Monitor:
             )
         else:
             spec = f"[green]{chat.title}[/]" if chat.title else f"[green]{chat.id}[/]"
-        
+
         self.log.info(f"开始监视: {spec}.")
         self.ctx.status = RunStatus.RUNNING
-        
+
         async with self.listener():
             await self.failed.wait()
             self.log.error(f"发生错误, 不再监视: {spec}.")

@@ -88,10 +88,10 @@ class MonitorManager:
 
         if not await Link(client).auth("monitor", log_func=log.error):
             return
-        
+
         monitors = []
         names = []
-        
+
         for cls in clses:
             site_name = cls.__module__.rsplit(".", 1)[-1]
             site_ctx = RunContext.prepare(f"{site_name} 站点监控", parent_ids=ctx.id)

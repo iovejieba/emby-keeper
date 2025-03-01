@@ -285,9 +285,10 @@ async def analyzer(chats, keywords, timerange, limit=10000, outputs=1000):
                     Dumper=IndentDumper,
                 )
 
+
 async def debug_notifier():
     from .notify import start_notifier
-    
+
     if await start_notifier():
         logger.info("以下是发送的日志:")
         logger.bind(msg=True, scheme="debugtool").info(

@@ -32,7 +32,9 @@ class JMSCheckin(BotCheckin):
                     )
                     url = r.url
                     for _ in range(1, 3):
-                        async with httpx.AsyncClient(http2=True, proxies=get_proxy_str(config.proxy)) as client:
+                        async with httpx.AsyncClient(
+                            http2=True, proxies=get_proxy_str(config.proxy)
+                        ) as client:
                             resp = await client.get(url, headers={"User-Agent": Faker().safari()})
                             if resp.status_code == 200:
                                 return

@@ -25,6 +25,4 @@ def __getattr__(spec: str):
             m = _i.import_module(f".{spec}", package=__name__)
             return m
         except ImportError:
-            raise AttributeError(
-                f"module '{__name__}' has no attribute '{spec}'"
-            ) from None
+            raise AttributeError(f"module '{__name__}' has no attribute '{spec}'") from None

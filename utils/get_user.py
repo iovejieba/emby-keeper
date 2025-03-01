@@ -19,7 +19,7 @@ async def main(config_file: Path, spec: str):
                     spec = int(spec)
                 except ValueError:
                     pass  # Keep as string (for username)
-                
+
                 results = await tg.get_users(spec)
                 if results:
                     print(results)

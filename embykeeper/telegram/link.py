@@ -272,7 +272,7 @@ class Link:
         """向机器人发送通过代理隧道进行验证码解析请求."""
         cmd = f"/captcha_wssocks {self.instance} {token} {url}"
         if user_agent:
-            cmd += f' {user_agent}'
+            cmd += f" {user_agent}"
         results = await self.post(cmd, timeout=120, name="请求跳过验证码")
         if results:
             return results.get("cf_clearance", None), results.get("useragent", None)

@@ -107,37 +107,40 @@ class CheckinerManager:
                     await self._run_account(ctx, a, client, instant),
         finally:
             self._running.discard(account.phone)
-    
-    def schedule_one(self, ctx: RunContext, at: datetime, account: TelegramAccount, site: str) -> asyncio.Task:
+
+    def schedule_one(
+        self, ctx: RunContext, at: datetime, account: TelegramAccount, site: str
+    ) -> asyncio.Task:
         account_ctx = RunContext.get_or_create(f"checkiner.account.{account.phone}")
         site_ctx = RunContext.prepare(
-            description=f"{account.phone} 账号 {site} 站点重新签到",
-            parent_ids=[account_ctx.id, ctx.id]
+            description=f"{account.phone} 账号 {site} 站点重新签到", parent_ids=[account_ctx.id, ctx.id]
         )
         site_ctx.reschedule = (ctx.reschedule or 0) + 1
-        
+
         async def _schedule():
             # 计算延迟时间(秒)
             delay = (at - datetime.now()).total_seconds()
             if delay > 0:
-                logger.debug(f"已安排账户 {account.phone} 的 {site} 站点在 {at.strftime('%m-%d %H:%M %p')} 重新尝试签到.")
+                logger.debug(
+                    f"已安排账户 {account.phone} 的 {site} 站点在 {at.strftime('%m-%d %H:%M %p')} 重新尝试签到."
+                )
                 await asyncio.sleep(10)
             await self._run_single_site(site_ctx, account, site)
-            
+
         return asyncio.create_task(_schedule())
 
     async def _run_single_site(self, ctx: RunContext, account: TelegramAccount, site_name: str):
         if account.phone in self._running:
             logger.warning(f"账户 {account.phone} 的签到已经在执行.")
             return
-        
+
         self._running.add(account.phone)
         try:
             async with ClientsSession([account]) as clients:
                 async for _, client in clients:
                     cls = get_cls("checkiner", names=[site_name])[0]
                     config_to_use = account.checkiner_config or config.checkiner
-                    
+
                     c: BaseBotCheckin = cls(
                         client,
                         context=ctx,
@@ -145,9 +148,9 @@ class CheckinerManager:
                         timeout=config_to_use.timeout,
                         config=config_to_use.get_site_config(site_name),
                     )
-                    
+
                     log = logger.bind(username=client.me.name, name=c.name)
-                    
+
                     result = await c._start()
                     if result.status == RunStatus.SUCCESS:
                         log.info("重新签到成功.")
@@ -199,7 +202,7 @@ class CheckinerManager:
         tasks = []
         names = []
         for c in checkiners:
-            names.append(c.name) 
+            names.append(c.name)
             wait = 0 if instant else random.uniform(0, config_to_use.random_start)
             task = self._task_main(c, sem, wait)
             tasks.append(task)
@@ -213,7 +216,7 @@ class CheckinerManager:
         ignored = []
         successful = []
         checked = []
-        
+
         for c, result in results:
             if result.status == RunStatus.IGNORE:
                 ignored.append(c.name)
@@ -244,7 +247,7 @@ class CheckinerManager:
             log.bind(log=True).error(f"{msg} ({spec}): {', '.join(failed)}")
         else:
             log.bind(log=True).info(f"签到成功 ({spec}).")
-        
+
     def new_ctx(self):
         now = datetime.now()
         ctx = RunContext.get_or_create(
@@ -256,7 +259,9 @@ class CheckinerManager:
     async def run_all(self, instant: bool = False):
         """Run checkins for all enabled accounts without scheduling"""
         accounts = [a for a in config.telegram.account if a.enabled and a.checkiner]
-        tasks = [self.run_account(RunContext.prepare("运行全部签到器"), account, instant) for account in accounts]
+        tasks = [
+            self.run_account(RunContext.prepare("运行全部签到器"), account, instant) for account in accounts
+        ]
         try:
             await asyncio.gather(*tasks)
         except asyncio.CancelledError:
@@ -265,17 +270,17 @@ class CheckinerManager:
                     task.cancel()
             await asyncio.gather(*tasks, return_exceptions=True)
             raise
-    
+
     async def schedule_all(self):
         """Start scheduling checkins for all accounts"""
-        
+
         for a in config.telegram.account:
             if a.enabled and a.checkiner:
                 scheduler = self.schedule_account(a)
                 self._pool.add(scheduler.schedule())
-                
+
         if not self._schedulers:
             logger.info("没有需要执行的 Telegram 机器人签到任务")
             return None
-        
+
         await self._pool.wait()

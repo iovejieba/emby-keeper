@@ -4,6 +4,7 @@ from embykeeper.utils import to_iterable
 
 from . import BotCheckin
 
+
 class PandaTVGroupCheckin(BotCheckin):
     name = "PandaTV 群组发言"
     chat_name = "PandaTV_Emby_Bot"

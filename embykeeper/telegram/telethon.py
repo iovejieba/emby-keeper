@@ -8,10 +8,11 @@ from loguru import logger
 if typing.TYPE_CHECKING:
     from telethon import TelegramClient
 
+
 class TelethonUtils:
     def __init__(self, client: TelegramClient):
         self.client = client
-    
+
     def start(
         self,
         phone: typing.Union[typing.Callable[[], str], str] = lambda: input(
@@ -58,7 +59,7 @@ class TelethonUtils:
             max_attempts=max_attempts,
         )
         return coro if self.client.loop.is_running() else self.client.loop.run_until_complete(coro)
-    
+
     async def _start(
         self,
         phone,

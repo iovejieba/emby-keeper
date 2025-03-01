@@ -6,6 +6,7 @@ from embykeeper.config import config
 
 logger = logger.bind(scheme="cfsolver")
 
+
 async def get_cf_clearance(url: str, proxy: str = None):
     from embykeeper.telegram.link import Link
     from embykeeper.telegram.session import ClientsSession

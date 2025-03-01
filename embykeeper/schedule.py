@@ -111,7 +111,6 @@ class Scheduler:
         # Convert config to a stable string representation and hash it
         config_str = json.dumps(config, sort_keys=True)
         return hashlib.md5(config_str.encode()).hexdigest()
-        
 
     @property
     def next_time(self) -> datetime:
@@ -195,7 +194,7 @@ class Scheduler:
                     self._ctx.finish(RunStatus.ERROR, f"任务发生错误")
                 if not config.nofail:
                     raise
-            
+
             if self._cache_key:
                 try:
                     cache.delete(self._cache_key)
@@ -207,4 +206,3 @@ class Scheduler:
             # If days is 0, break the loop after one execution
             if isinstance(self.days, (list, tuple)) and self.days[0] == 0:
                 break
-

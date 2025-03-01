@@ -16,10 +16,10 @@ async def main(config_file: Path):
         async for _, tg in clients:
             await tg.send_message("me", "Test")
             break
-    
+
     print("Wait for 300 seconds")
     await asyncio.sleep(300)
-    
+
     async with ClientsSession(config.telegram.account[:1]) as clients:
         async for _, tg in clients:
             await tg.send_message("me", "Test")

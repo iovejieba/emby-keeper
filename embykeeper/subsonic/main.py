@@ -15,9 +15,10 @@ from .player import SubsonicPlayer
 
 logger = logger.bind(scheme="subsonic")
 
+
 class SubsonicManager:
     def get_spec(self, a: SubsonicAccount):
-        return f'{a.username}@{a.name or a.url.host}'
+        return f"{a.username}@{a.name or a.url.host}"
 
     async def _listen_main(self, accounts: List[SubsonicAccount], instant: bool = False):
         if not accounts:
@@ -25,10 +26,10 @@ class SubsonicManager:
         logger.info("开始执行 Subsonic 保活.")
         tasks = []
         sem = asyncio.Semaphore(config.subsonic.concurrency or 100000)
-        
+
         ctx = RunContext.prepare(description="使用全局设置的 Subsonic 统一保活")
         ctx.start(RunStatus.INITIALIZING)
-        
+
         async def watch_wrapper(account: SubsonicAccount, sem):
             async with sem:
                 try:
@@ -51,7 +52,7 @@ class SubsonicManager:
                     player.log.error(f"播放任务执行失败: {e}")
                     show_exception(e, regular=False)
                     return account, False
-        
+
         for account in accounts:
             if account.enabled:
                 tasks.append(watch_wrapper(account, sem))
@@ -75,7 +76,9 @@ class SubsonicManager:
         if len(accounts) == 1:
             logger.bind(log=True).info(f"保活成功: {', '.join(successful_accounts)}.")
         else:
-            logger.bind(log=True).info(f"保活成功 ({len(tasks)}/{len(tasks)}): {', '.join(successful_accounts)}.")
+            logger.bind(log=True).info(
+                f"保活成功 ({len(tasks)}/{len(tasks)}): {', '.join(successful_accounts)}."
+            )
         return ctx.finish(RunStatus.SUCCESS, f"保活成功")
 
     async def run_all(self, instant: bool = False):

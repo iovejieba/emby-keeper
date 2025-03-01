@@ -72,6 +72,7 @@ class MessageType(Flag):
     CAPTCHA = auto()
     ANSWER = auto()
 
+
 class BaseBotCheckin(ABC):
     """基础签到类."""
 
@@ -96,10 +97,10 @@ class BaseBotCheckin(ABC):
         """
         self.client = client
         self.ctx = context or RunContext.prepare()
-        
+
         self._retries = retries
         self._timeout = timeout
-        
+
         self.config = config
         self.finished = asyncio.Event()  # 签到完成事件
         self.log = self.ctx.bind_logger(logger.bind(name=self.name, username=client.me.name))  # 日志组件
@@ -111,7 +112,7 @@ class BaseBotCheckin(ABC):
     @property
     def timeout(self):
         return self._timeout or config.checkiner.timeout
-    
+
     async def _start(self):
         """签到器的入口函数的错误处理外壳."""
         try:
@@ -221,13 +222,13 @@ class BotCheckin(BaseBotCheckin):
 
     async def start(self):
         """签到器的入口函数."""
-        
+
         self.ctx.start(RunStatus.INITIALIZING)
-        
+
         if (not self.chat_name) and (not self.bot_username):
             raise ValueError("未指定 chat_name 或 bot_username")
         ident = self.chat_name or self.bot_username
-        
+
         while True:
             try:
                 chat = await self.client.get_chat(ident)
@@ -249,9 +250,9 @@ class BotCheckin(BaseBotCheckin):
                     return self.ctx.finish(RunStatus.FAIL, "操作过于频繁")
             else:
                 break
-        
+
         is_archived = chat.folder_id == 1
-        
+
         if await self.client.get_chat_history_count(chat.id) == 0:
             if not self.bot_allow_from_scratch:
                 self.log.debug(f'跳过签到: 从未与 "{ident}" 交流.')
@@ -284,9 +285,9 @@ class BotCheckin(BaseBotCheckin):
                     await self.client.mute_chat(ident, time.time() + self.timeout + 10)
                 except FloodWait:
                     self.log.debug(f"[gray50]设置禁用提醒因访问超限而失败: {bot.username}[/]")
-            
+
             self.ctx.status = RunStatus.RUNNING
-            
+
             try:
                 async with self.listener():
                     try:
@@ -340,21 +341,23 @@ class BotCheckin(BaseBotCheckin):
                 self.log.warning("无法在时限内完成签到.")
                 return self.ctx.finish(RunStatus.FAIL, "无法在时限内完成签到")
             elif self.current_retries <= self.valid_retries:
-                if self.ctx.status == RunStatus.NONEED: # 已签到的情况, 如果设置了 checked_retries, 则返回重计划请求
+                if (
+                    self.ctx.status == RunStatus.NONEED
+                ):  # 已签到的情况, 如果设置了 checked_retries, 则返回重计划请求
                     if self.checked_retries:
                         if self.ctx.reschedule and self.ctx.reschedule > self.checked_retries:
                             return self.ctx.finish(RunStatus.NONEED)
                         else:
                             now = datetime.now()
-                            midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+                            midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(
+                                days=1
+                            )
                             max_sleep = midnight - now
                             sleep = timedelta(hours=min((self.ctx.reschedule or 0 + 1) * 1, 6))
                             if sleep > max_sleep:
                                 return self.ctx.finish(RunStatus.NONEED)
                             else:
-                                self.log.info(
-                                    f"今日已签到, 即将在 {format_timedelta_human(sleep)} 后重试."
-                                )
+                                self.log.info(f"今日已签到, 即将在 {format_timedelta_human(sleep)} 后重试.")
                                 self.ctx.next_time = now + sleep
                                 return self.ctx.finish(RunStatus.RESCHEDULE, "等待重新尝试签到")
                 return self.ctx.finish()
@@ -648,10 +651,10 @@ class BotCheckin(BaseBotCheckin):
     async def fail(self, status: RunStatus = RunStatus.FAIL, message: str = None):
         """设定签到器失败."""
         return await self.finish(status, message, fail=True)
-        
+
     async def finish(self, status: RunStatus = RunStatus.SUCCESS, message: str = None, fail=False):
         """设定签到器结束."""
-        
+
         if fail:
             self.current_retries = float("inf")
         self.ctx.status = status

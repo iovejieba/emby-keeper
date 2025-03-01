@@ -30,14 +30,14 @@ class NebulaCheckin(BotCheckin):
         scheme = urlparse(url_auth)
         params = parse_qs(scheme.fragment)
         webapp_data = params.get("tgWebAppData", [""])[0]
-        
+
         parsed_url = urlparse(url_auth)
         base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
         url_info = f"{base_url}/api/v1/tg/info"
         url_checkin = f"{base_url}/api/v1/tg/checkin"
-        
-        headers={"X-Initdata": webapp_data} 
-        
+
+        headers = {"X-Initdata": webapp_data}
+
         try:
             async with AsyncSession(
                 proxy=get_proxy_str(config.proxy), headers=headers, impersonate="edge", allow_redirects=True
@@ -45,19 +45,23 @@ class NebulaCheckin(BotCheckin):
                 # 先获取用户信息
                 resp_info = await session.get(url_info)
                 info_results = resp_info.json()
-                
+
                 if info_results.get("message") != "Success":
                     self.log.info("签到失败: 账户错误.")
                     return await self.fail(message="账户错误")
-                
+
                 # 获取当前余额和下次签到时间
                 current_balance = info_results["data"]["balance"]
-                next_checkin_time = datetime.fromisoformat(info_results["data"]["next_check_in"].replace('Z', '+00:00'))
-                
+                next_checkin_time = datetime.fromisoformat(
+                    info_results["data"]["next_check_in"].replace("Z", "+00:00")
+                )
+
                 # 检查是否可以签到
                 if next_checkin_time > datetime.now(timezone.utc):
                     # 获取今天24点的时间
-                    today_end = datetime.now(timezone.utc).replace(hour=23, minute=59, second=59, microsecond=999999)
+                    today_end = datetime.now(timezone.utc).replace(
+                        hour=23, minute=59, second=59, microsecond=999999
+                    )
                     if next_checkin_time <= today_end:
                         # 今天还可以签到，等待到指定时间
                         sleep = next_checkin_time - datetime.now(timezone.utc)
@@ -68,7 +72,7 @@ class NebulaCheckin(BotCheckin):
                         # 今天已经不能签到了
                         self.log.info("今日已经签到过了.")
                         return await self.finish(RunStatus.NONEED, "今日已签到")
-                
+
                 # 执行签到
                 resp = await session.post(url_checkin)
                 results = resp.json()

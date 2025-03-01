@@ -55,9 +55,9 @@ def formatter(record):
 
 def initialize(level="INFO", **kw):
     """初始化日志配置."""
-    
+
     from asyncio import constants
-    
+
     logger.remove()
     handler = RichHandler(
         console=var.console, markup=True, rich_tracebacks=True, tracebacks_suppress=[asyncio], **kw

@@ -37,11 +37,12 @@ _decode = lambda x: "".join(map(chr, to_iterable(pickle.loads(x))))
 API_ID = _decode(_id)
 API_HASH = _decode(_hash)
 
+
 class ClientsSession:
     pool = {}
     lock = asyncio.Lock()
     watch = None
-    
+
     @classmethod
     async def watchdog(cls, timeout=120):
         logger.debug("Telegram 账号池看门狗启动.")
@@ -115,10 +116,10 @@ class ClientsSession:
         self.phones = []
         self.done = asyncio.Queue()
         self.in_memory = in_memory
-        
+
         self._proxy = proxy
         self._basedir = basedir
-        
+
         if not self.watch:
             self.__class__.watch = asyncio.create_task(self.watchdog())
 
@@ -129,7 +130,7 @@ class ClientsSession:
     @property
     def proxy(self):
         return self._proxy or config.proxy
-    
+
     async def test_network(self):
         url = "https://telegram.org"
         proxy_str = get_proxy_str(self.proxy)
@@ -323,9 +324,7 @@ class ClientsSession:
                 except (Unauthorized, AuthKeyDuplicated) as e:
                     await client.storage.delete()
                     if session_str_src == "session":
-                        logger.error(
-                            f'账号 "{account.phone}" 由于配置中提供的 session 已被注销, 将被跳过.'
-                        )
+                        logger.error(f'账号 "{account.phone}" 由于配置中提供的 session 已被注销, 将被跳过.')
                         show_exception(e)
                         return None
                     elif session_str_src == "cache":
@@ -349,9 +348,7 @@ class ClientsSession:
         except asyncio.CancelledError:
             raise
         except binascii.Error:
-            logger.error(
-                f'登录账号 "{account.phone}" 失败, 由于您在配置文件中提供的 session 无效, 将被跳过.'
-            )
+            logger.error(f'登录账号 "{account.phone}" 失败, 由于您在配置文件中提供的 session 无效, 将被跳过.')
         except RPCError as e:
             logger.error(f'登录账号 "{account.phone}" 失败 ({e.MESSAGE.format(value=e.value)}), 将被跳过.')
             return None

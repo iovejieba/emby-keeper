@@ -72,6 +72,7 @@ class MessagePlan:
 
 class MessageMaterialSchema(BaseModel):
     """语料文件 Schema"""
+
     messages: List[str]
     at: List[str] = Field(default=["9:00", "23:00"])
     possibility: Optional[float] = Field(default=1.0)
@@ -117,14 +118,14 @@ class Messager:
         self.max_interval = config.get("max_interval", self.max_interval)  # 两条消息间的最大间隔时间
         self.log = logger.bind(scheme="telemessager", name=self.name, username=me.name)
         self.timeline: List[MessagePlan] = []  # 消息计划序列
-    
+
     def parse_message_yaml(self, file):
         """解析话术文件."""
         with open(file, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
-        
+
         material = MessageMaterialSchema.model_validate(data)
-        
+
         at = material.at
         assert len(at) == 2
         at = [parser.parse(t).time() for t in at]
@@ -251,7 +252,7 @@ class Messager:
     async def start(self):
         """自动水群器的入口函数."""
         self.ctx.start(RunStatus.INITIALIZING)
-        
+
         if self.additional_auth:
             async with ClientsSession([self.account]) as clients:
                 async for _, tg in clients:
@@ -294,7 +295,7 @@ class Messager:
         self.log.info(f"共启用 {len(schedules)} 个消息规划, 发送 {nmsgs} 条消息.")
         for s in schedules:
             self.add(s, use_multiply=True)
-        
+
         self.ctx.status = RunStatus.RUNNING
         if self.timeline:
             last_valid_p = None

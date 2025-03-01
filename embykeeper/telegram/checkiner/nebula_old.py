@@ -19,7 +19,7 @@ class NebulaCheckin(BotCheckin):
     name = "Nebula"
     bot_username = "Nebula_Account_bot"
     max_retries = 1
-    
+
     async def send_checkin(self, **kw):
         bot_peer = await self.client.resolve_peer(self.bot_username)
         user_full = await self.client.invoke(GetFullUser(id=bot_peer))
