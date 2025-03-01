@@ -395,7 +395,9 @@ class Client(pyrogram.Client):
                 last_error = e
                 await asyncio.sleep(0.5)
                 continue
-            except sqlite3.ProgrammingError as e: # Cannot operate on a closed database. The client is stopping.
+            except (
+                sqlite3.ProgrammingError
+            ) as e:  # Cannot operate on a closed database. The client is stopping.
                 raise asyncio.CancelledError() from None
         else:
             raise OSError(
