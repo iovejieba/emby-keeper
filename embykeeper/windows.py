@@ -1,12 +1,10 @@
 import os
 import platform
 import sys
-import time
 from msvcrt import getch
 from pathlib import Path
 from subprocess import Popen
 
-from appdirs import user_data_dir
 from rich import box
 from rich.align import Align
 from rich.panel import Panel
@@ -15,13 +13,14 @@ from rich.table import Table
 from . import __name__ as __product__
 from . import var
 from .cli import app as cli
-from .settings import write_faked_config
+from .config import config
 
 
-def generate_config(config: Path):
-    if config.exists():
-        return False
-    write_faked_config(config, quiet=True)
+def generate_config():
+    config_file = config.basedir / "config.toml"
+    if config_file.exists():
+        return
+    config.reload_conf()
     message = Table.grid(padding=2)
     message.add_column()
     urls = Table.grid(padding=2)
@@ -45,7 +44,7 @@ def generate_config(config: Path):
 
     _ = getch()
 
-    p = Popen(["start", config], shell=True)
+    p = Popen(["start", config_file], shell=True)
 
     if not p:
         var.console.print(f"配置文件打开失败, 请按任意键退出", justify="center")
@@ -61,9 +60,7 @@ def generate_config(config: Path):
 
 
 def main():
-    config = Path(user_data_dir(__product__)) / "config.toml"
-    config.parent.mkdir(exist_ok=True, parents=True)
-    generate_config(config)
+    generate_config()
     os.system("cls")
     var.console.rule("Embykeeper")
     args = sys.argv[1:]
