@@ -24,6 +24,11 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify, a
 from flask_socketio import SocketIO
 from flask_login import LoginManager, login_user, login_required, current_user
 
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
+
 from . import __version__
 
 cli = typer.Typer()
@@ -149,7 +154,10 @@ def config_save():
     if not is_authenticated():
         return "Not authenticated", 401
     data = request.get_json().get("config")
-    clean_data = tomlkit.dumps(tomlkit.parse(data))
+    # Parse with tomllib to get clean dict without comments
+    clean_dict = tomllib.loads(data)
+    # Use tomlkit to convert back to TOML string
+    clean_data = tomlkit.dumps(clean_dict)
     encoded_data = base64.b64encode(clean_data.encode()).decode()
     app.config["config"] = encoded_data
     return jsonify(encoded_data), 200
@@ -228,15 +236,15 @@ def read_and_forward_pty_output():
     while True:
         if app.config["fd"]:
             try:
-                (data, _, _) = select.select([app.config["fd"]], [], [], 1.0)
-                if data:
-                    with app.config["lock"]:
-                        if app.config["fd"]:
+                with app.config["lock"]:
+                    if app.config["fd"]:
+                        (data, _, _) = select.select([app.config["fd"]], [], [], 1.0)
+                        if data:
                             output = os.read(app.config["fd"], max_read_bytes).decode(errors="ignore")
                             app.config["hist"] += output
                             socketio.emit("pty-output", {"output": output}, namespace="/pty")
-                        else:
-                            break
+                    else:
+                        break
             except (select.error, OSError):
                 break
         else:

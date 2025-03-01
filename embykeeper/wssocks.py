@@ -6,7 +6,9 @@ from pathlib import Path
 import stat
 from typing import Optional
 
+from .schema import ProxyConfig
 from .utils import get_proxy_str
+from .config import config
 
 class WSSocks:
     BASE_URL = "https://github.com/zetxtech/wssocks/releases/download/v1.4.2"
@@ -25,7 +27,7 @@ class WSSocks:
         },
     }
 
-    def __init__(self, basedir: Path, proxy_str: str = None):
+    def __init__(self, proxy = None):
         """Initialize WSSocks handler
 
         Args:
@@ -33,16 +35,18 @@ class WSSocks:
         """
         self.system = platform.system()
         self.machine = platform.machine()
-        self.basedir = basedir
-        self.proxy_str = proxy_str
-        self.basedir.mkdir(parents=True, exist_ok=True)
         self.process: Optional[subprocess.Popen] = None
+        self._proxy = proxy
+     
+    @property
+    def proxy_str(self):
+        return get_proxy_str(self._proxy or config.proxy)
 
     @property
     def executable_path(self) -> Path:
         """Get path to the executable"""
         exe_name = "wssocks.exe" if self.system == "Windows" else "wssocks"
-        return self.basedir / exe_name
+        return config.basedir / exe_name
 
     def get_download_url(self) -> str:
         """Generate download URL based on current platform"""
@@ -56,7 +60,7 @@ class WSSocks:
         """Download wssocks binary asynchronously"""
         
         url = self.get_download_url()
-        temp_path = self.basedir / self.PLATFORM_MAPPING[self.system][self.machine]
+        temp_path = config.basedir / self.PLATFORM_MAPPING[self.system][self.machine]
         
         # Download file to temporary path using httpx
         async with httpx.AsyncClient(proxy = self.proxy_str, http2=True, follow_redirects=True) as client:
@@ -88,7 +92,7 @@ class WSSocks:
             stderr=subprocess.PIPE,
         )
 
-    async def start(self, host: str, token: str, connector_token: str, proxy_dict: dict = None) -> bool:
+    async def start(self, host: str, token: str, connector_token: str, proxy: ProxyConfig = None) -> bool:
         """Start wssocks client server
 
         Args:
@@ -101,7 +105,7 @@ class WSSocks:
             raise RuntimeError("WSSocks is already running")
         
         args = ["client", "-u", host, "-r", "-t", token, "-T", "1", "-c", connector_token, "-d", "-E"]
-        proxy_str = get_proxy_str(proxy_dict)
+        proxy_str = get_proxy_str(proxy)
         if proxy_str:
             args.extend(["-x", proxy_str])
         

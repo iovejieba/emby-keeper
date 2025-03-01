@@ -7,6 +7,8 @@ import time
 import uuid
 
 from .data import get_datas
+from .config import config
+from .schema import ProxyConfig
 
 
 class CharRange(IntEnum):
@@ -21,7 +23,6 @@ class CharRange(IntEnum):
 
 
 class OCRService:
-    # 添加类变量用于进程池
     _pool = {}
     _pool_lock = asyncio.Lock()
 
@@ -30,8 +31,6 @@ class OCRService:
         cls,
         ocr_name: str = None,
         char_range: Optional[Union[CharRange, str]] = None,
-        basedir: str = None,
-        proxy: dict = None,
     ):
         # 创建用于标识唯一实例的键
         key = (ocr_name, char_range)
@@ -39,7 +38,7 @@ class OCRService:
             # 检查池中是否存在相同配置的实例
             if key in cls._pool:
                 return cls._pool[key]
-            instance = cls(ocr_name, char_range, basedir, proxy)
+            instance = cls(ocr_name, char_range)
             cls._pool[key] = instance
             return instance
 
@@ -47,13 +46,9 @@ class OCRService:
         self,
         ocr_name: str = None,
         char_range: Optional[Union[CharRange, str]] = None,
-        basedir: str = None,
-        proxy: dict = None,
     ) -> None:
         self.ocr_name = ocr_name
         self.char_range = char_range
-        self.basedir = basedir
-        self.proxy = proxy
 
         self._process = None
         self._queue_in = None  # 发送图片数据的队列
@@ -80,8 +75,6 @@ class OCRService:
                 self._queue_out,
                 self.ocr_name,
                 self.char_range,
-                self.basedir,
-                self.proxy,
             ),
             daemon=True,
         )
@@ -196,8 +189,6 @@ class OCRService:
         queue_out: Queue,
         ocr_name: str,
         char_range: Optional[Union[CharRange, str]],
-        basedir: str,
-        proxy: dict,
     ):
         model = None
         use_probability = False
@@ -216,7 +207,7 @@ class OCRService:
             else:
                 data = []
                 files = (f"{ocr_name}.onnx", f"{ocr_name}.json")
-                async for p in get_datas(basedir, files, proxy=proxy, caller="OCR"):
+                async for p in get_datas(files, caller="OCR"):
                     if p is None:
                         queue_out.put(("error", "无法下载所需文件"))
                         return
