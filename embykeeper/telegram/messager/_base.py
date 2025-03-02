@@ -12,7 +12,7 @@ from loguru import logger
 from pyrogram.types import User
 from pyrogram.enums import ChatMemberStatus
 from pyrogram.errors import ChatWriteForbidden, RPCError, SlowmodeWait
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 from embykeeper import __name__ as __product__
 from embykeeper.data import get_data
@@ -217,7 +217,7 @@ class Messager:
                         multiply=spec_or_schedule.multiply or base_schedule.multiply,
                         only=spec_or_schedule.only or base_schedule.only,
                     )
-                except (OSError, yaml.YAMLError, SchemaError) as e:
+                except (OSError, yaml.YAMLError, ValidationError) as e:
                     self.log.warning(f'话术文件 "{spec_or_schedule.spec}" 错误, 将被跳过: {e}')
                     show_exception(e)
                     return None
@@ -230,7 +230,7 @@ class Messager:
                 return None
             try:
                 return self.parse_message_yaml(file)
-            except (OSError, yaml.YAMLError, SchemaError) as e:
+            except (OSError, yaml.YAMLError, ValidationError) as e:
                 self.log.warning(f'话术文件 "{spec_or_schedule}" 错误, 将被跳过: {e}')
                 show_exception(e)
                 return None
@@ -239,8 +239,6 @@ class Messager:
         """自动水群器的入口函数的错误处理外壳."""
         try:
             return await self.start()
-        except asyncio.CancelledError:
-            raise
         except Exception as e:
             if config.nofail:
                 self.log.warning(f"发生错误, 自动水群器将停止.")

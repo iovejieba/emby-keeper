@@ -90,27 +90,47 @@ class ClientsSession:
 
     @classmethod
     async def shutdown(cls):
-        print("\r正在停止...\r", end="", flush=True, file=sys.stderr)
+        """停止所有 Telegram 客户端会话."""
+        # 1. 取消所有 pool 中的 task
         for v in cls.pool.values():
             if isinstance(v, asyncio.Task):
                 v.cancel()
+
+        # 2. 等待所有非 pyrogram 任务完成
+        tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
+        wait_tasks = []
+
+        for task in tasks:
+            coro = task.get_coro()
+            if coro.__qualname__ and (
+                "Session.recv_worker" in coro.__qualname__
+                or "ClientsSession.watchdog" in coro.__qualname__
+                or "AsyncTyper" in coro.__qualname__
+            ):
+                pass
             else:
-                client, ref = v
-                client.dispatcher.updates_queue.put_nowait(None)
-                for t in client.dispatcher.handler_worker_tasks:
-                    try:
-                        await t
-                    except asyncio.CancelledError:
-                        pass
-        while len(asyncio.all_tasks()) > 1:
-            await asyncio.sleep(0.1)
-        print(f"Telegram 账号池停止.\r", end="", file=sys.stderr)
+                wait_tasks.append(task)
+
+        if wait_tasks:
+            while wait_tasks:
+                done, wait_tasks = await asyncio.wait(
+                    wait_tasks, timeout=5, return_when=asyncio.FIRST_COMPLETED
+                )
+                if wait_tasks:
+                    # logger.debug(f"等待剩余 {len(wait_tasks)} 个任务完成以停止 Telegram 账号池...")
+                    # logger.debug([t.get_coro().__qualname__ for t in wait_tasks])
+                    pass
+
+        # 3. 向所有 client 发送停止信号并登出账号
+        logger.debug(f"Telegram 账号池停止, 正在停止所有账号客户端.")
         for v in cls.pool.values():
             if isinstance(v, tuple):
                 client: Client = v[0]
-                await client.storage.save()
-                await client.storage.close()
-                logger.debug(f'登出账号 "{client.phone_number}".')
+                try:
+                    logger.debug(f'登出账号 "{client.phone_number}".')
+                    await client.terminate()
+                except Exception as e:
+                    logger.debug(f'登出账号 "{client.phone_number}" 时发生错误: {e}')
 
     def __init__(self, accounts: List[TelegramAccount], in_memory=False, proxy=None, basedir=None):
         self.accounts = accounts
@@ -356,8 +376,6 @@ class ClientsSession:
             else:
                 logger.error(f'登录账号 "{account.phone}" 失败次数超限, 将被跳过.')
                 return None
-        except asyncio.CancelledError:
-            raise
         except binascii.Error:
             logger.error(f'登录账号 "{account.phone}" 失败, 由于您在配置文件中提供的 session 无效, 将被跳过.')
         except RPCError as e:

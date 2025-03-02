@@ -1,5 +1,5 @@
 from pyrogram.types import Message
-from pyrogram.errors import MessageIdInvalid
+from pyrogram.errors import MessageIdInvalid, DataInvalid
 
 from embykeeper.utils import to_iterable
 
@@ -15,6 +15,8 @@ class TanhuaCheckin(AnswerBotCheckin):
     bot_success_keywords = ["签到获得积分"]
     bot_checked_keywords = ["今日已签到"]
     bot_text_ignore = ["请选择正确的验证码"]
+    bot_use_history = 10
+    bot_answer_button_message_pat = "请选择正确的验证码"
 
     async def message_handler(self, client, message: Message):
         text = message.caption or message.text
@@ -28,7 +30,7 @@ class TanhuaCheckin(AnswerBotCheckin):
                 if "个人信息" in k:
                     try:
                         await message.click(k)
-                    except (TimeoutError, MessageIdInvalid):
+                    except (TimeoutError, MessageIdInvalid, DataInvalid):
                         pass
                     return
                 if "签到" in k or "簽到" in k:
@@ -36,7 +38,7 @@ class TanhuaCheckin(AnswerBotCheckin):
                         await message.click(k)
                     except TimeoutError:
                         self.log.debug(f"点击签到按钮无响应, 可能按钮未正确处理点击回复. 一般来说不影响签到.")
-                    except MessageIdInvalid:
+                    except (MessageIdInvalid, DataInvalid):
                         pass
                     return
             else:
@@ -57,6 +59,8 @@ class TanhuaCheckin(AnswerBotCheckin):
                 return MessageType.CAPTCHA
         elif message.text:
             return MessageType.TEXT
+        elif message.document:
+            return MessageType.CAPTCHA
         else:
             return MessageType.IGNORE
 

@@ -10,7 +10,7 @@ from embykeeper.config import config
 from embykeeper.runinfo import RunContext
 
 from .messager import Messager
-from .dynamic import extract, get_cls
+from .dynamic import extract, get_cls, get_names
 from .link import Link
 from .session import ClientsSession
 from .pyrogram import Client
@@ -78,7 +78,14 @@ class MessageManager:
         log = logger.bind(username=client.me.name)
 
         # Get messager classes based on account config or global config
-        site = account.site.messager if account.site else config.site.messager
+        site = None
+        if account.site and account.site.messager is not None:
+            site = account.site.messager
+        elif config.site and config.site.messager is not None:
+            site = config.site.messager
+        else:
+            site = get_names("messager")
+        
         clses: List[Type[Messager]] = extract(get_cls("messager", names=site))
 
         if not clses:

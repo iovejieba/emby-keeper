@@ -16,6 +16,7 @@ class CharonCheckin(BotCheckin):
     bot_text_ignore = ["已结束当前对话"]
     additional_auth = ["captcha"]
     bot_success_keywords = ["签到成功"]
+    bot_fail_keywords = ["购买账号"]
 
     async def send_checkin(self, retry=False):
         if retry:

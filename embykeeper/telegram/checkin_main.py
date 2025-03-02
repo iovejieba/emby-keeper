@@ -14,7 +14,7 @@ from embykeeper.runinfo import RunContext, RunStatus
 from embykeeper.utils import AsyncTaskPool
 
 from .checkiner import BaseBotCheckin
-from .dynamic import extract, get_cls
+from .dynamic import extract, get_cls, get_names
 from .link import Link
 from .session import ClientsSession
 from .pyrogram import Client
@@ -172,7 +172,14 @@ class CheckinerManager:
         log = logger.bind(username=client.me.name)
 
         # Get checkin classes based on account config or global config
-        site = account.site.checkiner if account.site else config.site.checkiner
+        site = None
+        if account.site and account.site.checkiner is not None:
+            site = account.site.checkiner
+        elif config.site and config.site.checkiner is not None:
+            site = config.site.checkiner
+        else:
+            site = get_names("checkiner")
+            
         clses: List[Type[BaseBotCheckin]] = extract(get_cls("checkiner", names=site))
 
         if not clses:
