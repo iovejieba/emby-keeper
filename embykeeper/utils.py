@@ -119,31 +119,6 @@ def show_exception(e, regular=True):
 
 class AsyncTyper(Typer):
     """Typer 的异步版本, 所有命令函数都将以异步形式调用."""
-
-    async def _cancel_tasks_except_pyrogram(self):
-        """取消所有非 pyrogram 包内的任务，让 pyrogram 任务自然结束."""
-        print("\r正在停止...\r", end="", flush=True, file=sys.stderr)
-        tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
-        
-        cancel_tasks = []
-        pyrogram_tasks = []
-        for task in tasks:
-            coro = task.get_coro()
-            if coro.__qualname__ and 'Session.recv_worker' in coro.__qualname__:
-                pyrogram_tasks.append(task)
-            else:
-                cancel_tasks.append(task)
-        
-        # 取消非 pyrogram 任务
-        for task in cancel_tasks:
-            task.cancel()
-        
-        # 等待所有任务完成
-        if tasks:
-            await asyncio.gather(*tasks, return_exceptions=True)
-        
-        return len(tasks)
-
     def async_command(self, *args, **kwargs):
         def decorator(async_func):
             @wraps(async_func)
@@ -164,13 +139,17 @@ class AsyncTyper(Typer):
                     asyncio.set_event_loop(loop)
                     loop.run_until_complete(main())
                 except KeyboardInterrupt:
-                    loop.run_until_complete(self._cancel_tasks_except_pyrogram())
-                    print("\r", end="", flush=True)
-                    logger.info(f"所有服务已停止并登出, 欢迎您再次使用 {__name__.capitalize()}.")
+                    print("\r正在停止...\r", end="", flush=True, file=sys.stderr)
                 except Exit as e:
                     sys.exit(e.exit_code)
                 finally:
-                    loop.close()
+                    tasks = asyncio.all_tasks(loop)
+                    for task in tasks:
+                        task.cancel()
+                    loop.run_until_complete(asyncio.gather(*tasks, return_exceptions=True))
+                    loop.run_until_complete(loop.shutdown_asyncgens())
+                    print("\r", end="", flush=True)
+                    logger.info(f"所有服务已停止并登出, 欢迎您再次使用 {__name__.capitalize()}.")
 
             self.command(*args, **kwargs)(sync_func)
             return async_func

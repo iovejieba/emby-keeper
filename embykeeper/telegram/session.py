@@ -96,32 +96,7 @@ class ClientsSession:
             if isinstance(v, asyncio.Task):
                 v.cancel()
 
-        # 2. 等待所有非 pyrogram 任务完成
-        tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
-        wait_tasks = []
-
-        for task in tasks:
-            coro = task.get_coro()
-            if coro.__qualname__ and (
-                "Session.recv_worker" in coro.__qualname__
-                or "ClientsSession.watchdog" in coro.__qualname__
-                or "AsyncTyper" in coro.__qualname__
-            ):
-                pass
-            else:
-                wait_tasks.append(task)
-
-        if wait_tasks:
-            while wait_tasks:
-                done, wait_tasks = await asyncio.wait(
-                    wait_tasks, timeout=5, return_when=asyncio.FIRST_COMPLETED
-                )
-                if wait_tasks:
-                    # logger.debug(f"等待剩余 {len(wait_tasks)} 个任务完成以停止 Telegram 账号池...")
-                    # logger.debug([t.get_coro().__qualname__ for t in wait_tasks])
-                    pass
-
-        # 3. 向所有 client 发送停止信号并登出账号
+        # 2. 向所有 client 发送停止信号并登出账号
         logger.debug(f"Telegram 账号池停止, 正在停止所有账号客户端.")
         for v in cls.pool.values():
             if isinstance(v, tuple):
