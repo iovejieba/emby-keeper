@@ -322,6 +322,7 @@ class ClientsSession:
                             continue
                     else:
                         session_str = await client.export_session_string()
+                        session_str_key = f"telegram.session_str.{account.get_config_key()}"
                         cache.set(session_str_key, session_str)
                         logger.debug(f'登录账号 "{client.phone_number}" 成功.')
                         return client

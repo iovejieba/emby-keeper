@@ -182,7 +182,7 @@ async def prepare_config(env_config: str):
         return False
 
     # Add MongoDB check
-    if not not cfg.mongodb:
+    if not cfg.mongodb:
         logger.warning("未设置 MongoDB 连接, 所有缓存数据将在重启后遗失或重置.")
 
     to_login = []
