@@ -85,7 +85,7 @@ class MonitorManager:
             site = config.site.monitor
         else:
             site = get_names("monitor")
-        
+
         clses: List[Type[Monitor]] = extract(get_cls("monitor", names=site))
 
         if not clses:

@@ -85,7 +85,7 @@ class MessageManager:
             site = config.site.messager
         else:
             site = get_names("messager")
-        
+
         clses: List[Type[Messager]] = extract(get_cls("messager", names=site))
 
         if not clses:

@@ -96,11 +96,11 @@ class Dispatcher(dispatcher.Dispatcher):
     async def start(self):
         logger.debug("Telegram 更新分配器启动.")
         if not self.client.no_updates:
-            
+
             self.handler_worker_tasks = []
             for _ in range(self.client.workers):
                 self.handler_worker_tasks.append(self.loop.create_task(self.handler_worker()))
-                
+
             if not self.client.skip_updates:
                 await self.client.recover_gaps()
 

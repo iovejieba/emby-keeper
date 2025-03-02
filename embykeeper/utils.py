@@ -119,6 +119,7 @@ def show_exception(e, regular=True):
 
 class AsyncTyper(Typer):
     """Typer 的异步版本, 所有命令函数都将以异步形式调用."""
+
     def async_command(self, *args, **kwargs):
         def decorator(async_func):
             @wraps(async_func)
@@ -133,7 +134,7 @@ class AsyncTyper(Typer):
                         sys.exit(1)
                     else:
                         logger.info(f"所有任务已完成, 欢迎您再次使用 {__name__.capitalize()}.")
-                
+
                 try:
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)

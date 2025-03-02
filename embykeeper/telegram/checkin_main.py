@@ -179,7 +179,7 @@ class CheckinerManager:
             site = config.site.checkiner
         else:
             site = get_names("checkiner")
-            
+
         clses: List[Type[BaseBotCheckin]] = extract(get_cls("checkiner", names=site))
 
         if not clses:

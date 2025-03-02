@@ -232,32 +232,32 @@ class OCRService:
             def process_gif(gif_data):
                 gif = Image.open(BytesIO(gif_data))
                 frame_count = gif.n_frames
-                
+
                 # Calculate how many frames to use (up to 5)
                 num_frames = min(5, frame_count)
                 frame_indices = [i * (frame_count - 1) // (num_frames - 1) for i in range(num_frames)]
-                
+
                 # Get the first frame to determine size
                 gif.seek(0)
-                base_frame = gif.copy().convert('RGBA')
-                
+                base_frame = gif.copy().convert("RGBA")
+
                 # Create a blank transparent image
-                composite = Image.new('RGBA', base_frame.size, (0, 0, 0, 0))
-                
+                composite = Image.new("RGBA", base_frame.size, (0, 0, 0, 0))
+
                 # Calculate alpha for each frame
                 alpha_per_frame = 255 // num_frames
-                
+
                 for idx in frame_indices:
                     gif.seek(idx)
-                    frame = gif.copy().convert('RGBA')
+                    frame = gif.copy().convert("RGBA")
                     # Apply partial transparency
                     frame.putalpha(alpha_per_frame)
                     composite = Image.alpha_composite(composite, frame)
-                
+
                 # Convert final image to RGB for OCR
-                final_image = composite.convert('RGB')
+                final_image = composite.convert("RGB")
                 final_bytes = BytesIO()
-                final_image.save(final_bytes, format='PNG')
+                final_image.save(final_bytes, format="PNG")
                 return process_single_image(final_bytes.getvalue(), use_probability)
 
             # 处理请求循环

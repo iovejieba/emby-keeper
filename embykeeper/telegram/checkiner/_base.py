@@ -482,18 +482,18 @@ class BotCheckin(BaseBotCheckin):
             ocr_name=self.ocr,
             char_range=self.bot_captcha_char_range,
         )
-        
+
         try:
             with ocr:
-                is_gif = getattr(data, 'name', '').endswith('.gif')
+                is_gif = getattr(data, "name", "").endswith(".gif")
                 ocr_text = await ocr.run(data, gif=is_gif)
                 if not ocr_text:
                     self.log.info(f"签到失败: 接收到空验证码, 正在重试.")
                     await self.retry()
                     return
-                
+
                 captcha = ocr_text.translate(str.maketrans("", "", string.punctuation)).replace(" ", "")
-                
+
             if captcha:
                 self.log.debug(f"[gray50]接收验证码: {captcha}.[/]")
                 if self.bot_captcha_len and len(captcha) not in to_iterable(self.bot_captcha_len):
@@ -693,7 +693,7 @@ class BotCheckin(BaseBotCheckin):
 class AnswerBotCheckin(BotCheckin):
     """签到类, 用于按钮模式签到."""
 
-    bot_answer_button_message_pat: str = None # 回答按键消息内容的 regex 条件
+    bot_answer_button_message_pat: str = None  # 回答按键消息内容的 regex 条件
     bot_answer_button_pat: str = None  # 所有按键需要满足的 regex 条件
 
     def __init__(self, *args, **kw):
