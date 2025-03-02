@@ -18,6 +18,7 @@ app = AsyncTyper(
     context_settings={"help_option_names": ["-h", "--help"]},
 )
 
+
 def version(flag):
     if flag:
         print(__version__)
@@ -273,14 +274,14 @@ async def main(
         subsonic = True
         monitor = True
         messager = True
-        
+
     if config.mongodb:
         logger.info(f"正在连接到 MongoDB 缓存, 请稍候.")
         try:
             from .cache import cache
-            
-            cache.set('test', 'test')
-            assert cache.get('test', None) == 'test'
+
+            cache.set("test", "test")
+            assert cache.get("test", None) == "test"
         except Exception as e:
             logger.error(f"MongoDB 缓存连接失败: {e}, 程序将退出.")
             show_exception(e, regular=False)

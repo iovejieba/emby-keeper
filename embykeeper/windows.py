@@ -24,7 +24,8 @@ def generate_config():
             f.write(config.generate_example_config())
     except OSError as e:
         var.console.print(
-            f'无法写入默认配置文件 "{config_file}", 请确认是否有权限进行该目录写入: {e}, 请按任意键退出', justify="center"
+            f'无法写入默认配置文件 "{config_file}", 请确认是否有权限进行该目录写入: {e}, 请按任意键退出',
+            justify="center",
         )
         _ = getch()
         sys.exit(1)
@@ -64,6 +65,7 @@ def generate_config():
         f"请确认您配置完成, 并按任意键以继续启动 {__product__.capitalize()}...", justify="center"
     )
     var.console.print(f"配置完成, 即将启动 {__product__.capitalize()} ...", justify="center")
+
 
 def main():
     generate_config()
