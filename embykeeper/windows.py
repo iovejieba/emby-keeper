@@ -17,6 +17,8 @@ from .config import config
 
 def generate_config():
     config_file = config.basedir / "config.toml"
+    if config_file.exists():
+        return
     try:
         with open(config_file, "w+", encoding="utf-8") as f:
             f.write(config.generate_example_config())
@@ -26,9 +28,6 @@ def generate_config():
         )
         _ = getch()
         sys.exit(1)
-    if config_file.exists():
-        return
-    config.generate_example_config()
     message = Table.grid(padding=2)
     message.add_column()
     urls = Table.grid(padding=2)
