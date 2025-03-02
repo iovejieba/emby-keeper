@@ -297,7 +297,6 @@ class BotCheckin(BaseBotCheckin):
                             await self.send_checkin()
                         elif not await self.walk_history(self.bot_use_history):
                             await self.send_checkin()
-                        await asyncio.sleep(500)
                         await asyncio.wait_for(self.finished.wait(), self.timeout)
                     finally:
                         try:
