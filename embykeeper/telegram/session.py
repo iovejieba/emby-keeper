@@ -90,27 +90,22 @@ class ClientsSession:
 
     @classmethod
     async def shutdown(cls):
-        print("\r正在停止...\r", end="", flush=True, file=sys.stderr)
+        """停止所有 Telegram 客户端会话."""
+        # 1. 取消所有 pool 中的 task
         for v in cls.pool.values():
             if isinstance(v, asyncio.Task):
                 v.cancel()
-            else:
-                client, ref = v
-                client.dispatcher.updates_queue.put_nowait(None)
-                for t in client.dispatcher.handler_worker_tasks:
-                    try:
-                        await t
-                    except asyncio.CancelledError:
-                        pass
-        while len(asyncio.all_tasks()) > 1:
-            await asyncio.sleep(0.1)
-        print(f"Telegram 账号池停止.\r", end="", file=sys.stderr)
+
+        # 2. 向所有 client 发送停止信号并登出账号
+        logger.debug(f"Telegram 账号池停止, 正在停止所有账号客户端.")
         for v in cls.pool.values():
             if isinstance(v, tuple):
                 client: Client = v[0]
-                await client.storage.save()
-                await client.storage.close()
-                logger.debug(f'登出账号 "{client.phone_number}".')
+                try:
+                    logger.debug(f'登出账号 "{client.phone_number}".')
+                    await client.terminate()
+                except Exception as e:
+                    logger.debug(f'登出账号 "{client.phone_number}" 时发生错误: {e}')
 
     def __init__(self, accounts: List[TelegramAccount], in_memory=False, proxy=None, basedir=None):
         self.accounts = accounts
@@ -286,7 +281,14 @@ class ClientsSession:
                     )
                     if use_telethon:
                         logger.debug("选择使用 Telethon 进行首次登陆, 并导出会话数据至 Pyrogram.")
-                        session_str = await self.get_session_str_from_telethon(account)
+                        try:
+                            session_str = await self.get_session_str_from_telethon(account)
+                        except EOFError:
+                            logger.warning(
+                                "非可交互终端, 无法输入验证码, 如果您使用 docker 请使用 docker -it 运行, 否则请使用可交互终端."
+                            )
+                            logger.error(f'登录账号 "{account.phone}" 时发生异常, 将被跳过.')
+                            return None
                         if session_str:
                             logger.info("请耐心等待, 正在登陆.")
                             await asyncio.sleep(5)
@@ -356,8 +358,6 @@ class ClientsSession:
             else:
                 logger.error(f'登录账号 "{account.phone}" 失败次数超限, 将被跳过.')
                 return None
-        except asyncio.CancelledError:
-            raise
         except binascii.Error:
             logger.error(f'登录账号 "{account.phone}" 失败, 由于您在配置文件中提供的 session 无效, 将被跳过.')
         except RPCError as e:
@@ -387,7 +387,7 @@ class ClientsSession:
                 await self.done.put((account, client))
                 logger.debug(f"Telegram 账号池计数增加: {account.phone} => 1")
             else:
-                self.pool.pop(account.phone, None)
+                self.pool[account.phone] = None
                 await self.done.put((account, None))
 
     async def __aenter__(self):
@@ -396,17 +396,16 @@ class ClientsSession:
         for a in self.accounts:
             try:
                 await self.lock.acquire()
-                pending = self.pool.get(a.phone, None)
-                if not pending:
+                if a.phone not in self.pool:
                     self.pool[a.phone] = asyncio.create_task(self.loginer(a))
                 else:
-                    if isinstance(pending, asyncio.Task):
-                        self.lock.release()
-                        await pending
-                        await self.lock.acquire()
-                    if not self.pool.get(a.phone, None):
+                    if not self.pool[a.phone]:
                         await self.done.put((a, None))
                         continue
+                    if isinstance(self.pool[a.phone], asyncio.Task):
+                        self.lock.release()
+                        await self.pool[a.phone]
+                        await self.lock.acquire()
                     client, ref = self.pool[a.phone]
                     ref += 1
                     self.pool[a.phone] = (client, ref)

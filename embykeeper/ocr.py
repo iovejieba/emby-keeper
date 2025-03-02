@@ -117,7 +117,7 @@ class OCRService:
         self._queue_out = None
         self._stop_event = None
 
-    async def run(self, image_data: BytesIO, timeout: int = 60) -> str:
+    async def run(self, image_data: BytesIO, timeout: int = 60, gif: bool = False) -> str:
         """发送图片到OCR进程并等待结果"""
         if not self._process or not self._process.is_alive():
             await self.start()
@@ -129,7 +129,7 @@ class OCRService:
 
         try:
             self._last_active = time.time()
-            self._queue_in.put(("process", (request_id, image_data.getvalue())))
+            self._queue_in.put(("process", (request_id, image_data.getvalue(), gif)))
             result = await asyncio.wait_for(future, timeout=timeout)
             return result
         finally:
@@ -197,6 +197,7 @@ class OCRService:
             from ddddocr import DdddOcr
             from onnxruntime.capi.onnxruntime_pybind11_state import InvalidProtobuf
             from PIL import Image
+            from io import BytesIO
 
             # 加载模型
             if not ocr_name:
@@ -218,6 +219,47 @@ class OCRService:
                     queue_out.put(("error", "文件下载不完全"))
                     return
 
+            def process_single_image(image, use_probability):
+                if use_probability:
+                    ocr_result = model.classification(image, probability=True)
+                    ocr_text = ""
+                    for i in ocr_result["probability"]:
+                        ocr_text += ocr_result["charsets"][i.index(max(i))]
+                else:
+                    ocr_text = model.classification(image)
+                return ocr_text
+
+            def process_gif(gif_data):
+                gif = Image.open(BytesIO(gif_data))
+                frame_count = gif.n_frames
+
+                # Calculate how many frames to use (up to 5)
+                num_frames = min(5, frame_count)
+                frame_indices = [i * (frame_count - 1) // (num_frames - 1) for i in range(num_frames)]
+
+                # Get the first frame to determine size
+                gif.seek(0)
+                base_frame = gif.copy().convert("RGBA")
+
+                # Create a blank transparent image
+                composite = Image.new("RGBA", base_frame.size, (0, 0, 0, 0))
+
+                # Calculate alpha for each frame
+                alpha_per_frame = 255 // num_frames
+
+                for idx in frame_indices:
+                    gif.seek(idx)
+                    frame = gif.copy().convert("RGBA")
+                    # Apply partial transparency
+                    frame.putalpha(alpha_per_frame)
+                    composite = Image.alpha_composite(composite, frame)
+
+                # Convert final image to RGB for OCR
+                final_image = composite.convert("RGB")
+                final_bytes = BytesIO()
+                final_image.save(final_bytes, format="PNG")
+                return process_single_image(final_bytes.getvalue(), use_probability)
+
             # 处理请求循环
             while True:
                 try:
@@ -227,16 +269,13 @@ class OCRService:
                 if cmd == "stop":
                     break
 
-                request_id, image_data = data
+                request_id, image_data, is_gif = data
                 try:
-                    image = Image.open(BytesIO(image_data))
-                    if use_probability:
-                        ocr_result = model.classification(image, probability=True)
-                        ocr_text = ""
-                        for i in ocr_result["probability"]:
-                            ocr_text += ocr_result["charsets"][i.index(max(i))]
+                    if is_gif:
+                        ocr_text = process_gif(image_data)
                     else:
-                        ocr_text = model.classification(image)
+                        image = Image.open(BytesIO(image_data))
+                        ocr_text = process_single_image(image, use_probability)
                     queue_out.put(("success", (request_id, ocr_text)))
                 except Exception as e:
                     queue_out.put(("error", (request_id, str(e))))

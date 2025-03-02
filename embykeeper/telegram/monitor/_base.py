@@ -189,8 +189,6 @@ class Monitor:
         """监控器的入口函数的错误处理外壳."""
         try:
             return await self.start()
-        except asyncio.CancelledError:
-            raise
         except Exception as e:
             if config.nofail:
                 self.log.warning(f"发生初始化错误, 监控停止.")
@@ -316,8 +314,6 @@ class Monitor:
             await self.message_handler(client, message)
         except OSError as e:
             self.log.info(f'发生错误: "{e}", 忽略.')
-        except asyncio.CancelledError:
-            raise
         except Exception as e:
             self.failed.set()
             if config.nofail:

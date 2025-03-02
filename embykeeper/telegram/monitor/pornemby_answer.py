@@ -107,14 +107,11 @@ class _PornembyAnswerAnswerMonitor(Monitor):
                 self.lock.release()
 
     async def cache_watchdog(self):
-        try:
-            while True:
-                secs = 3600 * 12
-                self.log.debug(f"等待 {secs} 秒后进行缓存更新.")
-                await asyncio.sleep(secs)
-                await self.update()
-        except asyncio.CancelledError:
-            raise
+        while True:
+            secs = 3600 * 12
+            self.log.debug(f"等待 {secs} 秒后进行缓存更新.")
+            await asyncio.sleep(secs)
+            await self.update()
 
     async def init(self):
         self.update_task = asyncio.create_task(self.cache_watchdog())

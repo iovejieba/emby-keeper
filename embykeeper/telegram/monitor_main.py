@@ -10,7 +10,7 @@ from embykeeper.config import config
 from embykeeper.runinfo import RunContext
 
 from .monitor import Monitor
-from .dynamic import extract, get_cls
+from .dynamic import extract, get_cls, get_names
 from .link import Link
 from .session import ClientsSession
 from .pyrogram import Client
@@ -78,7 +78,14 @@ class MonitorManager:
         log = logger.bind(username=client.me.name)
 
         # Get monitor classes based on account config or global config
-        site = account.site.monitor if account.site else config.site.monitor
+        site = None
+        if account.site and account.site.monitor is not None:
+            site = account.site.monitor
+        elif config.site and config.site.monitor is not None:
+            site = config.site.monitor
+        else:
+            site = get_names("monitor")
+
         clses: List[Type[Monitor]] = extract(get_cls("monitor", names=site))
 
         if not clses:

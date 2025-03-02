@@ -114,8 +114,12 @@ class Link:
                     self.log.debug(f"[gray50]-> {cmd}[/]")
                     results = await asyncio.wait_for(future, timeout=timeout)
                 except asyncio.CancelledError:
-                    asyncio.create_task(self.delete_messages(messages))
-                    raise
+                    try:
+                        await asyncio.wait_for(self.delete_messages(messages), 3)
+                    except asyncio.TimeoutError:
+                        pass
+                    finally:
+                        raise
                 except asyncio.TimeoutError:
                     await self.delete_messages(messages)
                     if r + 1 < retries:
@@ -171,7 +175,7 @@ class Link:
         try:
             toml = tomli.loads(message.text)
         except tomli.TOMLDecodeError:
-            self.delete_messages([message])
+            await self.delete_messages([message])
         else:
             try:
                 if toml.get("command", None) == cmd:
@@ -188,11 +192,12 @@ class Link:
                         return
             except asyncio.CancelledError as e:
                 try:
-                    await asyncio.wait_for(self.delete_messages([message]), 1)
+                    await asyncio.wait_for(self.delete_messages([message]), 3)
                 except asyncio.TimeoutError:
                     pass
                 finally:
                     future.set_exception(e)
+                    raise
             finally:
                 message.continue_propagation()
 

@@ -9,7 +9,6 @@ import string
 import time
 from typing import Iterable, List, Optional, Union
 
-from appdirs import user_data_dir
 from loguru import logger
 from pyrogram import filters
 from pyrogram.errors import (
@@ -19,6 +18,7 @@ from pyrogram.errors import (
     ChannelInvalid,
     ChannelPrivate,
     MessageIdInvalid,
+    DataInvalid,
 )
 from pyrogram.handlers import EditedMessageHandler, MessageHandler
 from pyrogram.types import InlineKeyboardMarkup, Message, ReplyKeyboardMarkup
@@ -117,8 +117,6 @@ class BaseBotCheckin(ABC):
         """签到器的入口函数的错误处理外壳."""
         try:
             return await self.start()
-        except asyncio.CancelledError:
-            raise
         except Exception as e:
             if config.nofail:
                 self.log.warning(f"初始化异常错误, 签到器将停止.")
@@ -270,7 +268,11 @@ class BotCheckin(BaseBotCheckin):
 
             specs = []
             if self.bot_username:
-                bot = await self.client.get_users(self.bot_username)
+                try:
+                    bot = await self.client.get_users(self.bot_username)
+                except IndexError:
+                    self.log.warning(f"初始化错误: 用户名 {self.bot_username} 不存在或不是有效用户.")
+                    return self.ctx.finish(RunStatus.FAIL, "初始化错误")
                 specs.append(f"[green]{bot.name}[/] [gray50](@{bot.username})[/]")
             if chat.title:
                 specs.append(f"[green]{chat.title}[/] [gray50](@{chat.username})[/]")
@@ -296,8 +298,6 @@ class BotCheckin(BaseBotCheckin):
                         elif not await self.walk_history(self.bot_use_history):
                             await self.send_checkin()
                         await asyncio.wait_for(self.finished.wait(), self.timeout)
-                    except asyncio.CancelledError:
-                        raise
                     finally:
                         try:
                             if await asyncio.wait_for(self.cleanup(), 3):
@@ -309,7 +309,7 @@ class BotCheckin(BaseBotCheckin):
                         if is_archived:
                             self.log.debug(f"[gray50]将会话重新归档: {ident}[/]")
                             try:
-                                if await chat.archive():
+                                if await asyncio.wait_for(chat.archive(), 3):
                                     self.log.debug(f"[gray50]重新归档成功: {ident}[/]")
                             except asyncio.TimeoutError:
                                 self.log.debug(f"[gray50]归档失败: {ident}[/]")
@@ -476,31 +476,39 @@ class BotCheckin(BaseBotCheckin):
             return MessageType.IGNORE
 
     async def on_photo(self, message: Message):
-        """分析分析传入的验证码图片并返回验证码."""
+        """分析传入的验证码图片并返回验证码."""
         data = await self.client.download_media(message, in_memory=True)
         ocr = await OCRService.get(
             ocr_name=self.ocr,
             char_range=self.bot_captcha_char_range,
         )
+
         try:
             with ocr:
-                ocr_text = await ocr.run(data)
+                is_gif = getattr(data, "name", "").endswith(".gif")
+                ocr_text = await ocr.run(data, gif=is_gif)
+                if not ocr_text:
+                    self.log.info(f"签到失败: 接收到空验证码, 正在重试.")
+                    await self.retry()
+                    return
+
+                captcha = ocr_text.translate(str.maketrans("", "", string.punctuation)).replace(" ", "")
+
+            if captcha:
+                self.log.debug(f"[gray50]接收验证码: {captcha}.[/]")
+                if self.bot_captcha_len and len(captcha) not in to_iterable(self.bot_captcha_len):
+                    self.log.info(f"签到失败: 验证码低于设定长度, 正在重试.")
+                    await self.retry()
+                else:
+                    await asyncio.sleep(random.uniform(2, 4))
+                    await self.on_captcha(message, captcha)
+            else:
+                self.log.info(f"签到失败: 接收到空验证码, 正在重试.")
+                await self.retry()
         except asyncio.TimeoutError:
             self.log.info("签到失败: 验证码识别失败, 正在重试.")
             await self.retry()
             return
-        captcha = ocr_text.translate(str.maketrans("", "", string.punctuation)).replace(" ", "")
-        if captcha:
-            self.log.debug(f"[gray50]接收验证码: {captcha}.[/]")
-            if self.bot_captcha_len and len(captcha) not in to_iterable(self.bot_captcha_len):
-                self.log.info(f"签到失败: 验证码低于设定长度, 正在重试.")
-                await self.retry()
-            else:
-                await asyncio.sleep(random.uniform(2, 4))
-                await self.on_captcha(message, captcha)
-        else:
-            self.log.info(f"签到失败: 接收到空验证码, 正在重试.")
-            await self.retry()
 
     async def on_captcha(self, message: Message, captcha: str):
         """
@@ -685,7 +693,8 @@ class BotCheckin(BaseBotCheckin):
 class AnswerBotCheckin(BotCheckin):
     """签到类, 用于按钮模式签到."""
 
-    bot_checkin_button_pat: str = None  # 所有按键需要满足的 regex 条件
+    bot_answer_button_message_pat: str = None  # 回答按键消息内容的 regex 条件
+    bot_answer_button_pat: str = None  # 所有按键需要满足的 regex 条件
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
@@ -727,9 +736,15 @@ class AnswerBotCheckin(BotCheckin):
         """确认消息是回复按钮消息."""
         if not message.reply_markup:
             return False
-        if self.bot_checkin_button_pat:
+        if self.bot_answer_button_message_pat:
+            text = message.text or message.caption
+            if not text:
+                return False
+            if not re.search(self.bot_answer_button_message_pat, text):
+                return False
+        if self.bot_answer_button_pat:
             for k in self.get_keys(message):
-                if not re.search(self.bot_checkin_button_pat, k):
+                if not re.search(self.bot_answer_button_pat, k):
                     return False
         return True
 
@@ -769,7 +784,8 @@ class AnswerBotCheckin(BotCheckin):
         async with self.operable:
             if not self.message:
                 await self.operable.wait()
-            match = [(k, fuzz.ratio(k, captcha)) for k in self.get_keys(self.message)]
+            # Convert captcha to lowercase and compare with lowercase keys
+            match = [(k, fuzz.ratio(k.lower(), captcha.lower())) for k in self.get_keys(self.message)]
             max_k, max_r = max(match, key=lambda x: x[1])
             if max_r < 75:
                 self.log.info(f'未能找到对应 "{captcha}" 的按键, 正在重试.')
@@ -777,5 +793,5 @@ class AnswerBotCheckin(BotCheckin):
             else:
                 try:
                     await self.message.click(max_k)
-                except (TimeoutError, MessageIdInvalid):
+                except (TimeoutError, MessageIdInvalid, DataInvalid):
                     pass

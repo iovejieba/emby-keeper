@@ -124,20 +124,33 @@ class AsyncTyper(Typer):
         def decorator(async_func):
             @wraps(async_func)
             def sync_func(*_args, **_kwargs):
+                async def main():
+                    try:
+                        await async_func(*_args, **_kwargs)
+                    except Exception as e:
+                        print("\r", end="", flush=True)
+                        logger.critical(f"发生关键错误, {__name__.capitalize()} 将退出.")
+                        show_exception(e, regular=False)
+                        sys.exit(1)
+                    else:
+                        logger.info(f"所有任务已完成, 欢迎您再次使用 {__name__.capitalize()}.")
+
                 try:
-                    asyncio.run(async_func(*_args, **_kwargs))
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    loop.run_until_complete(main())
                 except KeyboardInterrupt:
-                    print("\r", end="", flush=True)
-                    logger.info(f"所有客户端已停止, 欢迎您再次使用 {__name__.capitalize()}.")
+                    print("\r正在停止...\r", end="", flush=True, file=sys.stderr)
                 except Exit as e:
                     sys.exit(e.exit_code)
-                except Exception as e:
+                finally:
+                    tasks = asyncio.all_tasks(loop)
+                    for task in tasks:
+                        task.cancel()
+                    loop.run_until_complete(asyncio.gather(*tasks, return_exceptions=True))
+                    loop.run_until_complete(loop.shutdown_asyncgens())
                     print("\r", end="", flush=True)
-                    logger.critical(f"发生关键错误, {__name__.capitalize()} 将退出.")
-                    show_exception(e, regular=False)
-                    sys.exit(1)
-                else:
-                    logger.info(f"所有任务已完成, 欢迎您再次使用 {__name__.capitalize()}.")
+                    logger.info(f"所有服务已停止并登出, 欢迎您再次使用 {__name__.capitalize()}.")
 
             self.command(*args, **kwargs)(sync_func)
             return async_func
