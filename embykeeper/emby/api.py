@@ -224,7 +224,7 @@ class Emby:
         if path.startswith(("http://", "https://")):
             url = path
         else:
-            base_url = f"{self.a.url.scheme}://{self.a.url.host}: {self.a.url.port}"
+            base_url = f"{self.a.url.scheme}://{self.a.url.host}:{self.a.url.port}"
             url = f"{base_url}/{path.lstrip('/')}"
 
         last_err = None
