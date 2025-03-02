@@ -52,7 +52,6 @@ class NebulaCheckin(BotCheckin):
 
                 # 获取当前余额和下次签到时间
                 current_balance = info_results["data"]["balance"]
-                print(info_results)
                 next_checkin_time = datetime.fromisoformat(
                     info_results["data"]["next_check_in"].replace("Z", "+00:00")
                 )
