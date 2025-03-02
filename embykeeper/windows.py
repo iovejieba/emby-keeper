@@ -51,7 +51,7 @@ def generate_config():
 
     _ = getch()
 
-    p = Popen(["start", config_file], shell=True)
+    p = Popen(["notepad.exe", str(config_file)], shell=True)
 
     if not p:
         var.console.print(f"配置文件打开失败, 请按任意键退出", justify="center")
