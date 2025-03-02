@@ -508,9 +508,8 @@ class ConfigManager(ProxyBase):
                         f'无法写入默认配置文件 "{default_conf_file}", 请确认是否有权限进行该目录写入: {e}.'
                     )
                     return False
-                if not self.windows:
-                    logger.warning("需要一个 TOML 格式的配置文件.")
-                    logger.warning(f'您可以根据生成的参考配置文件 "{default_conf_file}" 进行配置')
+                logger.warning("需要一个 TOML 格式的配置文件.")
+                logger.warning(f'您可以根据生成的参考配置文件 "{default_conf_file}" 进行配置')
                 return False
 
         cfg_model = self.validate_config(cfg_dict)
