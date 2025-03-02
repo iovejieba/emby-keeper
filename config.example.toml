@@ -26,11 +26,11 @@ concurrency = 1
 [[emby.account]] # 第 1 个账号
 
 # 站点域名和端口:
-url = "https://www.gould.com:443"
+url = "https://johnson-roberts.com:443"
 
 # 用户名和密码:
-username = "mirandathomas"
-password = "3ez*iQdz(X"
+username = "bhenderson"
+password = "HU0K+uwm&n"
 
 # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 time = [300, 600]
@@ -59,9 +59,9 @@ time = [300, 600]
 # enabled = false
 
 [[emby.account]] # 第 2 个账号
-url = "https://www.ochoa-young.org:443"
-username = "mgraham"
-password = "!7zf9NRa8e"
+url = "https://walters-joseph.net:443"
+username = "amitchell"
+password = "*eSNmberM2"
 time = [300, 600]
 
 # ================================================================================
@@ -94,7 +94,7 @@ concurrency = 1
 [[telegram.account]] # 第 1 个账号
 
 # 带国家区号的账户手机号, 一般为 "+86..."
-phone = "+8615946244641"
+phone = "+8611497532047"
 
 # 启用机器人签到系列功能, 默认启用, 设置为 false 以禁用:
 checkiner = true
@@ -106,7 +106,7 @@ monitor = false
 messager = false
 
 [[telegram.account]] # 第 2 个账号
-phone = "+8611152101946"
+phone = "+8611369960239"
 checkiner = true
 monitor = false
 messager = false
@@ -114,7 +114,7 @@ messager = false
 # ================================================================================
 # 站点相关设置
 # 当您需要禁用某些站点时, 请将该段取消注释并修改.
-# 该部分内容是根据 Embykeeper 7.0.6 生成的.
+# 该部分内容是根据 Embykeeper 7.0.7 生成的.
 # 详见: https://emby-keeper.github.io/guide/配置文件#site-子项
 # ================================================================================
 
@@ -197,17 +197,18 @@ concurrency = 1
 [[subsonic.account]] # 第 1 个账号
 
 # 站点域名和端口:
-url = "https://www.torres.com:443"
+url = "https://www.holder-galloway.com:443"
 
 # 用户名和密码:
-username = "timothy34"
-password = "QV5_R5my9+"
+username = "joshua81"
+password = "!N1uk3Nunz"
 
 # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 time = [300, 600]
 
 [[subsonic.account]] # 第 2 个账号
-url = "https://owens.com:443"
-username = "blairchristopher"
-password = "Q%EC7WsXC^"
+url = "https://landry.com:443"
+username = "stewartjack"
+password = "kEj3cM_uW!"
 time = [300, 600]
+
