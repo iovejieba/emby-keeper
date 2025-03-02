@@ -25,9 +25,11 @@ async def topper():
 
     def get_client_stats(pool: Dict[str, Tuple[Union[Client, Task], int]]) -> Tuple[int, int, int, str]:
         """统计 Client 状态数量"""
-        pending = using = idle = 0
+        failed = pending = using = idle = 0
         queue_stats = []
         for v in pool.values():
+            if not v:
+                failed += 1
             if isinstance(v, Task):
                 pending += 1
             else:
@@ -52,7 +54,7 @@ async def topper():
                         queue_stats.append("[Error]")
 
         queue_text = f" Queue: {' '.join(queue_stats)}" if queue_stats else ""
-        return pending, using, idle, queue_text
+        return failed, pending, using, idle, queue_text
 
     def get_ocr_stats():
         """获取OCR子进程状态"""
@@ -85,8 +87,10 @@ async def topper():
             from .telegram.pyrogram import Dispatcher
             from .telegram.link import Link
 
-            pending, using, idle, queue_text = get_client_stats(ClientsSession.pool)
+            failed, pending, using, idle, queue_text = get_client_stats(ClientsSession.pool)
             client_stats = []
+            if failed:
+                client_stats.append(f"Failed({failed})")
             if pending:
                 client_stats.append(f"Pending({pending})")
             if using:

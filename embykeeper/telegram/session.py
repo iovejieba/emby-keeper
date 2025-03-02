@@ -380,7 +380,7 @@ class ClientsSession:
                 await self.done.put((account, client))
                 logger.debug(f"Telegram 账号池计数增加: {account.phone} => 1")
             else:
-                self.pool.pop(account.phone, None)
+                self.pool[account.phone] = None
                 await self.done.put((account, None))
 
     async def __aenter__(self):
@@ -389,17 +389,16 @@ class ClientsSession:
         for a in self.accounts:
             try:
                 await self.lock.acquire()
-                pending = self.pool.get(a.phone, None)
-                if not pending:
+                if a.phone not in self.pool:
                     self.pool[a.phone] = asyncio.create_task(self.loginer(a))
                 else:
-                    if isinstance(pending, asyncio.Task):
-                        self.lock.release()
-                        await pending
-                        await self.lock.acquire()
-                    if not self.pool.get(a.phone, None):
+                    if not self.pool[a.phone]:
                         await self.done.put((a, None))
                         continue
+                    if isinstance(self.pool[a.phone], asyncio.Task):
+                        self.lock.release()
+                        await self.pool[a.phone]
+                        await self.lock.acquire()
                     client, ref = self.pool[a.phone]
                     ref += 1
                     self.pool[a.phone] = (client, ref)
