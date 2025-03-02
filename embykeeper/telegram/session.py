@@ -281,7 +281,14 @@ class ClientsSession:
                     )
                     if use_telethon:
                         logger.debug("选择使用 Telethon 进行首次登陆, 并导出会话数据至 Pyrogram.")
-                        session_str = await self.get_session_str_from_telethon(account)
+                        try:
+                            session_str = await self.get_session_str_from_telethon(account)
+                        except EOFError:
+                            logger.warning(
+                                "非可交互终端, 无法输入验证码, 如果您使用 docker 请使用 docker -it 运行, 否则请使用可交互终端."
+                            )
+                            logger.error(f'登录账号 "{account.phone}" 时发生异常, 将被跳过.')
+                            return None
                         if session_str:
                             logger.info("请耐心等待, 正在登陆.")
                             await asyncio.sleep(5)
