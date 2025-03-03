@@ -65,7 +65,7 @@ class Cache:
             parts = key.split(".")
             current = self._data
             path = []
-            
+
             # 遍历路径，检查每一层
             for part in parts[:-1]:
                 if not isinstance(current, dict) or part not in current:

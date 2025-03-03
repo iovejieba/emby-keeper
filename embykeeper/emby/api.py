@@ -118,7 +118,7 @@ class Emby:
                 if user_value and data.get(key) != user_value:
                     should_clear = True
                     break
-            
+
             if should_clear:
                 logger.info("账户设置已修改, 将重新生成环境 (Headers).")
                 self._env = None
@@ -187,7 +187,11 @@ class Emby:
 
         # 按优先级获取各个值
         is_filebar = random.random() < 0.2
-        version = self.a.client_version or cached_env.get("client_version") or f"1.3.{random.randint(34, 34) if is_filebar else random.randint(16, 30)}"
+        version = (
+            self.a.client_version
+            or cached_env.get("client_version")
+            or f"1.3.{random.randint(34, 34) if is_filebar else random.randint(16, 30)}"
+        )
         client = self.a.client or cached_env.get("client") or ("Filebar" if is_filebar else "Fileball")
         device = self.a.device or cached_env.get("device") or self.get_random_device()
         device_id = self.a.device_id or cached_env.get("device_id") or str(uuid.uuid4()).upper()
