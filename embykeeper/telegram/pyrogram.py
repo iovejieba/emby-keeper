@@ -403,7 +403,7 @@ class Client(pyrogram.Client):
                 raise asyncio.CancelledError() from None
         else:
             raise OSError(
-                f"Fail to invoke Telegram function due to network error "
+                f"执行 Telegram 请求由于网络因素而失败, 且重试超限."
                 f"({last_error.__class__.__name__} for {query.__class__.__name__})"
             )
 

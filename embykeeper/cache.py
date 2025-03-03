@@ -65,17 +65,21 @@ class Cache:
             parts = key.split(".")
             current = self._data
             path = []
+            
+            # 遍历路径，检查每一层
             for part in parts[:-1]:
-                if part not in current:
+                if not isinstance(current, dict) or part not in current:
                     return
                 current = current[part]
                 path.append((part, current))
 
-            if parts[-1] in current:
+            # 检查并删除最后一个键
+            if isinstance(current, dict) and parts[-1] in current:
                 del current[parts[-1]]
 
+                # 清理空字典
                 for part, parent in reversed(path):
-                    if not parent[part]:
+                    if isinstance(parent, dict) and part in parent and not parent[part]:
                         del parent[part]
                     else:
                         break

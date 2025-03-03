@@ -103,12 +103,32 @@ class Emby:
         self._user_id = data.get("userid", None)
 
     def _load_env(self):
-        data: dict = cache.get(f"emby.env.{self.hostname}.{self.a.username}", {})
+        cache_key = f"emby.env.{self.hostname}.{self.a.username}"
+        data: dict = cache.get(cache_key, {})
         if data:
-            try:
-                self._env = EmbyEnv.model_validate(data)
-            except ValidationError:
-                logger.warning("缓存加载失败, 将重新生成环境 (Headers).")
+            # 检查用户配置是否与缓存一致
+            should_clear = False
+            for key, user_value in {
+                "client_version": self.a.client_version,
+                "client": self.a.client,
+                "device": self.a.device,
+                "device_id": self.a.device_id,
+                "useragent": self.a.useragent,
+            }.items():
+                if user_value and data.get(key) != user_value:
+                    should_clear = True
+                    break
+            
+            if should_clear:
+                logger.info("账户设置已修改, 将重新生成环境 (Headers).")
+                self._env = None
+                cache.delete(cache_key)
+            else:
+                try:
+                    self._env = EmbyEnv.model_validate(data)
+                except ValidationError:
+                    logger.warning("缓存加载失败, 将重新生成环境 (Headers).")
+                    self._env = None
 
     @staticmethod
     def get_random_device():
@@ -166,11 +186,12 @@ class Emby:
         cached_env: dict = cache.get(f"emby.env.{self.hostname}.{self.a.username}", {})
 
         # 按优先级获取各个值
-        client = self.a.client or cached_env.get("client") or "Fileball"
+        is_filebar = random.random() < 0.2
+        version = self.a.client_version or cached_env.get("client_version") or f"1.3.{random.randint(34, 34) if is_filebar else random.randint(16, 30)}"
+        client = self.a.client or cached_env.get("client") or ("Filebar" if is_filebar else "Fileball")
         device = self.a.device or cached_env.get("device") or self.get_random_device()
-        device_id = self.a.device_id or cached_env.get("device_id") or str(self.get_device_uuid()).upper()
-        version = self.a.client_version or cached_env.get("client_version") or f"1.3.{random.randint(16, 33)}"
-        useragent = self.useragent or self.a.useragent or cached_env.get("ua") or f"Fileball/{version}"
+        device_id = self.a.device_id or cached_env.get("device_id") or str(uuid.uuid4()).upper()
+        useragent = self.useragent or self.a.useragent or cached_env.get("ua") or f"{client}/{version}"
 
         data = {
             "client": client,
