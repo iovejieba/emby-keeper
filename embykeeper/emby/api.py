@@ -269,10 +269,8 @@ class Emby:
                     ):
                         if self.cf_clearance:
                             raise EmbyStatusError("访问失败: Cloudflare 验证码解析后依然有验证")
-                        if not await self.use_cfsolver():
-                            raise EmbyStatusError(f"访问失败: Cloudflare 验证码解析失败")
-                        else:
-                            continue
+                        await self.use_cfsolver()
+                        continue
                     elif not resp.ok and not _login:
                         raise EmbyStatusError(f"访问失败: 异常 HTTP 代码 {resp.status_code} (URL = {url})")
                     else:
