@@ -80,10 +80,10 @@ window.addEventListener('DOMContentLoaded', function() {
         var statusMsg = document.getElementById("status-msg");
         statusMsg.textContent = "程序正在重启";
         console.info("Web console restarting.");
-        
+
         // 先发送终止信号
         socket.emit("embykeeper_kill");
-        
+
         // 等待一段时间后再重连
         setTimeout(() => {
             socket.disconnect();
@@ -92,7 +92,7 @@ window.addEventListener('DOMContentLoaded', function() {
             }, 1000);
         }, 1000);
     });
-    
+
     socket.on("connect_error", (error) => {
         console.error("Connection error:", error);
     });

@@ -17,6 +17,7 @@ from . import Monitor
 
 JAVDATABASE_URL = "https://www.javdatabase.com"
 
+
 class _PornembyExamResultMonitor(Monitor):
     name = "Pornemby 科举答案"
     chat_keyword = r"问题\d*：(.*?)\n+答案为：([ABCD])\n+([A-Z-\d]+)"
@@ -49,15 +50,13 @@ class _PornembyExamAnswerMonitor(Monitor):
         "C": ["C", "🅲"],
         "D": ["D", "🅳"],
     }
-    
+
     async def use_cfsolver(self):
         from embykeeper.cloudflare import get_cf_clearance
-        
+
         if self.proxy:
             if self.proxy.scheme != "socks5":
-                self.log.warning(
-                    f"站点验证解析仅支持 SOCKS5 代理，由于当前代理协议不支持, 将尝试不使用代理."
-                )
+                self.log.warning(f"站点验证解析仅支持 SOCKS5 代理，由于当前代理协议不支持, 将尝试不使用代理.")
                 self.proxy = None
             else:
                 self.log.info(
@@ -78,7 +77,6 @@ class _PornembyExamAnswerMonitor(Monitor):
             show_exception(e, regular=False)
             return False
 
-    
     async def init(self):
         self.proxy = config.proxy
         self.useragent = None
@@ -102,7 +100,9 @@ class _PornembyExamAnswerMonitor(Monitor):
                     cookies=cookies,
                 ) as session:
                     resp: Response = await session.get(JAVDATABASE_URL)
-                    if resp.status_code == 403 and ("cf-wrapper" in resp.text or "Just a moment" in resp.text):
+                    if resp.status_code == 403 and (
+                        "cf-wrapper" in resp.text or "Just a moment" in resp.text
+                    ):
                         if self.cf_clearance:
                             self.log.warning("初始化失败: Javdatabase 在 Cloudflare 验证码解析后依然有验证")
                             return False
@@ -142,14 +142,10 @@ class _PornembyExamAnswerMonitor(Monitor):
                             continue
                         return None
                     html = resp.text
-                    pattern = (
-                        f'<div id="thumbnailContainer".*({JAVDATABASE_URL}//covers/thumb/.*/.*.webp)'
-                    )
+                    pattern = f'<div id="thumbnailContainer".*({JAVDATABASE_URL}//covers/thumb/.*/.*.webp)'
                     match = re.search(pattern, html)
                     if not match:
-                        self.log.warning(
-                            f"获取封面图片失败: 未找到图片: {detail_url} ({resp.status_code})."
-                        )
+                        self.log.warning(f"获取封面图片失败: 未找到图片: {detail_url} ({resp.status_code}).")
                         return None
                     img_url = match.group(1)
                     # 下载封面图片

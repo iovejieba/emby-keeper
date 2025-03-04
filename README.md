@@ -127,6 +127,7 @@ docker run -v $(pwd)/embykeeper:/app --rm -it --net=host embykeeper/embykeeper -
   - 惊蛰 (`jingzhe`): [频道](https://t.me/jz_emby) [群组](https://t.me/jingzhe_EMBY) [机器人](https://t.me/JingzheProbot)
   - 墨云阁 (`moyunge`): [频道](https://t.me/q98e1VZocwxkZDc1) [群组](https://t.me/mobaishishuaige) [机器人](https://t.me/MoYunGeBoss_bot)
   - 电子书库 (`epub`): [频道](https://t.me/bookhsulife) [群组](https://t.me/libhsulife) [机器人](https://t.me/wenjian_emby_bot)
+  - Kiku (`kiku`): [频道](https://t.me/KikuEmbyNotice) [群组](https://t.me/KikuEmbyChat) [机器人](https://t.me/kikuemby_bot)
 
   <!-- #endregion checkiner-sites -->
 

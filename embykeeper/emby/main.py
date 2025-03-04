@@ -33,7 +33,7 @@ class EmbyManager:
     def _handle_account_change(self, added: List[EmbyAccount], removed: List[EmbyAccount]):
         """Handle account additions and removals"""
         need_reschedule_unified = False
-        
+
         for account in removed:
             spec = self.get_spec(account)
             if account.time_range or account.interval_days:
@@ -110,9 +110,10 @@ class EmbyManager:
 
     def schedule_unified_accounts(self):
         """Schedule unified emby watch for global accounts"""
-        unified_accounts = [a for a in config.emby.account 
-                          if a.enabled and not (a.time_range or a.interval_days)]
-        
+        unified_accounts = [
+            a for a in config.emby.account if a.enabled and not (a.time_range or a.interval_days)
+        ]
+
         if not unified_accounts:
             return None
 
@@ -294,4 +295,3 @@ class EmbyManager:
 
     async def run_all(self, instant: bool = False):
         return await self._watch_main(config.emby.account, instant)
-

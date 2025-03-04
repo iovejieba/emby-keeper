@@ -102,7 +102,10 @@ class MessageManager:
         names = []
 
         for cls in clses:
-            site_name = cls.__module__.rsplit(".", 1)[-1]
+            if hasattr(cls, "templ_name"):
+                site_name = cls.templ_name
+            else:
+                site_name = cls.__module__.rsplit(".", 1)[-1]
             site_ctx = RunContext.prepare(f"{site_name} 站点自动水群", parent_ids=ctx.id)
             messager = cls(
                 account=account,

@@ -25,7 +25,7 @@
   // Check if page is loaded in iframe and on Hugging Face space
   function isHuggingFaceSpace() {
     try {
-      return window.self !== window.top && 
+      return window.self !== window.top &&
              window.location.href.includes('huggingface.co/spaces/');
     } catch (e) {
       return false;
@@ -82,7 +82,7 @@
           `;
           toast.textContent = '网址已复制到剪贴板';
           document.body.appendChild(toast);
-          
+
           setTimeout(() => {
             toast.style.opacity = '0';
             toast.style.transition = 'opacity 0.5s ease';
