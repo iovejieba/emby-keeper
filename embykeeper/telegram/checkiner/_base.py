@@ -344,26 +344,25 @@ class BotCheckin(BaseBotCheckin):
                 if (
                     self.ctx.status == RunStatus.NONEED
                 ):  # 已签到的情况, 如果设置了 checked_retries, 则返回重计划请求
-                    return await self.reschedule()
+                    if self.checked_retries:
+                        if self.ctx.reschedule and self.ctx.reschedule > self.checked_retries:
+                            return self.ctx.finish(RunStatus.NONEED)
+                        else:
+                            now = datetime.now()
+                            midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(
+                                days=1
+                            )
+                            max_sleep = midnight - now
+                            sleep = timedelta(hours=min((self.ctx.reschedule or 0 + 1) * 1, 6))
+                            if sleep > max_sleep:
+                                return self.ctx.finish(RunStatus.NONEED)
+                            else:
+                                self.log.info(f"今日已签到, 即将在 {format_timedelta_human(sleep)} 后重试.")
+                                self.ctx.next_time = now + sleep
+                                return self.ctx.finish(RunStatus.RESCHEDULE, "等待重新尝试签到")
                 return self.ctx.finish()
             else:
                 return self.ctx.finish(RunStatus.FAIL, "重试次数超限")
-
-    async def reschedule(self):
-        if self.checked_retries:
-            if self.ctx.reschedule and self.ctx.reschedule > self.checked_retries:
-                return self.ctx.finish(RunStatus.NONEED)
-            else:
-                now = datetime.now()
-                midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
-                max_sleep = midnight - now
-                sleep = timedelta(hours=min((self.ctx.reschedule or 0 + 1) * 1, 6))
-                if sleep > max_sleep:
-                    return self.ctx.finish(RunStatus.NONEED)
-                else:
-                    self.log.info(f"今日已签到, 即将在 {format_timedelta_human(sleep)} 后重试.")
-                    self.ctx.next_time = now + sleep
-                    return self.ctx.finish(RunStatus.RESCHEDULE, "等待重新尝试签到")
 
     async def init(self):
         """可重写的初始化函数, 在读取聊天后运行, 在执行签到前运行, 返回 False 将视为初始化错误."""

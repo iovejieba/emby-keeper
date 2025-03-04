@@ -1,4 +1,3 @@
-import asyncio
 from json import JSONDecodeError
 from urllib.parse import parse_qs, urlparse
 from datetime import datetime, timezone
@@ -11,7 +10,6 @@ from embykeeper.runinfo import RunStatus
 from embykeeper.utils import format_timedelta_human, get_proxy_str, show_exception
 from embykeeper.config import config
 
-from ..link import Link
 from . import BotCheckin
 
 
@@ -19,6 +17,7 @@ class NebulaCheckin(BotCheckin):
     name = "Nebula"
     bot_username = "Nebula_Account_bot"
     max_retries = 1
+    additional_auth = ["prime"]
 
     async def send_checkin(self, **kw):
         bot_peer = await self.client.resolve_peer(self.bot_username)
