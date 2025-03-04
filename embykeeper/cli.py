@@ -213,6 +213,13 @@ async def main(
         rich_help_panel="调试参数",
         help="设定账号文件的位置",
     ),
+    noexit: bool = typer.Option(
+        False,
+        "--noexit",
+        "-N",
+        rich_help_panel="调试参数",
+        help="要求所有长期任务在没有账号时继续监控等待",
+    ),
 ):
     from .log import logger, initialize
 
@@ -267,6 +274,7 @@ async def main(
     if debug_cron:
         config.debug_cron = True
         logger.warning("您当前处于计划任务调试模式, 将在 10 秒后运行计划任务.")
+    config.noexit = noexit
 
     if not checkiner and not monitor and not emby and not messager and not subsonic:
         checkiner = True
@@ -389,6 +397,9 @@ async def main(
                 pool.add(emby_man.schedule_all(), "Emby 保活")
             if subsonic_man:
                 pool.add(subsonic_man.schedule_all(), "Subsonic 保活")
+        if config.noexit:
+            logger.info("处于长期监控模式, 当没有账号时将继续监控等待新配置.")
+            pool.add(asyncio.Event().wait(), "账号配置文件监控")
         try:
             async for t in pool.as_completed():
                 try:

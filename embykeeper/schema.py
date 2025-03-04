@@ -222,6 +222,7 @@ class Config(ConfigModel):
     mongodb: Optional[str] = None
     basedir: Optional[str] = None
     nofail: Optional[bool] = True
+    noexit: Optional[bool] = False
     debug_cron: Optional[bool] = False
     proxy: Optional[ProxyConfig] = None
     emby: Optional[EmbyConfig] = EmbyConfig()

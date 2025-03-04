@@ -494,8 +494,11 @@ class ConfigManager(ProxyBase):
                 conf_file = default_conf_file
             if conf_file:
                 if conf_file.suffix.lower() == ".toml":
-                    with open(conf_file, "rb") as f:
-                        deep_update(cfg_dict, tomllib.load(f))
+                    try:
+                        with open(conf_file, "rb") as f:
+                            deep_update(cfg_dict, tomllib.load(f))
+                    except tomllib.TOMLDecodeError:
+                        logger.error(f'配置文件 "{conf_file}" 中的 TOML 格式错误.')
                 else:
                     logger.error(f'配置文件 "{conf_file}" 不是 TOML 格式的配置文件.')
                     return False

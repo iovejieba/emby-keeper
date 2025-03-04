@@ -31,10 +31,12 @@ class MessageManager:
     def _handle_account_change(self, added: List[TelegramAccount], removed: List[TelegramAccount]):
         """Handle account additions and removals"""
         for account in removed:
+            logger.info(f"{account.phone} 账号的自动水群任务已被清除.")
             self.stop_account(account.phone)
 
         for account in added:
             if account.messager and account.enabled:
+                logger.info(f"新增的 {account.phone} 账号的自动水群任务已增加.")
                 self.start_account(account)
 
     def stop_account(self, phone: str):

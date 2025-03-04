@@ -31,19 +31,18 @@ class CheckinerManager:
         self._running: Set[str] = set()  # Currently running phones
         self._pool = AsyncTaskPool()
 
-        # Set up config change callbacks
         config.on_list_change("telegram.account", self._handle_account_change)
 
     def _handle_account_change(self, added: List[TelegramAccount], removed: List[TelegramAccount]):
         """Handle account additions and removals"""
         for account in removed:
             self.stop_account(account.phone)
-            logger.debug(f"{account.phone} 账号的签到及其计划任务已被清除.")
+            logger.info(f"{account.phone} 账号的签到及其计划任务已被清除.")
 
         for account in added:
             scheduler = self.schedule_account(account)
             self._pool.add(scheduler.schedule())
-            logger.debug(f"新增的 {account.phone} 账号的计划任务已增加.")
+            logger.info(f"新增的 {account.phone} 账号的计划任务已增加.")
 
     def stop_account(self, phone: str):
         """Stop scheduling and running tasks for an account"""
