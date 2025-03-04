@@ -301,17 +301,6 @@ def start(data, auth=True):
             set_size(app.config["fd"], data["rows"], data["cols"])
 
 
-def kill_proc(proc: Popen):
-    proc.send_signal(signal.SIGINT)
-    for _ in range(10):
-        poll = proc.poll()
-        if poll is not None:
-            break
-    else:
-        proc.kill()
-    logger.debug(f"Embykeeper killed: {proc.pid}.")
-
-
 @socketio.on("embykeeper_kill", namespace="/pty")
 def kill():
     logger.debug("Received embykeeper_kill socketio signal.")
@@ -323,8 +312,23 @@ def kill():
             app.config["fd"] = None
             app.config["proc"] = None
             app.config["hist"] = ""
-    if proc is not None:
-        socketio.start_background_task(target=kill_proc, proc=proc)
+            kill_proc(proc)
+            proc.wait()
+
+
+def kill_proc(proc: Popen):
+    try:
+        proc.send_signal(signal.SIGINT)
+        for _ in range(20):
+            if proc.poll() is not None:
+                break
+            time.sleep(0.1)
+        if proc.poll() is None:
+            proc.kill()
+            proc.wait()
+        logger.debug(f"Embykeeper killed: {proc.pid}.")
+    except Exception as e:
+        logger.error(f"Error killing process: {e}")
 
 
 @cli.command(context_settings={"ignore_unknown_options": True, "allow_extra_args": True})
