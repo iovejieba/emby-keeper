@@ -26,11 +26,11 @@ concurrency = 1
 [[emby.account]] # 第 1 个账号
 
 # 站点域名和端口:
-url = "https://ray-dorsey.biz:443"
+url = "https://www.carlson-johnson.net:443"
 
 # 用户名和密码:
-username = "charles88"
-password = "*lQf_N6kt3"
+username = "paulmoore"
+password = "EY4(P3eNq+"
 
 # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 time = [300, 600]
@@ -59,9 +59,9 @@ time = [300, 600]
 # enabled = false
 
 [[emby.account]] # 第 2 个账号
-url = "https://morrison-brown.info:443"
-username = "umacdonald"
-password = "$(4KMSpRWS"
+url = "https://watts.info:443"
+username = "bjackson"
+password = "7_2#SZe#to"
 time = [300, 600]
 
 # ================================================================================
@@ -94,7 +94,7 @@ concurrency = 1
 [[telegram.account]] # 第 1 个账号
 
 # 带国家区号的账户手机号, 一般为 "+86..."
-phone = "+8616837372098"
+phone = "+8611523659030"
 
 # 启用机器人签到系列功能, 默认启用, 设置为 false 以禁用:
 checkiner = true
@@ -106,7 +106,7 @@ monitor = false
 messager = false
 
 [[telegram.account]] # 第 2 个账号
-phone = "+8615689106414"
+phone = "+8612830076775"
 checkiner = true
 monitor = false
 messager = false
@@ -114,7 +114,7 @@ messager = false
 # ================================================================================
 # 站点相关设置
 # 当您需要禁用某些站点时, 请将该段取消注释并修改.
-# 该部分内容是根据 Embykeeper 7.0.18 生成的.
+# 该部分内容是根据 Embykeeper 7.1.0 生成的.
 # 详见: https://emby-keeper.github.io/guide/配置文件#site-子项
 # ================================================================================
 
@@ -197,18 +197,18 @@ concurrency = 1
 [[subsonic.account]] # 第 1 个账号
 
 # 站点域名和端口:
-url = "https://www.miller.com:443"
+url = "https://www.robinson-taylor.com:443"
 
 # 用户名和密码:
-username = "julie49"
-password = "y&^3KYuywq"
+username = "amy78"
+password = ")uQl4sYrQ("
 
 # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 time = [300, 600]
 
 [[subsonic.account]] # 第 2 个账号
-url = "https://www.bond.biz:443"
-username = "williamharmon"
-password = "No6fOo!ry+"
+url = "https://ford.com:443"
+username = "sosaallen"
+password = "@cjrTVyl(8"
 time = [300, 600]
 
