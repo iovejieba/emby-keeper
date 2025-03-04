@@ -26,11 +26,11 @@ concurrency = 1
 [[emby.account]] # 第 1 个账号
 
 # 站点域名和端口:
-url = "https://www.arellano.com:443"
+url = "https://ray-dorsey.biz:443"
 
 # 用户名和密码:
-username = "lopezruth"
-password = "8QUFmLi^*0"
+username = "charles88"
+password = "*lQf_N6kt3"
 
 # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 time = [300, 600]
@@ -59,9 +59,9 @@ time = [300, 600]
 # enabled = false
 
 [[emby.account]] # 第 2 个账号
-url = "https://www.phillips-newman.com:443"
-username = "amycampbell"
-password = "^5pWDhXhj5"
+url = "https://morrison-brown.info:443"
+username = "umacdonald"
+password = "$(4KMSpRWS"
 time = [300, 600]
 
 # ================================================================================
@@ -94,7 +94,7 @@ concurrency = 1
 [[telegram.account]] # 第 1 个账号
 
 # 带国家区号的账户手机号, 一般为 "+86..."
-phone = "+8615230627889"
+phone = "+8616837372098"
 
 # 启用机器人签到系列功能, 默认启用, 设置为 false 以禁用:
 checkiner = true
@@ -106,7 +106,7 @@ monitor = false
 messager = false
 
 [[telegram.account]] # 第 2 个账号
-phone = "+8619261085179"
+phone = "+8615689106414"
 checkiner = true
 monitor = false
 messager = false
@@ -114,7 +114,7 @@ messager = false
 # ================================================================================
 # 站点相关设置
 # 当您需要禁用某些站点时, 请将该段取消注释并修改.
-# 该部分内容是根据 Embykeeper 7.0.17 生成的.
+# 该部分内容是根据 Embykeeper 7.0.18 生成的.
 # 详见: https://emby-keeper.github.io/guide/配置文件#site-子项
 # ================================================================================
 
@@ -136,13 +136,13 @@ messager = false
 
 # 默认启用站点:
 # [site]
-# checkiner = ["apoppro", "aurora", "awatv", "cc", "datasgk", "dvfilm", "epub", "feiyue", "feiyuedpx", "future", "ikunmusic", "jingzhe", "jsq", "july", "levilde", "lily", "lyrebird", "magic", "micu", "misty", "mjj", "mooncake", "moonkk", "moyunge", "nebula", "nebula_old", "pandatv", "pandatv_group", "peach", "pilipili", "plumber", "pornemby", "raismusic", "saturday", "sfcju", "shufu", "tanhua", "tdck", "tdck_new", "terminus", "tiannan", "tiannanus", "watermelon", "worldline", "yomo", "zm"]
+# checkiner = ["apoppro", "aurora", "awatv", "cc", "datasgk", "dvfilm", "epub", "feiyue", "feiyuedpx", "future", "ikunmusic", "jingzhe", "jsq", "july", "kiku", "levilde", "lily", "lyrebird", "magic", "micu", "misty", "mjj", "mooncake", "moonkk", "moyunge", "nebula", "nebula_old", "pandatv", "pandatv_group", "peach", "pilipili", "plumber", "pornemby", "raismusic", "saturday", "sfcju", "shufu", "tanhua", "tdck", "tdck_new", "terminus", "tiannan", "tiannanus", "watermelon", "worldline", "yomo", "zm"]
 # monitor = ["bgk", "future", "infinity_fly", "misty", "pornemby_answer", "pornemby_double", "pornemby_dragon_rain", "pornemby_exam", "pornemby_nohp", "viper"]
 # messager = []
 
 # 全部可用站点:
 # [site]
-# checkiner = ["agentsgk", "aisgk", "aivbi", "akile", "akile_group", "akuai", "alpha", "apop", "apoppro", "aurora", "awamusic", "awatv", "baidusgk", "bearsgk", "bingdaosgk", "bitsgk", "bluesea", "bostsgk", "bytevirt_group", "carll1sgk", "carll2sgk", "cc", "charon", "charon_old", "chunjiangsgk", "ciji", "datasgk", "dingdangsgk", "dogsgk", "dvfilm", "embyhub", "epub", "fanhuasgk", "feiji", "feiyue", "feiyuedpx", "feiyuemusic", "feiyuemusic_group_old", "future", "happy", "heisi", "hka", "huasgk", "ikunmusic", "infsgk", "ingeeksgk", "jinding", "jingzhe", "jms", "jms_iptv", "jms_old", "johnsgk", "jsq", "judog", "july", "koisgk", "levilde", "lily", "ljyy", "ljyy_old", "lyrebird", "m78", "magic", "marmot_group_old", "mastersgk", "micu", "minisgk", "misty", "mjj", "mooncake", "moonkk", "moshensgk", "moyunge", "navidrome", "nebula", "nebula_old", "niaoge", "oixel", "pandatv", "pandatv_group", "peach", "pilipili", "pingansgk", "plumber", "pornemby", "qingfengsgk", "raismusic", "rednosesgk", "saturday", "seedsgk", "sfcju", "shufu", "singularity", "skysink", "sssq", "starcat", "starsgk", "tanhua", "tdck", "tdck_new", "temby", "temby_beta", "temby_old", "terminus", "terminus_old", "theend", "tianmaosgk", "tiannan", "tiannanus", "unionsgk", "watermelon", "worldline", "xraysgk", "yomo", "zhihusgk", "zhipian", "zhushousgk", "zm"]
+# checkiner = ["agentsgk", "aisgk", "aivbi", "akile", "akile_group", "akuai", "alpha", "apop", "apoppro", "aurora", "awamusic", "awatv", "baidusgk", "bearsgk", "bingdaosgk", "bitsgk", "bluesea", "bostsgk", "bytevirt_group", "carll1sgk", "carll2sgk", "cc", "charon", "charon_old", "chunjiangsgk", "ciji", "datasgk", "dingdangsgk", "dogsgk", "dvfilm", "embyhub", "epub", "fanhuasgk", "feiji", "feiyue", "feiyuedpx", "feiyuemusic", "feiyuemusic_group_old", "future", "happy", "heisi", "hka", "huasgk", "ikunmusic", "infsgk", "ingeeksgk", "jinding", "jingzhe", "jms", "jms_iptv", "jms_old", "johnsgk", "jsq", "judog", "july", "kiku", "koisgk", "levilde", "lily", "ljyy", "ljyy_old", "lyrebird", "m78", "magic", "marmot_group_old", "mastersgk", "micu", "minisgk", "misty", "mjj", "mooncake", "moonkk", "moshensgk", "moyunge", "navidrome", "nebula", "nebula_old", "niaoge", "oixel", "pandatv", "pandatv_group", "peach", "pilipili", "pingansgk", "plumber", "pornemby", "qingfengsgk", "raismusic", "rednosesgk", "saturday", "seedsgk", "sfcju", "shufu", "singularity", "skysink", "sssq", "starcat", "starsgk", "tanhua", "tdck", "tdck_new", "temby", "temby_beta", "temby_old", "terminus", "terminus_old", "theend", "tianmaosgk", "tiannan", "tiannanus", "unionsgk", "watermelon", "worldline", "xraysgk", "yomo", "zhihusgk", "zhipian", "zhushousgk", "zm"]
 # monitor = ["bgk", "embyhub", "follow", "future", "infinity_fly", "judog", "misty", "polo", "pornemby_alert", "pornemby_answer", "pornemby_double", "pornemby_dragon_rain", "pornemby_exam", "pornemby_nohp", "pornemby_register", "shufu", "terminus_exam", "viper"]
 # messager = ["marmot", "nakonako", "pornemby", "smart_pornemby"]
 
@@ -197,17 +197,18 @@ concurrency = 1
 [[subsonic.account]] # 第 1 个账号
 
 # 站点域名和端口:
-url = "https://cantu-king.biz:443"
+url = "https://www.miller.com:443"
 
 # 用户名和密码:
-username = "frenchseth"
-password = "#!9tGAnTJ6"
+username = "julie49"
+password = "y&^3KYuywq"
 
 # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 time = [300, 600]
 
 [[subsonic.account]] # 第 2 个账号
-url = "https://www.murray.biz:443"
-username = "jacobsonbrenda"
-password = "$7IQDbKtEw"
+url = "https://www.bond.biz:443"
+username = "williamharmon"
+password = "No6fOo!ry+"
 time = [300, 600]
+
