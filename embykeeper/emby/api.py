@@ -691,7 +691,7 @@ class Emby:
             path=f"/Users/{self.user_id}/Views",
             params=dict(IncludeExternalContent=False),
         )
-        
+
         col_ids = []
         for i in views.json().get("Items", []):
             cid: str = i.get("Id", None)
@@ -715,7 +715,7 @@ class Emby:
         await asyncio.sleep(random.uniform(0.1, 0.3))
         await self.get_resume_items(media_types=["Audio"])
         await asyncio.sleep(random.uniform(0.1, 0.3))
-        
+
         for cid in col_ids[:25]:
             items = await self.get_latest_items(parent_id=cid)
             for item in items:
@@ -724,11 +724,11 @@ class Emby:
                     self.items[iid] = item
                 except KeyError:
                     pass
-                
+
         if not self.items:
             if col_ids:
                 self.log.info("无法获取最新视频, 尝试从文件夹中读取.")
-                
+
                 for col_id in col_ids[:3]:
                     await asyncio.sleep(4)
                     items = await self.get_folder_items(parent_id=col_id)
@@ -740,7 +740,7 @@ class Emby:
                             pass
                     if len(self.items) >= 3:
                         break
-                
+
         return last_login_date
 
     async def get_latest_items(
@@ -804,7 +804,7 @@ class Emby:
             },
         )
         return resp.json()
-    
+
     async def get_folder_items(
         self,
         parent_id,

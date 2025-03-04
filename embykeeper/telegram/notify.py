@@ -55,7 +55,7 @@ async def start_notifier():
             else:
                 logger.error(f'无法连接到 "{account.phone}" 账号, 无法发送日志推送.')
                 return None
-        
+
         stream_log = TelegramStream(
             account=account,
             instant=config.notifier.immediately,
