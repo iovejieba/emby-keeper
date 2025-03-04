@@ -4,6 +4,7 @@ from loguru import logger
 
 from embykeeper.log import formatter
 from embykeeper.config import config
+from .session import ClientsSession
 
 from .log import TelegramStream
 
@@ -47,7 +48,14 @@ async def start_notifier():
                         break
 
     if account:
-        logger.info(f'计划任务的关键消息将通过 Embykeeper Bot 发送至 "{account.phone}" 账号.')
+        async with ClientsSession([account]) as clients:
+            async for a, tg in clients:
+                logger.info(f'计划任务的关键消息将通过 Embykeeper Bot 发送至 "{account.phone}" 账号.')
+                break
+            else:
+                logger.error(f'无法连接到 "{account.phone}" 账号, 无法发送日志推送.')
+                return None
+        
         stream_log = TelegramStream(
             account=account,
             instant=config.notifier.immediately,
