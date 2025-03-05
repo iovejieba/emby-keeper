@@ -136,6 +136,7 @@ class AsyncTyper(Typer):
                         sys.exit(1)
                     else:
                         logger.info(f"所有任务已完成, 欢迎您再次使用 {__name__.capitalize()}.")
+
                 try:
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
