@@ -48,6 +48,9 @@ class UseHttpUrl(HttpUrl):
             v = f"https://{v}"
         return HttpUrl(v)
 
+    def __str__(self):
+        return str(self._url)
+
 
 class ProxyConfig(ConfigModel):
     hostname: Optional[str] = None
