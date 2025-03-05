@@ -207,10 +207,15 @@ def run_gradio():
         )
 
     demo.queue()
-    port = get_free_port()
-    print(f"Starting Gradio on port {port}", flush=True)
-    demo.launch(server_name="127.0.0.1", server_port=port, share=False)
-    return port
+    print(f"Starting Gradio on port {gradio_port}", flush=True)
+    demo.launch(
+        server_name="0.0.0.0",
+        server_port=gradio_port,
+        share=False,
+        debug=True,
+        show_error=True,
+        prevent_thread_lock=True,
+    )
 
 
 def run_proxy():
@@ -299,7 +304,7 @@ if __name__ == "__main__":
 
     print(f"Using ports - Gradio: {gradio_port}, EK: {ek_port}", flush=True)
 
-    gradio_thread = threading.Thread(target=lambda: run_gradio())
+    gradio_thread = threading.Thread(target=run_gradio)
     gradio_thread.daemon = True
     gradio_thread.start()
 
