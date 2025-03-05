@@ -18,6 +18,7 @@ EK_VERSION = "7.1.2"
 APP_DATA_DIR = Path(user_data_dir("embykeeper"))
 VERSION_CACHE_DIR = APP_DATA_DIR / "hf" / "version"
 
+
 def setup_embykeeper():
     try:
         # 确保缓存目录存在
@@ -31,11 +32,11 @@ def setup_embykeeper():
 
         # 创建临时目录
         temp_dir = tempfile.mkdtemp()
-        
+
         # 下载并解压（使用系统代理）
         print("Downloading EK...", flush=True)
         tarball_path = os.path.join(temp_dir, "embykeeper.tar.gz")
-        
+
         if cached_tarball.exists():
             print(f"Using cached tarball from {cached_tarball}", flush=True)
             shutil.copy2(cached_tarball, tarball_path)
@@ -59,12 +60,15 @@ def setup_embykeeper():
 
         # 安装依赖
         print("Installing dependencies...", flush=True)
-        subprocess.run([sys.executable, "-m", "pip", "install", "-r", os.path.join(extracted_dir, "requirements.txt")], check=True)
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "-r", os.path.join(extracted_dir, "requirements.txt")],
+            check=True,
+        )
         subprocess.run([sys.executable, "-m", "pip", "install", extracted_dir], check=True)
 
         # 将处理好的文件复制到缓存目录
         shutil.copytree(extracted_dir, cached_version, dirs_exist_ok=True)
-        
+
         # 清理临时目录
         shutil.rmtree(temp_dir)
 
@@ -72,6 +76,7 @@ def setup_embykeeper():
     except Exception as e:
         print(f"Error setting up EK: {e}", flush=True)
         return False
+
 
 def obfuscate_with_pyarmor(package_path):
     try:
@@ -101,15 +106,12 @@ def obfuscate_with_pyarmor(package_path):
             dist_dir = os.path.join(package_path, "dist")
             pkg_dist_dir = os.path.join(dist_dir, pkg)
             runtime_dir = os.path.join(dist_dir, "pyarmor_runtime_000000")
-            
+
             if os.path.exists(pkg_dist_dir) and os.path.exists(runtime_dir):
                 # 复制混淆后的文件
                 shutil.copytree(pkg_dist_dir, pkg_dir, dirs_exist_ok=True)
                 # 复制运行时文件到包目录
-                shutil.copy2(
-                    os.path.join(runtime_dir, "pyarmor_runtime.so"),
-                    pkg_dir
-                )
+                shutil.copy2(os.path.join(runtime_dir, "pyarmor_runtime.so"), pkg_dir)
                 # 清理 dist 目录
                 shutil.rmtree(dist_dir)
             else:
@@ -121,6 +123,7 @@ def obfuscate_with_pyarmor(package_path):
         print(f"Error during obfuscation: {e}", flush=True)
         return False
 
+
 def run_gradio():
     import gradio as gr
     import random
@@ -131,13 +134,13 @@ def run_gradio():
         print(ctime(t))
 
         if choice == "Prompt Generator v0.1(Better quality)":
-            prompt = open('pr1.txt').read().splitlines()
+            prompt = open("pr1.txt").read().splitlines()
         elif choice == "Prompt Generator v0.2(More tags)":
-            prompt = open('pr2.txt').read().splitlines()
+            prompt = open("pr2.txt").read().splitlines()
 
         if int(num) < 1 or int(num) > 20:
             num = 10
-        
+
         if int(artist) < 0 or int(artist) > 40:
             artist = 2
 
@@ -146,13 +149,13 @@ def run_gradio():
         artists_num = 0
         while len(sorted(set(generated), key=lambda d: generated.index(d))) < int(num):
             rand = random.choice(prompt)
-            if rand.startswith('art by') and artists_num < int(artist):
-                artists_num += 1 
+            if rand.startswith("art by") and artists_num < int(artist):
+                artists_num += 1
                 generated.append(rand)
-            elif not rand.startswith('art by'):
+            elif not rand.startswith("art by"):
                 generated.append(rand)
-        print(', '.join(set(generated)) + '\n\n')
-        return ', '.join(set(generated))
+        print(", ".join(set(generated)) + "\n\n")
+        return ", ".join(set(generated))
 
     demo = gr.Blocks()
 
@@ -176,7 +179,11 @@ def run_gradio():
             """
         )
         with gr.Column():
-            model_size = gr.Radio(["Prompt Generator v0.1(Better quality)", "Prompt Generator v0.2(More tags)"], label="Model Variant", value="Prompt Generator v0.1(Better quality)")
+            model_size = gr.Radio(
+                ["Prompt Generator v0.1(Better quality)", "Prompt Generator v0.2(More tags)"],
+                label="Model Variant",
+                value="Prompt Generator v0.1(Better quality)",
+            )
             number = gr.Number(value="10", label="Num of tag (MAX 20)", show_label=True)
             artist = gr.Number(value="2", label="Num of artist (Standart 2)", show_label=True)
             out = gr.Textbox(lines=4, label="Generated Prompts")
@@ -193,95 +200,94 @@ def run_gradio():
     demo.queue()
     demo.launch(server_name="127.0.0.1", server_port=7861, share=False)
 
+
 def run_proxy():
-    sio_server = socketio.Server(async_mode='eventlet')
+    sio_server = socketio.Server(async_mode="eventlet")
     app = socketio.WSGIApp(sio_server)
-    
+
     sio_client = socketio.Client()
-    
+
     # 存储 sid 映射关系
     client_sessions = {}
-    
-    @sio_server.on('connect', namespace='/pty')
+
+    @sio_server.on("connect", namespace="/pty")
     def connect(sid, environ):
         print(f"Client connected: {sid}")
         if not sio_client.connected:
-            sio_client.connect('http://127.0.0.1:7862', namespaces=['/pty'])
+            sio_client.connect("http://127.0.0.1:7862", namespaces=["/pty"])
         client_sessions[sid] = True
 
-    @sio_server.on('disconnect', namespace='/pty')
+    @sio_server.on("disconnect", namespace="/pty")
     def disconnect(sid):
         print(f"Client disconnected: {sid}")
         client_sessions.pop(sid, None)
         if not client_sessions:
             sio_client.disconnect()
 
-    @sio_server.on('*', namespace='/pty')
+    @sio_server.on("*", namespace="/pty")
     def catch_all(event, sid, *args):
-        if event not in ['connect', 'disconnect']:
+        if event not in ["connect", "disconnect"]:
             print(f"Forward to ek: {event}")
-            sio_client.emit(event, *args, namespace='/pty')
+            sio_client.emit(event, *args, namespace="/pty")
 
-    @sio_client.on('*', namespace='/pty')
+    @sio_client.on("*", namespace="/pty")
     def forward_from_ek(event, *args):
-        if event not in ['connect', 'disconnect']:
+        if event not in ["connect", "disconnect"]:
             print(f"Forward from ek: {event}")
-            sio_server.emit(event, *args, namespace='/pty')
+            sio_server.emit(event, *args, namespace="/pty")
 
     def proxy_handler(environ, start_response):
-        path = environ['PATH_INFO']
-        
-        if path.startswith('/ek'):
-            target = 'http://127.0.0.1:7862'
+        path = environ["PATH_INFO"]
+
+        if path.startswith("/ek"):
+            target = "http://127.0.0.1:7862"
         else:
-            target = 'http://127.0.0.1:7861'
-        
+            target = "http://127.0.0.1:7861"
+
         url = f"{target}{path}"
         headers = {}
         for key, value in environ.items():
-            if key.startswith('HTTP_'):
-                header_key = key[5:].replace('_', '-').title()
-                if header_key.lower() not in ['connection', 'upgrade', 'proxy-connection']:
+            if key.startswith("HTTP_"):
+                header_key = key[5:].replace("_", "-").title()
+                if header_key.lower() not in ["connection", "upgrade", "proxy-connection"]:
                     headers[header_key] = value
-        content_length = environ.get('CONTENT_LENGTH')
+        content_length = environ.get("CONTENT_LENGTH")
         body = None
         if content_length:
             content_length = int(content_length)
-            body = environ['wsgi.input'].read(content_length)
-            
-            if environ.get('CONTENT_TYPE'):
-                headers['Content-Type'] = environ['CONTENT_TYPE']
+            body = environ["wsgi.input"].read(content_length)
+
+            if environ.get("CONTENT_TYPE"):
+                headers["Content-Type"] = environ["CONTENT_TYPE"]
         resp = requests.request(
-            method=environ['REQUEST_METHOD'],
+            method=environ["REQUEST_METHOD"],
             url=url,
             headers=headers,
             data=body,
             stream=True,
-            allow_redirects=False
+            allow_redirects=False,
         )
-        
-        start_response(f'{resp.status_code} {resp.reason}', list(resp.headers.items()))
+
+        start_response(f"{resp.status_code} {resp.reason}", list(resp.headers.items()))
         return resp.iter_content(chunk_size=4096)
 
     app.wsgi_app = proxy_handler
-    eventlet.wsgi.server(eventlet.listen(('', 7860)), app)
+    eventlet.wsgi.server(eventlet.listen(("", 7860)), app)
+
 
 if __name__ == "__main__":
     print("Setting up EK...", flush=True)
     if not setup_embykeeper():
         print("Failed to setup EK!", flush=True)
         sys.exit(1)
-    
+
     gradio_thread = threading.Thread(target=run_gradio)
     gradio_thread.daemon = True
     gradio_thread.start()
 
-    ek_thread = threading.Thread(target=lambda: subprocess.run([
-        "embykeeperweb",
-        "--port", "7862",
-        "--prefix", "/ek",
-        "--public"
-    ]))
+    ek_thread = threading.Thread(
+        target=lambda: subprocess.run(["embykeeperweb", "--port", "7862", "--prefix", "/ek", "--public"])
+    )
     ek_thread.daemon = True
     ek_thread.start()
 
