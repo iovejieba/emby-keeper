@@ -128,6 +128,11 @@ def obfuscate_with_pyarmor(package_path):
         return False
 
 
+def get_free_port():
+    with eventlet.listen(("", 0)) as sock:
+        return sock.getsockname()[1]
+
+
 def run_gradio():
     import gradio as gr
     import random
@@ -202,7 +207,10 @@ def run_gradio():
         )
 
     demo.queue()
-    demo.launch(server_name="127.0.0.1", server_port=7861, share=False)
+    port = get_free_port()
+    print(f"Starting Gradio on port {port}", flush=True)
+    demo.launch(server_name="127.0.0.1", server_port=port, share=False)
+    return port
 
 
 def run_proxy():
@@ -244,9 +252,9 @@ def run_proxy():
         path = environ["PATH_INFO"]
 
         if path.startswith("/ek"):
-            target = "http://127.0.0.1:7862"
+            target = f"http://127.0.0.1:{ek_port}"
         else:
-            target = "http://127.0.0.1:7861"
+            target = f"http://127.0.0.1:{gradio_port}"
 
         url = f"{target}{path}"
         headers = {}
@@ -285,16 +293,60 @@ if __name__ == "__main__":
         print("Failed to setup EK!", flush=True)
         sys.exit(1)
 
-    gradio_thread = threading.Thread(target=run_gradio)
+    # Get random ports for internal services
+    gradio_port = get_free_port()
+    ek_port = get_free_port()
+
+    print(f"Using ports - Gradio: {gradio_port}, EK: {ek_port}", flush=True)
+
+    gradio_thread = threading.Thread(target=lambda: run_gradio())
     gradio_thread.daemon = True
     gradio_thread.start()
 
     ek_thread = threading.Thread(
-        target=lambda: subprocess.run(["embykeeperweb", "--port", "7862", "--prefix", "/ek", "--public"])
+        target=lambda: subprocess.run(
+            ["embykeeperweb", "--port", str(ek_port), "--prefix", "/ek", "--public"]
+        )
     )
     ek_thread.daemon = True
     ek_thread.start()
 
-    # 启动代理服务器（主线程）
-    print("Starting proxy server...", flush=True)
+    # Update proxy to use dynamic ports
+    def proxy_handler(environ, start_response):
+        path = environ["PATH_INFO"]
+
+        if path.startswith("/ek"):
+            target = f"http://127.0.0.1:{ek_port}"
+        else:
+            target = f"http://127.0.0.1:{gradio_port}"
+
+        url = f"{target}{path}"
+        headers = {}
+        for key, value in environ.items():
+            if key.startswith("HTTP_"):
+                header_key = key[5:].replace("_", "-").title()
+                if header_key.lower() not in ["connection", "upgrade", "proxy-connection"]:
+                    headers[header_key] = value
+        content_length = environ.get("CONTENT_LENGTH")
+        body = None
+        if content_length:
+            content_length = int(content_length)
+            body = environ["wsgi.input"].read(content_length)
+
+            if environ.get("CONTENT_TYPE"):
+                headers["Content-Type"] = environ["CONTENT_TYPE"]
+        resp = requests.request(
+            method=environ["REQUEST_METHOD"],
+            url=url,
+            headers=headers,
+            data=body,
+            stream=True,
+            allow_redirects=False,
+        )
+
+        start_response(f"{resp.status_code} {resp.reason}", list(resp.headers.items()))
+        return resp.iter_content(chunk_size=4096)
+
+    # Start proxy server on fixed port 7860
+    print("Starting proxy server on port 7860...", flush=True)
     run_proxy()
