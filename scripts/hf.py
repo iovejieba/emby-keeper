@@ -43,7 +43,7 @@ def obfuscate_with_pyarmor(app_path):
 
     if os.path.exists(dist_dir):
         # Get the obfuscated app.py from dist directory
-        obfuscated_app = os.path.join(dist_dir, "app.py")
+        obfuscated_app = os.path.join(dist_dir, "hf", "app.py")
         runtime_dir = os.path.join(dist_dir, "pyarmor_runtime_000000")
 
         if os.path.exists(obfuscated_app) and os.path.exists(runtime_dir):
