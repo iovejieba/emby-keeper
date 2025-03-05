@@ -12,9 +12,9 @@ window.addEventListener('DOMContentLoaded', function() {
     editor.on('change',function(inst){
         statusMsgBadge.classList.add("d-none");
     });
-    
+
     const basePrefix = document.documentElement.getAttribute('data-prefix') || '';
-    
+
     document.getElementById('save-btn').addEventListener('click', function() {
         statusMsg.innerText = '正在保存中';
         statusMsgBadge.classList.remove("d-none");

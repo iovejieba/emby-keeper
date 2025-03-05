@@ -52,7 +52,8 @@ app.config["config"] = os.environ.get("EK_CONFIG", "")
 version = f"V{__version__}"
 
 # 创建蓝图
-bp = Blueprint('main', __name__)
+bp = Blueprint("main", __name__)
+
 
 class DummyUser:
     def is_authenticated(self):
@@ -334,14 +335,14 @@ def kill_proc(proc: Popen):
     except Exception as e:
         logger.error(f"Error killing process: {e}")
 
+
 def set_static_url_path(app, prefix):
     app.static_url_path = f"{prefix}/assets"
-    app.view_functions.pop('static', None)
+    app.view_functions.pop("static", None)
     app.add_url_rule(
-        f"{app.static_url_path}/<path:filename>",
-        endpoint="static",
-        view_func=app.send_static_file
+        f"{app.static_url_path}/<path:filename>", endpoint="static", view_func=app.send_static_file
     )
+
 
 @cli.command(context_settings={"ignore_unknown_options": True, "allow_extra_args": True})
 def run(

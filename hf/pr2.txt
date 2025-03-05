@@ -476,10 +476,10 @@ art by Evelyn Abelson
 art by Affandi Koesoema
 art by Maryati Affandi
 art by Kartika Affandi-Koberl
-art by Abdullah 
+art by Abdullah
 art by Sudjono Abdullah
 art by Basuki Abdullah
-art by Raden Saleh 
+art by Raden Saleh
 art by Syarif Bustaman
 art by Lee Man Fong
 art by Mario Blanco
@@ -1571,7 +1571,7 @@ art by Anthony van Dyck
 art by Floris van Dyck
 art by Friedel Dzubas
 art by Aileen Eagleton
-art by Thomas Eakins  
+art by Thomas Eakins
 art by Ralph Earl
 art by Augustus Earle
 art by Alfred East
@@ -3926,7 +3926,7 @@ art by Henry Scott Tuke
 art by Mym Tuma
 art by Bernt Tunold
 art by John Doman Turner
-art by 
+art by
 art by William Turner of Oxford
 art by Glennray Tutor
 art by Laurits Tuxen
