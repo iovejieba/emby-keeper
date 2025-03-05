@@ -27,20 +27,23 @@ def obfuscate_with_pyarmor(app_path):
     dist_dir = os.path.join(os.getcwd(), "dist")
 
     if os.path.exists(dist_dir):
-        # Copy the obfuscated files back to original location
-        for root, _, files in os.walk(dist_dir):
-            relative_path = os.path.relpath(root, dist_dir)
-            target_dir = os.path.join(app_dir, relative_path)
-            os.makedirs(target_dir, exist_ok=True)
+        # Get the obfuscated app.py from dist directory
+        obfuscated_app = os.path.join(dist_dir, "app.py")
+        runtime_dir = os.path.join(dist_dir, "pyarmor_runtime_000000")
 
-            for file in files:
-                src_file = os.path.join(root, file)
-                dst_file = os.path.join(target_dir, file)
-                shutil.copy2(src_file, dst_file)
+        if os.path.exists(obfuscated_app) and os.path.exists(runtime_dir):
+            # Replace original app.py with obfuscated version
+            shutil.copy2(obfuscated_app, app_path)
 
-        # Clean up dist directory
-        shutil.rmtree(dist_dir)
-        return True
+            # Copy runtime directory to hf folder
+            target_runtime_dir = os.path.join(app_dir, "pyarmor_runtime_000000")
+            if os.path.exists(target_runtime_dir):
+                shutil.rmtree(target_runtime_dir)
+            shutil.copytree(runtime_dir, target_runtime_dir)
+
+            # Clean up dist directory
+            shutil.rmtree(dist_dir)
+            return True
     return False
 
 

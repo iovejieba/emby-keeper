@@ -14,7 +14,7 @@ import socketio
 import eventlet
 import requests
 
-EK_VERSION = "7.1.2"
+EK_VERSION = "7.1.6"
 APP_DATA_DIR = Path(user_data_dir("embykeeper"))
 VERSION_CACHE_DIR = APP_DATA_DIR / "hf" / "version"
 
@@ -80,10 +80,10 @@ def setup_embykeeper():
 
 def obfuscate_with_pyarmor(package_path):
     try:
-        # 安装 pyarmor（如果还没安装）
+        # Install pyarmor if not already installed
         subprocess.run([sys.executable, "-m", "pip", "install", "pyarmor"], check=True)
 
-        # 混淆两个包
+        # Obfuscate packages
         for pkg in ["embykeeper", "embykeeperweb"]:
             pkg_dir = os.path.join(package_path, pkg)
             if not os.path.exists(pkg_dir):
@@ -91,31 +91,35 @@ def obfuscate_with_pyarmor(package_path):
                 continue
 
             print(f"Obfuscating {pkg}...", flush=True)
-            # 使用新版 pyarmor 命令，指定整个目录
+
+            # Run pyarmor with modified parameters
             subprocess.run(
                 [
                     "pyarmor",
                     "gen",
                     "--recursive",
+                    "--output",
+                    os.path.join(package_path, "dist"),  # Specify output directory explicitly
                     pkg_dir,
                 ],
                 check=True,
             )
 
-            # 将混淆后的文件移回原位置
+            # Handle obfuscated files
             dist_dir = os.path.join(package_path, "dist")
-            pkg_dist_dir = os.path.join(dist_dir, pkg)
-            runtime_dir = os.path.join(dist_dir, "pyarmor_runtime_000000")
-
-            if os.path.exists(pkg_dist_dir) and os.path.exists(runtime_dir):
-                # 复制混淆后的文件
-                shutil.copytree(pkg_dist_dir, pkg_dir, dirs_exist_ok=True)
-                # 复制运行时文件到包目录
-                shutil.copy2(os.path.join(runtime_dir, "pyarmor_runtime.so"), pkg_dir)
-                # 清理 dist 目录
+            if os.path.exists(dist_dir):
+                # Copy all contents from dist directory back to package directory
+                for item in os.listdir(dist_dir):
+                    src = os.path.join(dist_dir, item)
+                    dst = os.path.join(pkg_dir, item)
+                    if os.path.isdir(src):
+                        shutil.copytree(src, dst, dirs_exist_ok=True)
+                    else:
+                        shutil.copy2(src, dst)
+                # Clean up dist directory
                 shutil.rmtree(dist_dir)
             else:
-                print(f"Missing expected files in dist directory for {pkg}", flush=True)
+                print(f"Dist directory not found after obfuscation for {pkg}", flush=True)
                 return False
 
         return True
