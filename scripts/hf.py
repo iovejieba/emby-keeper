@@ -18,7 +18,7 @@ def update_version(app_path, version):
 def obfuscate_with_pyarmor(app_path):
     """Obfuscate app.py using pyarmor"""
     subprocess.run(
-        ["pyarmor", "obfuscate", "--recursive", "--output", os.path.dirname(app_path), app_path], check=True
+        ["pyarmor", "gen", "--recursive", os.path.dirname(app_path)], check=True
     )
 
 
