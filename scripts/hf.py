@@ -19,12 +19,10 @@ def update_version(app_path, version):
 def obfuscate_with_pyarmor(app_path):
     """Obfuscate app.py using pyarmor and replace the original file with obfuscated version"""
     app_dir = os.path.dirname(app_path)
-
-    # Run pyarmor
-    subprocess.run(["pyarmor", "gen", "--recursive", app_dir], check=True)
-
-    # Get the dist directory where pyarmor outputs files
     dist_dir = os.path.join(os.getcwd(), "dist")
+
+    # Run pyarmor with explicit dist directory
+    subprocess.run(["pyarmor", "gen", "--recursive", "--output", dist_dir, app_dir], check=True)
 
     if os.path.exists(dist_dir):
         # Get the obfuscated app.py from dist directory
