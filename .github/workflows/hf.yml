@@ -3,6 +3,7 @@ name: Sync to Hugging Face
 on:
   release:
     types: [released]
+  workflow_dispatch:
 
 env:
   HF_SPACE_REPO: ekuser/prompt-generator
