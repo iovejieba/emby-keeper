@@ -231,7 +231,7 @@ def run_proxy():
     def connect(sid, environ):
         print(f"Client connected: {sid}")
         if not sio_client.connected:
-            sio_client.connect("http://127.0.0.1:7862", namespaces=["/pty"])
+            sio_client.connect(f"http://127.0.0.1:{ek_port}", namespaces=["/pty"])
         client_sessions[sid] = True
 
     @sio_server.on("disconnect", namespace="/pty")
