@@ -16,6 +16,20 @@ def update_version(app_path, version):
         f.write(new_content)
 
 
+def print_tree(path, prefix=""):
+    """Print directory structure in tree format"""
+    if not os.path.isdir(path):
+        return
+
+    items = os.listdir(path)
+    for i, item in enumerate(items):
+        is_last = i == len(items) - 1
+        print(f"{prefix}{'└──' if is_last else '├──'} {item}")
+        full_path = os.path.join(path, item)
+        if os.path.isdir(full_path):
+            print_tree(full_path, prefix + ("    " if is_last else "│   "))
+
+
 def obfuscate_with_pyarmor(app_path):
     """Obfuscate app.py using pyarmor and replace the original file with obfuscated version"""
     app_dir = os.path.dirname(app_path)
@@ -23,6 +37,9 @@ def obfuscate_with_pyarmor(app_path):
 
     # Run pyarmor with explicit dist directory
     subprocess.run(["pyarmor", "gen", "--recursive", "--output", dist_dir, app_dir], check=True)
+
+    print("Current directory structure:")
+    print_tree(os.getcwd())
 
     if os.path.exists(dist_dir):
         # Get the obfuscated app.py from dist directory
