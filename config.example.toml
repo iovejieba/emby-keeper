@@ -37,9 +37,6 @@ time = [300, 600]
 
 # 以下为进阶配置, 请取消注释 (删除左侧的 #) 以使用:
 
-# 该服务器是否为 Jellyfin 服务器:
-# jellyfin = true
-
 # 每隔几天进行保活, 默认使用全局设置 emby.interval_days:
 # interval_days = "<7,12>"
 

@@ -191,8 +191,6 @@ class ConfigManager(ProxyBase):
         a.add(nl())
         a.add(comment("以下为进阶配置, 请取消注释 (删除左侧的 #) 以使用:"))
         a.add(nl())
-        a.add(comment("该服务器是否为 Jellyfin 服务器:"))
-        a.add(comment(item({"jellyfin": True}).as_string()))
         a.add(comment("每隔几天进行保活, 默认使用全局设置 emby.interval_days:"))
         a.add(comment(item({"interval_days": default_config.emby.interval_days}).as_string()))
         a.add(comment("每次进行保活的当日时间范围, 默认使用全局设置 emby.time_range:"))
