@@ -97,8 +97,14 @@ class EmbyManager:
                 f"下一次 Emby 账号 ({spec}) 的保活将在 {t.strftime('%m-%d %H:%M %p')} 进行."
             )
 
+        def func(ctx: RunContext):
+            task = self._tasks[self.get_spec(account)] = asyncio.create_task(
+                self._watch_main([account], False)
+            )
+            return task
+
         scheduler = Scheduler.from_str(
-            func=lambda ctx: self._watch_main([account], False),
+            func=func,
             interval_days=interval,
             time_range=time_range,
             on_next_time=make_on_next_time(account_spec),
@@ -121,8 +127,12 @@ class EmbyManager:
             f"下一次 Emby 保活将在 {t.strftime('%m-%d %H:%M %p')} 进行."
         )
 
+        def func(ctx: RunContext):
+            task = self._tasks["unified"] = asyncio.create_task(self._watch_main(unified_accounts, False))
+            return task
+
         scheduler = Scheduler.from_str(
-            func=lambda ctx: self._watch_main(unified_accounts, False),
+            func=func,
             interval_days=config.emby.interval_days,
             time_range=config.emby.time_range,
             on_next_time=on_next_time,

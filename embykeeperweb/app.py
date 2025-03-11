@@ -226,8 +226,8 @@ def handle_connect():
 
 
 @socketio.on("disconnect", namespace="/pty")
-def handle_disconnect():
-    logger.debug(f"Console disconnected from {request.sid}")
+def handle_disconnect(reason=""):
+    logger.debug(f"Console disconnected from {request.sid} ({reason})")
 
 
 @socketio.on_error_default

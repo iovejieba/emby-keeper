@@ -43,7 +43,7 @@ async def start_notifier():
                     notifier = None
             elif isinstance(notifier, str):
                 for a in accounts:
-                    if a["phone"] == notifier:
+                    if a.phone == notifier:
                         account = a
                         break
 
