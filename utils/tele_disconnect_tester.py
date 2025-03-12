@@ -2,7 +2,7 @@ import asyncio
 from pathlib import Path
 
 from embykeeper.telegram.session import ClientsSession
-from embykeeper.utils import AsyncTyper
+from embykeeper.cli import AsyncTyper
 from embykeeper.config import config
 
 app = AsyncTyper()

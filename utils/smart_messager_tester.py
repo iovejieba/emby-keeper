@@ -14,7 +14,7 @@ from pyrogram.types import Message
 from embykeeper import __name__ as __product__
 from embykeeper.telegram.messager.smart_pornemby import SmartPornembyMessager
 from embykeeper.telegram.session import ClientsSession
-from embykeeper.utils import AsyncTyper, get_proxy_str, truncate_str
+from embykeeper.cli import AsyncTyper, get_proxy_str, truncate_str
 from embykeeper.config import config
 
 

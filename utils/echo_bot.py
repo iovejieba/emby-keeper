@@ -7,7 +7,7 @@ from pyrogram.handlers import MessageHandler
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
 from pyrogram.enums import ParseMode
 
-from embykeeper.utils import AsyncTyper
+from embykeeper.cli import AsyncTyper
 from embykeeper.telegram.pyrogram import Client
 from embykeeper.telegram.session import API_ID, API_HASH
 from embykeeper.config import config

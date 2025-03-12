@@ -3,7 +3,7 @@ from pathlib import Path
 from tqdm import tqdm, trange
 
 from embykeeper.telegram.session import ClientsSession
-from embykeeper.utils import AsyncTyper, async_partial
+from embykeeper.cli import AsyncTyper, async_partial
 from embykeeper.config import config
 from embykeeper import __name__ as __product__
 

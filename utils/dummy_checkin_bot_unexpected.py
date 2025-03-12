@@ -10,7 +10,7 @@ from pyrogram import filters
 from pyrogram.handlers import MessageHandler
 from pyrogram.types import Message, BotCommand
 
-from embykeeper.utils import AsyncTyper
+from embykeeper.cli import AsyncTyper
 from embykeeper.telegram.pyrogram import Client
 from embykeeper.config import config
 from embykeeper.telegram.session import API_ID, API_HASH

@@ -1,7 +1,7 @@
 from pathlib import Path
 from ddddocr import DdddOcr
 
-from embykeeper.utils import AsyncTyper
+from embykeeper.cli import AsyncTyper
 
 app = AsyncTyper()
 

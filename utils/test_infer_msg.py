@@ -5,7 +5,7 @@ import yaml
 from embykeeper.telegram.session import ClientsSession
 from embykeeper.telegram.pyrogram import Client
 from embykeeper.telegram.link import Link
-from embykeeper.utils import AsyncTyper, truncate_str
+from embykeeper.cli import AsyncTyper, truncate_str
 from embykeeper.config import config
 
 

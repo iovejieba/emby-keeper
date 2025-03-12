@@ -6,7 +6,7 @@ from loguru import logger
 
 from embykeeper.telegram.session import ClientsSession
 from embykeeper.telegram.link import Link
-from embykeeper.utils import AsyncTyper
+from embykeeper.cli import AsyncTyper
 from embykeeper.telegram.notify import start_notifier
 from embykeeper.config import config
 

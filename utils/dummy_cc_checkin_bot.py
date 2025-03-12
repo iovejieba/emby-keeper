@@ -17,7 +17,7 @@ from pyrogram.types import (
 from pyrogram.enums import ParseMode
 
 from embykeeper.config import config
-from embykeeper.utils import AsyncTyper
+from embykeeper.cli import AsyncTyper
 from embykeeper.telegram.pyrogram import Client
 from embykeeper.telegram.session import API_ID, API_HASH
 

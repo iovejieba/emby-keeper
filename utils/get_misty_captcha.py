@@ -6,7 +6,7 @@ from loguru import logger
 
 from embykeeper.telegram.monitor.misty import MistyMonitor
 from embykeeper.telegram.session import ClientsSession
-from embykeeper.utils import AsyncTyper, async_partial
+from embykeeper.cli import AsyncTyper, async_partial
 from embykeeper.config import config
 
 app = AsyncTyper()
