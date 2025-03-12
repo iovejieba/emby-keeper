@@ -274,23 +274,22 @@ class Monitor:
         """可重写的初始化函数, 在读取聊天后运行, 在执行监控前运行, 返回 False 将视为初始化错误."""
         return True
 
-    @classmethod
-    def keys(cls, message: Message):
-        """提取信息中的 keys."""
+    def keys(self, message: Message):
+        """提取信息中的 keys, 注意该函数可能通过类直接调用 (self 为 cls)."""
         sender = message.from_user
         if (
             sender
-            and cls.chat_user
-            and not any(i in to_iterable(cls.chat_user) for i in (sender.id, sender.username))
+            and self.chat_user
+            and not any(i in to_iterable(self.chat_user) for i in (sender.id, sender.username))
         ):
             return
         text = message.text or message.caption
-        if text and cls.chat_except_keyword:
-            for k in to_iterable(cls.chat_except_keyword):
+        if text and self.chat_except_keyword:
+            for k in to_iterable(self.chat_except_keyword):
                 if re.search(k, text, re.IGNORECASE):
                     return
-        if cls.chat_keyword:
-            for k in to_iterable(cls.chat_keyword):
+        if self.chat_keyword:
+            for k in to_iterable(self.chat_keyword):
                 if k is None or text is None:
                     if k is None and text is None:
                         yield None
@@ -309,7 +308,16 @@ class Monitor:
             else:
                 return result
         else:
-            return self.chat_reply
+            reply = self.chat_reply
+            if isinstance(reply, str):
+                if isinstance(key, str):
+                    # If key is a single value, only replace $1
+                    reply = re.sub(r'(?<!\\)\$1', str(key), reply)
+                elif key is not None:
+                    # Replace $1, $2, etc. with corresponding values from key list
+                    for i, k in enumerate(key, 1):
+                        reply = re.sub(r'(?<!\\)\$' + str(i), str(k), reply)
+            return reply
 
     @staticmethod
     def get_spec(keys):

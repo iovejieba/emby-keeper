@@ -38,6 +38,7 @@ class TemplateAMonitor(Monitor):
     init_first = True
     additional_auth = ["prime"]
     notify_create_name = True
+    debug_no_log = True
 
     async def init(self):
         try:
@@ -86,6 +87,8 @@ class TemplateAMonitor(Monitor):
                 self.log.bind(log=True).info(
                     f"监控器 {self.name} 成功注册机器人 {self.t_config.try_register_bot}."
                 )
+        else:
+            await super().on_trigger(message, key, reply)
 
     def get_unique_name(self):
         if not self.t_config.try_register_bot:

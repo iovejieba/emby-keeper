@@ -18,6 +18,7 @@ class FollowMonitor(Monitor):
     lock = asyncio.Lock()
     cache = TTLCache(maxsize=2048, ttl=300)
     chat_follow_user = 5
+    allow_same_user = False
 
     async def start(self):
         self.ctx.start(RunStatus.RUNNING)
@@ -43,15 +44,22 @@ class FollowMonitor(Monitor):
             return
         ident = (message.chat.id, message.text)
         async with self.lock:
-            if ident in self.cache:
+            if ident not in self.cache:
+                self.cache[ident] = {message.from_user.id} if not self.allow_same_user else 1
+                return
+
+            if self.allow_same_user:
                 self.cache[ident] += 1
-                if self.cache[ident] == self.chat_follow_user:
-                    try:
-                        chat_id, text = ident
-                        await self.client.send_message(chat_id, text)
-                    except RPCError as e:
-                        self.log.warning(f"发送从众信息到群组 {message.chat.title} 失败: {e}.")
-                    else:
-                        self.log.info(f"已发送从众信息到群组 {message.chat.title}.")
+                count = self.cache[ident]
             else:
-                self.cache[ident] = 1
+                self.cache[ident].add(message.from_user.id)
+                count = len(self.cache[ident])
+
+            if count == self.chat_follow_user:
+                try:
+                    chat_id, text = ident
+                    await self.client.send_message(chat_id, text)
+                except RPCError as e:
+                    self.log.warning(f"发送从众信息到群组 {message.chat.title} 失败: {e}.")
+                else:
+                    self.log.info(f"已发送从众信息到群组 {message.chat.title}: {text}.")

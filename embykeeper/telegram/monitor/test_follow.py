@@ -1,13 +1,11 @@
-from . import Monitor
+from .follow import FollowMonitor
 
 __ignore__ = True
 
 
-class TestFollowMonitor(Monitor):
-    name = "从众 测试"
+class TestFollowMonitor(FollowMonitor):
+    name = "全部群组从众 测试"
     chat_name = "api_group"
     chat_allow_outgoing = True
-    chat_keyword = r"从众"
     chat_follow_user = 3
-    chat_delay = 1
-    chat_reply = "我来"
+    allow_same_user = True
