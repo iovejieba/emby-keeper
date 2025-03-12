@@ -26,11 +26,11 @@ concurrency = 1
 [[emby.account]] # 第 1 个账号
 
 # 站点域名和端口:
-url = "https://www.dyer.com:443"
+url = "https://www.chapman.net:443"
 
 # 用户名和密码:
-username = "aaroncook"
-password = "jy7%11EgXe"
+username = "charlesrivera"
+password = "NKG0Vv9gK("
 
 # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 time = [300, 600]
@@ -57,9 +57,9 @@ time = [300, 600]
 
 # 第 2 个账号, 如需使用请将该段取消注释并修改, 也可以添加更多账号.
 # [[emby.account]]
-# url = "https://www.acevedo.com:443"
-# username = "ltanner"
-# password = "+3@gCycm)&"
+# url = "https://www.ruiz-byrd.com:443"
+# username = "ronaldcunningham"
+# password = "^*0#C6(xXB"
 # time = [300, 600]
 
 # ================================================================================
@@ -95,7 +95,7 @@ interval_days = 1
 [[telegram.account]] # 第 1 个账号
 
 # 带国家区号的账户手机号, 一般为 "+86..."
-phone = "+8610967026829"
+phone = "+8613242921376"
 
 # 启用机器人签到系列功能, 默认启用, 设置为 false 以禁用:
 checkiner = true
@@ -115,7 +115,7 @@ messager = false
 
 # 第 2 个账号, 如需使用请将该段取消注释并修改, 也可以添加更多账号.
 # [[telegram.account]]
-# phone = "+8617251408613"
+# phone = "+8614475787137"
 # checkiner = true
 # monitor = false
 # messager = false
@@ -123,7 +123,7 @@ messager = false
 # ================================================================================
 # 站点相关设置
 # 当您需要禁用某些站点时, 请将该段取消注释并修改.
-# 该部分内容是根据 Embykeeper 7.1.20 生成的.
+# 该部分内容是根据 Embykeeper 7.1.21 生成的.
 # 详见: https://emby-keeper.github.io/guide/配置文件#site-子项
 # ================================================================================
 
@@ -206,18 +206,18 @@ concurrency = 1
 # [[subsonic.account]] # 第 1 个账号
 # 
 # # 站点域名和端口:
-# url = "https://carlson-waters.com:443"
+# url = "https://roach-cunningham.info:443"
 # 
 # # 用户名和密码:
-# username = "woodkristen"
-# password = "&JDDALrG5K"
+# username = "pdouglas"
+# password = "(cYLIkHi24"
 # 
 # # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 # time = [300, 600]
 # 
 # [[subsonic.account]] # 第 2 个账号
-# url = "https://newton-chandler.com:443"
-# username = "pughlauren"
-# password = "czdtz4ADG&"
+# url = "https://www.sanders.com:443"
+# username = "drakespencer"
+# password = "&9MN%uNiGN"
 # time = [300, 600]
 
