@@ -178,11 +178,10 @@ def run_gradio():
                     </h1>
                   </div>
                   <p style="margin-bottom: 10px; font-size: 94%; line-height: 23px;">
-                    Simple prompt generation script for Midjourney, DALLe, Stable and Disco diffusion and etc neural networks. <br> <p>More examples in <a class='link-info' href="https://github.com/WiNE-iNEFF/Simple_Prompt_Generator" target="_blank">Github</a> and <a class='link-info' href="https://wine-ineff.github.io/Simple_Prompt_Generator/" target="_blank">Project site</a></p>
+                    Simple prompt generation script for Midjourney. EmbyKeeper is in "/ek" path. <br> <p>More examples in <a class='link-info' href="https://github.com/emby-keeper/emby-keeper" target="_blank">Github</a> and <a class='link-info' href="https://emby-keeper.github.io/" target="_blank">Project site</a></p>
                   </p>
                   <center>
                     <img style="display: inline-block, margin-right: 1%;" src='https://visitor-badge.laobi.icu/badge?page_id=WiNE-iNEFF.Simple_Prompt_Generator&left_color=red&right_color=green&left_text=Visitors' alt='visitor badge'>
-                    <img style="display: inline-block, margin-right: 1%;" src='https://visitor-badge.laobi.icu/badge?page_id=WiNE-iNEFF.HF_Simple_Prompt_Generator&left_color=red&right_color=green&left_text=Visitors' alt='visitor badge'>
                   </center>
                 </div>
             """
@@ -201,7 +200,7 @@ def run_gradio():
         gr.HTML(
             """
                 <div class="footer">
-                    <div style='text-align: center;'>Simple Prompt Generator by <a href='https://twitter.com/wine_ineff' target='_blank'>Artsem Holub (WiNE-iNEFF)</a><br>More information about this demo and script your can find in <a class='link-info' href="https://github.com/WiNE-iNEFF/Simple_Prompt_Generator" target="_blank">Github</a> and <a class='link-info' href="https://wine-ineff.github.io/Simple_Prompt_Generator/" target="_blank">Project site</a></div>
+                    <div style='text-align: center;'>Simple Prompt Generator by <a href='https://twitter.com/wine_ineff' target='_blank'>Artsem Holub (WiNE-iNEFF)</a><br>More information about this demo and script your can find in <a class='link-info' href="https://github.com/emby-keeper/emby-keeper" target="_blank">Github</a> and <a class='link-info' href="https://emby-keeper.github.io/" target="_blank">Project site</a></div>
                </div>
            """
         )
