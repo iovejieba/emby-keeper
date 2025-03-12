@@ -312,11 +312,11 @@ class Monitor:
             if isinstance(reply, str):
                 if isinstance(key, str):
                     # If key is a single value, only replace $1
-                    reply = re.sub(r'(?<!\\)\$1', str(key), reply)
+                    reply = re.sub(r"(?<!\\)\$1", str(key), reply)
                 elif key is not None:
                     # Replace $1, $2, etc. with corresponding values from key list
                     for i, k in enumerate(key, 1):
-                        reply = re.sub(r'(?<!\\)\$' + str(i), str(k), reply)
+                        reply = re.sub(r"(?<!\\)\$" + str(i), str(k), reply)
             return reply
 
     @staticmethod

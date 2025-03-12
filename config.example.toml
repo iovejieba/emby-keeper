@@ -109,7 +109,7 @@ messager = false
 # 针对该账号的独特设置, 如需使用请将该段取消注释并修改. 详见 site 项和 checkiner 项.
 # [telegram.account.site]
 # checkiner = ["all"]
-# 
+#
 # [telegram.account.checkiner_config]
 # interval_days = 1
 
@@ -204,20 +204,19 @@ concurrency = 1
 # ================================================================================
 
 # [[subsonic.account]] # 第 1 个账号
-# 
+#
 # # 站点域名和端口:
 # url = "https://www.mendez-noble.com:443"
-# 
+#
 # # 用户名和密码:
 # username = "jonathansimmons"
 # password = "560!NRqt)n"
-# 
+#
 # # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 # time = [300, 600]
-# 
+#
 # [[subsonic.account]] # 第 2 个账号
 # url = "https://www.griffith.org:443"
 # username = "robert15"
 # password = "_bZnCdeFs0"
 # time = [300, 600]
-
