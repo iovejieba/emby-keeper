@@ -16,6 +16,7 @@ from .config import config
 
 
 def generate_config():
+    config.basedir.mkdir(parents=True, exist_ok=True)
     config_file = config.basedir / "config.toml"
     if config_file.exists():
         return
