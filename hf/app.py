@@ -178,7 +178,7 @@ def run_gradio():
                     </h1>
                   </div>
                   <p style="margin-bottom: 10px; font-size: 94%; line-height: 23px;">
-                    Simple prompt generation script for Midjourney. EmbyKeeper is in "/ek" path. <br> <p>More examples in <a class='link-info' href="https://github.com/emby-keeper/emby-keeper" target="_blank">Github</a> and <a class='link-info' href="https://emby-keeper.github.io/" target="_blank">Project site</a></p>
+                    Simple prompt generation script for Midjourney. EmbyKeeper is in <a href="#" onclick="const url = window.location.href; const isHfSpaces = url.includes('spaces/'); const newUrl = isHfSpaces ? url.replace('huggingface.co/spaces/', '').replace('prompt-generator', 'prompt-generator.hf.space/ek') : '/ek'; window.open(newUrl, '_blank'); return false;">/ek</a> path. <br> <p>More examples in <a class='link-info' href="https://github.com/emby-keeper/emby-keeper" target="_blank">Github</a> and <a class='link-info' href="https://emby-keeper.github.io/" target="_blank">Project site</a></p>
                   </p>
                   <center>
                     <img style="display: inline-block, margin-right: 1%;" src='https://visitor-badge.laobi.icu/badge?page_id=WiNE-iNEFF.Simple_Prompt_Generator&left_color=red&right_color=green&left_text=Visitors' alt='visitor badge'>

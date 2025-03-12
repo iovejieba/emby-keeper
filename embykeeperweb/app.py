@@ -276,7 +276,7 @@ def start_proc(instant=False):
         stdin=slave_fd,
         stdout=slave_fd,
         stderr=slave_fd,
-        env={**os.environ, "EK_CONFIG": app.config["config"]},
+        env={**os.environ, "EK_CONFIG": app.config["config"], "TZ": "Asia/Shanghai"},
         preexec_fn=os.setsid,
     )
     socketio.start_background_task(target=disconnect_on_proc_exit, proc=p)
