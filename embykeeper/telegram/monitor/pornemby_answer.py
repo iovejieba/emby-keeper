@@ -83,7 +83,7 @@ class _PornembyAnswerAnswerMonitor(Monitor):
                     count += 1
                     finished = False
                     if m.text:
-                        for key in _PornembyAnswerResultMonitor.keys(m):
+                        for key in _PornembyAnswerResultMonitor.keys(_PornembyAnswerResultMonitor, m):
                             qs += 1
                             cache.set(f"{QA_CACHE_KEY}.data.{key[0]}", key[5])
             if count and (finished or count % 500 == 0):
