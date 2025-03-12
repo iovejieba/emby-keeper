@@ -37,6 +37,7 @@ class TemplateBCheckinConfig(BaseModel):
     wait_response: bool = True  # 是否需要等待相关回复, 以确认签到完成
     # fmt: on
 
+
 class TemplateBCheckin(BotCheckin):
     init_first = True
     additional_auth = ["prime"]
