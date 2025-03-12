@@ -26,11 +26,11 @@ concurrency = 1
 [[emby.account]] # 第 1 个账号
 
 # 站点域名和端口:
-url = "https://www.brown.biz:443"
+url = "https://www.jensen.com:443"
 
 # 用户名和密码:
-username = "sandrabryan"
-password = "*JeF+w^9h8"
+username = "tammy75"
+password = "r@4ZWfSGPq"
 
 # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 time = [300, 600]
@@ -54,9 +54,9 @@ time = [300, 600]
 
 # 第 2 个账号, 如需使用请将该段取消注释并修改, 也可以添加更多账号.
 # [[emby.account]]
-# url = "https://moreno.com:443"
-# username = "daniellejarvis"
-# password = "50_SCm7c%4"
+# url = "https://fowler.net:443"
+# username = "jeffrey35"
+# password = "@)Pspaead9"
 # time = [300, 600]
 
 # ================================================================================
@@ -92,7 +92,7 @@ interval_days = 1
 [[telegram.account]] # 第 1 个账号
 
 # 带国家区号的账户手机号, 一般为 "+86..."
-phone = "+8612387833799"
+phone = "+8615214301539"
 
 # 启用机器人签到系列功能, 默认启用, 设置为 false 以禁用:
 checkiner = true
@@ -112,7 +112,7 @@ messager = false
 
 # 第 2 个账号, 如需使用请将该段取消注释并修改, 也可以添加更多账号.
 # [[telegram.account]]
-# phone = "+8610060754594"
+# phone = "+8614818211973"
 # checkiner = true
 # monitor = false
 # messager = false
@@ -120,7 +120,7 @@ messager = false
 # ================================================================================
 # 站点相关设置
 # 当您需要禁用某些站点时, 请将该段取消注释并修改.
-# 该部分内容是根据 Embykeeper 7.1.24 生成的.
+# 该部分内容是根据 Embykeeper 7.1.25 生成的.
 # 详见: https://emby-keeper.github.io/guide/配置文件#site-子项
 # ================================================================================
 
@@ -203,18 +203,18 @@ concurrency = 1
 # [[subsonic.account]] # 第 1 个账号
 # 
 # # 站点域名和端口:
-# url = "https://www.melton-branch.com:443"
+# url = "https://www.miller.org:443"
 # 
 # # 用户名和密码:
-# username = "gregorygraham"
-# password = "hxzzZFFh@9"
+# username = "linda55"
+# password = "5o_eJXcy#1"
 # 
 # # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 # time = [300, 600]
 # 
 # [[subsonic.account]] # 第 2 个账号
-# url = "https://mendoza.com:443"
-# username = "teresagibson"
-# password = "h+K4Uj@Ekn"
+# url = "https://velasquez.com:443"
+# username = "leonardherman"
+# password = "ov@4BctpGN"
 # time = [300, 600]
 
