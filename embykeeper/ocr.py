@@ -7,8 +7,6 @@ import time
 import uuid
 
 from .data import get_datas
-from .config import config
-from .schema import ProxyConfig
 
 
 class CharRange(IntEnum):

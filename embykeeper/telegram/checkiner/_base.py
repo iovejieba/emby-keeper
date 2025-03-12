@@ -169,12 +169,13 @@ class BotCheckin(BaseBotCheckin):
     bot_success_keywords: Union[str, List[str]] = []  # 成功时检测的关键词 (暂不支持regex), 置空使用内置关键词表
     bot_checked_keywords: Union[str, List[str]] = []  # 今日已签到时检测的关键词, 置空使用内置关键词表
     bot_account_fail_keywords: Union[str, List[str]] = []  # 账户错误将退出时检测的关键词 (暂不支持regex), 置空使用内置关键词表
-    bot_too_many_tries_fail_keywords: Union[str, List[str]] = []  # 账户错误将退出时检测的关键词 (暂不支持regex), 置空使用内置关键词表
+    bot_too_many_tries_fail_keywords: Union[str, List[str]] = []  # 过多尝试将退出时检测的关键词 (暂不支持regex), 置空使用内置关键词表
     bot_fail_keywords: Union[str, List[str]] = []  # 签到错误将重试时检测的关键词 (暂不支持regex), 置空使用内置关键词表
     chat_name: str = None  # 在群聊中向机器人签到
     additional_auth: List[str] = []  # 额外认证要求
     max_retries = None  # 验证码错误或网络错误时最高重试次数 (默认无限)
     checked_retries = None # 今日已签到时最高重试次数 (默认不重试)
+    init_first: bool = False  # 先执行自定义初始化函数, 再进行加入群组分析
     # fmt: on
 
     @property
@@ -238,6 +239,11 @@ class BotCheckin(BaseBotCheckin):
 
         self.ctx.start(RunStatus.INITIALIZING)
 
+        if self.init_first:
+            if not await self.init():
+                self.log.warning(f"初始化错误.")
+                return self.ctx.finish(RunStatus.FAIL, "初始化错误")
+
         if (not self.chat_name) and (not self.bot_username):
             raise ValueError("未指定 chat_name 或 bot_username")
         ident = self.chat_name or self.bot_username
@@ -277,9 +283,10 @@ class BotCheckin(BaseBotCheckin):
                     if not await Link(self.client).auth(a, log_func=self.log.info):
                         return self.ctx.finish(RunStatus.IGNORE, "需要额外认证")
 
-            if not await self.init():
-                self.log.warning(f"初始化错误.")
-                return self.ctx.finish(RunStatus.FAIL, "初始化错误")
+            if not self.init_first:
+                if not await self.init():
+                    self.log.warning(f"初始化错误.")
+                    return self.ctx.finish(RunStatus.FAIL, "初始化错误")
 
             specs = []
             if self.bot_username:
