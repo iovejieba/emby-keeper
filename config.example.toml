@@ -26,11 +26,11 @@ concurrency = 1
 [[emby.account]] # 第 1 个账号
 
 # 站点域名和端口:
-url = "https://www.chapman.net:443"
+url = "https://www.dickson.biz:443"
 
 # 用户名和密码:
-username = "charlesrivera"
-password = "NKG0Vv9gK("
+username = "bensonderek"
+password = "xVq2JGiV@c"
 
 # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 time = [300, 600]
@@ -57,9 +57,9 @@ time = [300, 600]
 
 # 第 2 个账号, 如需使用请将该段取消注释并修改, 也可以添加更多账号.
 # [[emby.account]]
-# url = "https://www.ruiz-byrd.com:443"
-# username = "ronaldcunningham"
-# password = "^*0#C6(xXB"
+# url = "https://www.kennedy.com:443"
+# username = "donnalopez"
+# password = "b(_1QE&swD"
 # time = [300, 600]
 
 # ================================================================================
@@ -95,7 +95,7 @@ interval_days = 1
 [[telegram.account]] # 第 1 个账号
 
 # 带国家区号的账户手机号, 一般为 "+86..."
-phone = "+8613242921376"
+phone = "+8619518856843"
 
 # 启用机器人签到系列功能, 默认启用, 设置为 false 以禁用:
 checkiner = true
@@ -115,7 +115,7 @@ messager = false
 
 # 第 2 个账号, 如需使用请将该段取消注释并修改, 也可以添加更多账号.
 # [[telegram.account]]
-# phone = "+8614475787137"
+# phone = "+8611836342742"
 # checkiner = true
 # monitor = false
 # messager = false
@@ -123,7 +123,7 @@ messager = false
 # ================================================================================
 # 站点相关设置
 # 当您需要禁用某些站点时, 请将该段取消注释并修改.
-# 该部分内容是根据 Embykeeper 7.1.21 生成的.
+# 该部分内容是根据 Embykeeper 7.1.22 生成的.
 # 详见: https://emby-keeper.github.io/guide/配置文件#site-子项
 # ================================================================================
 
@@ -206,18 +206,18 @@ concurrency = 1
 # [[subsonic.account]] # 第 1 个账号
 # 
 # # 站点域名和端口:
-# url = "https://roach-cunningham.info:443"
+# url = "https://gomez-robinson.com:443"
 # 
 # # 用户名和密码:
-# username = "pdouglas"
-# password = "(cYLIkHi24"
+# username = "andrew94"
+# password = "!6$FASo*o$"
 # 
 # # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 # time = [300, 600]
 # 
 # [[subsonic.account]] # 第 2 个账号
-# url = "https://www.sanders.com:443"
-# username = "drakespencer"
-# password = "&9MN%uNiGN"
+# url = "https://medina.biz:443"
+# username = "colleenpoole"
+# password = "#1TFHldt9J"
 # time = [300, 600]
 
