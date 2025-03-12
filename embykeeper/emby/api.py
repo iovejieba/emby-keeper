@@ -851,22 +851,19 @@ class Emby:
     async def watch(self):
         """Play one or more videos until account time requirement played."""
 
-        if self.a.continuous:
-            self.log.info("开始连续播放视频")
-        else:
-            try:
-                if isinstance(self.a.time, Iterable):
-                    req_time = random.uniform(*self.a.time)
-                else:
-                    req_time = self.a.time
-            except TypeError:
-                self.log.warning(
-                    f"无法解析 time 配置, 请检查配置: {self.a.time} (应该为数字或两个数字的数组)."
-                )
-                return False
-            msg = " (允许播放多个)" if self.a.allow_multiple else ""
-            msg = f"开始播放视频{msg}, 共需播放 {req_time:.0f} 秒."
-            self.log.info(msg)
+        try:
+            if isinstance(self.a.time, Iterable):
+                req_time = random.uniform(*self.a.time)
+            else:
+                req_time = self.a.time
+        except TypeError:
+            self.log.warning(
+                f"无法解析 time 配置, 请检查配置: {self.a.time} (应该为数字或两个数字的数组)."
+            )
+            return False
+        msg = " (允许播放多个)" if self.a.allow_multiple else ""
+        msg = f"开始播放视频{msg}, 共需播放 {req_time:.0f} 秒."
+        self.log.info(msg)
 
         played_time = 0
         last_played_time = 0
@@ -899,7 +896,7 @@ class Emby:
                         continue
                 total_time = total_ticks / 10000000
                 if req_time - played_time > total_time:
-                    if (not self.a.allow_multiple) and (not self.a.continuous):
+                    if not self.a.allow_multiple:
                         failed_reasons["short_length"] += 1
                         failed_items.append(iid)
                         continue

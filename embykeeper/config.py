@@ -195,8 +195,6 @@ class ConfigManager(ProxyBase):
         a.add(comment(item({"interval_days": default_config.emby.interval_days}).as_string()))
         a.add(comment("每次进行保活的当日时间范围, 默认使用全局设置 emby.time_range:"))
         a.add(comment(item({"time_range": default_config.emby.time_range}).as_string()))
-        a.add(comment("使用连续播放, 主要用于增加观看时长:"))
-        a.add(comment(item({"continuous": True}).as_string()))
         a.add(comment("无法获取视频长度时, 依然允许播放 (默认最大播放 10 分钟左右, 可能播放超出实际长度):"))
         a.add(comment(item({"allow_stream": True}).as_string()))
         a.add(comment("取消注释以不使用配置文件定义的代理进行连接"))

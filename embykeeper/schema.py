@@ -114,7 +114,6 @@ class EmbyAccount(ConfigModel):
     password: str
     name: str = None
     time: Optional[Union[int, List[int]]] = [300, 600]
-    continuous: Optional[bool] = False
     useragent: Optional[str] = None
     client: Optional[str] = None
     client_version: Optional[str] = None
@@ -137,6 +136,7 @@ class EmbyAccount(ConfigModel):
     hide: Optional[bool] = None
     ua: Optional[str] = None
     jellyfin: Optional[bool] = None
+    continuous: Optional[bool] = False
 
 
 class EmbyConfig(MediaServerBaseConfig):
