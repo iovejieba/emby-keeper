@@ -12,41 +12,30 @@ __ignore__ = True
 
 
 class TemplateBCheckinConfig(BaseModel):
+    # fmt: off
     name: str = None  # 签到器的名称
     bot_checkin_cmd: Union[str, List[str]] = ["/checkin"]  # Bot 依次执行的签到命令
     bot_send_interval: int = 3  # 签到命令间等待的秒数
     bot_use_captcha: bool = True  # 当 Bot 返回图片时, 识别验证码并调用 on_captcha
-    bot_checkin_caption_pat: Optional[str] = (
-        None  # 当 Bot 返回图片时, 仅当符合该 regex 才识别为验证码, 置空不限制
-    )
+    bot_checkin_caption_pat: Optional[str] = (None)  # 当 Bot 返回图片时, 仅当符合该 regex 才识别为验证码, 置空不限制
     bot_text_ignore: Union[str, List[str]] = []  # 当含有列表中的关键词, 即忽略该消息, 置空不限制
     ocr: Optional[str] = None  # OCR 模型, None = 默认模型, str = 自定义模型
-    bot_captcha_char_range: Optional[Union[CharRange, str]] = (
-        None  # OCR 字符范围, 仅当默认模型可用, None = 默认范围, OCRRanges = 预定义范围, str = 自定义范围
-    )
+    bot_captcha_char_range: Optional[Union[CharRange, str]] = (None)  # OCR 字符范围, 仅当默认模型可用, None = 默认范围, OCRRanges = 预定义范围, str = 自定义范围
     bot_captcha_len: Union[int, Iterable[int]] = []  # 验证码长度的可能范围, 例如 [1, 2, 3], 置空不限制
     bot_success_pat: str = r"(\d+)[^\d]*(\d+)"  # 当接收到成功消息后, 从消息中提取数字的模式
     bot_retry_wait: int = 2  # 失败时等待的秒数
     bot_use_history: Optional[int] = None  # 首先尝试识别历史记录中最后一个验证码图片, 最多识别 N 条, 置空禁用
     bot_allow_from_scratch: bool = False  # 允许从未聊天情况下启动
-    bot_success_keywords: Union[str, List[str]] = (
-        []
-    )  # 成功时检测的关键词 (暂不支持regex), 置空使用内置关键词表
+    bot_success_keywords: Union[str, List[str]] = ([])  # 成功时检测的关键词 (暂不支持regex), 置空使用内置关键词表
     bot_checked_keywords: Union[str, List[str]] = []  # 今日已签到时检测的关键词, 置空使用内置关键词表
-    bot_account_fail_keywords: Union[str, List[str]] = (
-        []
-    )  # 账户错误将退出时检测的关键词 (暂不支持regex), 置空使用内置关键词表
-    bot_too_many_tries_fail_keywords: Union[str, List[str]] = (
-        []
-    )  # 过多尝试将退出时检测的关键词 (暂不支持regex), 置空使用内置关键词表
-    bot_fail_keywords: Union[str, List[str]] = (
-        []
-    )  # 签到错误将重试时检测的关键词 (暂不支持regex), 置空使用内置关键词表
+    bot_account_fail_keywords: Union[str, List[str]] = ([])  # 账户错误将退出时检测的关键词 (暂不支持regex), 置空使用内置关键词表
+    bot_too_many_tries_fail_keywords: Union[str, List[str]] = ([])  # 过多尝试将退出时检测的关键词 (暂不支持regex), 置空使用内置关键词表
+    bot_fail_keywords: Union[str, List[str]] = ([])  # 签到错误将重试时检测的关键词 (暂不支持regex), 置空使用内置关键词表
     is_chat: bool = False  # 指定的用户名为群组用户名或 ID, 而非机器人
     max_retries: Optional[int] = None  # 验证码错误或网络错误时最高重试次数 (默认无限)
     checked_retries: Optional[int] = None  # 今日已签到时最高重试次数 (默认不重试)
     wait_response: bool = True  # 是否需要等待相关回复, 以确认签到完成
-
+    # fmt: on
 
 class TemplateBCheckin(BotCheckin):
     init_first = True
@@ -60,6 +49,9 @@ class TemplateBCheckin(BotCheckin):
             return False
         self.name = self.t_config.name or "自定义"
 
+        if self.t_config.is_chat:
+            self.chat_name = self.bot_username
+            self.bot_username = None
         self.bot_checkin_cmd = self.t_config.bot_checkin_cmd
         self.bot_send_interval = self.t_config.bot_send_interval
         self.bot_use_captcha = self.t_config.bot_use_captcha
