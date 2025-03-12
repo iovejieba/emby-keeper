@@ -65,7 +65,9 @@ class NebulaCheckin(BotCheckin):
                         # 今天还可以签到，等待到指定时间
                         sleep = next_checkin_time - datetime.now(timezone.utc)
                         self.log.info(f"即将在 {format_timedelta_human(sleep)} 后重试.")
-                        self.ctx.next_time = next_checkin_time
+                        # 将UTC时间转换为本地时间并移除时区信息
+                        local_next_time = next_checkin_time.astimezone().replace(tzinfo=None)
+                        self.ctx.next_time = local_next_time
                         return await self.finish(RunStatus.RESCHEDULE, "等待重新尝试签到")
                     else:
                         # 今天已经不能签到了

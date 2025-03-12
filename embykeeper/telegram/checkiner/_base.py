@@ -105,6 +105,8 @@ class BaseBotCheckin(ABC):
         self.finished = asyncio.Event()  # 签到完成事件
         self.log = self.ctx.bind_logger(logger.bind(name=self.name, username=client.me.name))  # 日志组件
 
+        self._task = None  # 主任务
+
     @property
     def retries(self):
         return self._retries or config.checkiner.retries
@@ -116,7 +118,9 @@ class BaseBotCheckin(ABC):
     async def _start(self):
         """签到器的入口函数的错误处理外壳."""
         try:
-            return await self.start()
+            self.client.stop_handlers.append(self.stop)
+            self._task = asyncio.create_task(self.start())
+            return await self._task
         except Exception as e:
             if config.nofail:
                 self.log.warning(f"初始化异常错误, 签到器将停止.")
@@ -124,10 +128,21 @@ class BaseBotCheckin(ABC):
                 return self.ctx.finish(RunStatus.ERROR, "异常错误")
             else:
                 raise
+        finally:
+            self.client.stop_handlers.remove(self.stop)
+            self._task = None
 
     @abstractmethod
     async def start(self) -> RunContext:
         pass
+
+    async def stop(self):
+        if self._task:
+            self._task.cancel()
+            try:
+                await self._task
+            except asyncio.CancelledError:
+                pass
 
 
 class BotCheckin(BaseBotCheckin):
@@ -154,12 +169,13 @@ class BotCheckin(BaseBotCheckin):
     bot_success_keywords: Union[str, List[str]] = []  # 成功时检测的关键词 (暂不支持regex), 置空使用内置关键词表
     bot_checked_keywords: Union[str, List[str]] = []  # 今日已签到时检测的关键词, 置空使用内置关键词表
     bot_account_fail_keywords: Union[str, List[str]] = []  # 账户错误将退出时检测的关键词 (暂不支持regex), 置空使用内置关键词表
-    bot_too_many_tries_fail_keywords: Union[str, List[str]] = []  # 账户错误将退出时检测的关键词 (暂不支持regex), 置空使用内置关键词表
+    bot_too_many_tries_fail_keywords: Union[str, List[str]] = []  # 过多尝试将退出时检测的关键词 (暂不支持regex), 置空使用内置关键词表
     bot_fail_keywords: Union[str, List[str]] = []  # 签到错误将重试时检测的关键词 (暂不支持regex), 置空使用内置关键词表
     chat_name: str = None  # 在群聊中向机器人签到
     additional_auth: List[str] = []  # 额外认证要求
     max_retries = None  # 验证码错误或网络错误时最高重试次数 (默认无限)
     checked_retries = None # 今日已签到时最高重试次数 (默认不重试)
+    init_first: bool = False  # 先执行自定义初始化函数, 再进行加入群组分析
     # fmt: on
 
     @property
@@ -223,6 +239,11 @@ class BotCheckin(BaseBotCheckin):
 
         self.ctx.start(RunStatus.INITIALIZING)
 
+        if self.init_first:
+            if not await self.init():
+                self.log.warning(f"初始化错误.")
+                return self.ctx.finish(RunStatus.FAIL, "初始化错误")
+
         if (not self.chat_name) and (not self.bot_username):
             raise ValueError("未指定 chat_name 或 bot_username")
         ident = self.chat_name or self.bot_username
@@ -262,9 +283,10 @@ class BotCheckin(BaseBotCheckin):
                     if not await Link(self.client).auth(a, log_func=self.log.info):
                         return self.ctx.finish(RunStatus.IGNORE, "需要额外认证")
 
-            if not await self.init():
-                self.log.warning(f"初始化错误.")
-                return self.ctx.finish(RunStatus.FAIL, "初始化错误")
+            if not self.init_first:
+                if not await self.init():
+                    self.log.warning(f"初始化错误.")
+                    return self.ctx.finish(RunStatus.FAIL, "初始化错误")
 
             specs = []
             if self.bot_username:
@@ -408,20 +430,20 @@ class BotCheckin(BaseBotCheckin):
             # 创建新的任务并存储
             task = asyncio.create_task(self.message_handler(client, message))
             self._handler_tasks.add(task)
-            try:
-                await task
-            finally:
-                self._handler_tasks.remove(task)
+            await task
         except OSError as e:
             self.log.info(f'发生错误: "{e}", 正在重试.')
             show_exception(e)
             await self.retry()
             message.continue_propagation()
         except asyncio.CancelledError:
-            # 当任务被取消时，确保从集合中移除
-            if task in self._handler_tasks:
-                self._handler_tasks.remove(task)
-            raise
+            task.cancel()
+            try:
+                await asyncio.wait_for(task, 5)
+            except (asyncio.CancelledError, asyncio.TimeoutError):
+                pass
+            finally:
+                raise
         except Exception as e:
             if not config.nofail:
                 await self.fail()
@@ -433,6 +455,9 @@ class BotCheckin(BaseBotCheckin):
                 message.continue_propagation()
         else:
             message.continue_propagation()
+        finally:
+            if task in self._handler_tasks:
+                self._handler_tasks.remove(task)
 
     async def message_handler(self, client: Client, message: Message, type=None):
         """消息处理入口函数."""
