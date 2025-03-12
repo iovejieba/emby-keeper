@@ -857,9 +857,7 @@ class Emby:
             else:
                 req_time = self.a.time
         except TypeError:
-            self.log.warning(
-                f"无法解析 time 配置, 请检查配置: {self.a.time} (应该为数字或两个数字的数组)."
-            )
+            self.log.warning(f"无法解析 time 配置, 请检查配置: {self.a.time} (应该为数字或两个数字的数组).")
             return False
         msg = " (允许播放多个)" if self.a.allow_multiple else ""
         msg = f"开始播放视频{msg}, 共需播放 {req_time:.0f} 秒."
