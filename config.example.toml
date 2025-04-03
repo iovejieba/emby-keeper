@@ -26,11 +26,11 @@ concurrency = 1
 [[emby.account]] # 第 1 个账号
 
 # 站点域名和端口:
-url = "https://www.jensen.com:443"
+url = "https://rowland.biz:443"
 
 # 用户名和密码:
-username = "tammy75"
-password = "r@4ZWfSGPq"
+username = "laura53"
+password = "$1CfX7lHx6"
 
 # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 time = [300, 600]
@@ -54,9 +54,9 @@ time = [300, 600]
 
 # 第 2 个账号, 如需使用请将该段取消注释并修改, 也可以添加更多账号.
 # [[emby.account]]
-# url = "https://fowler.net:443"
-# username = "jeffrey35"
-# password = "@)Pspaead9"
+# url = "https://www.gregory.net:443"
+# username = "randyarmstrong"
+# password = "^SD966pk)7"
 # time = [300, 600]
 
 # ================================================================================
@@ -92,7 +92,7 @@ interval_days = 1
 [[telegram.account]] # 第 1 个账号
 
 # 带国家区号的账户手机号, 一般为 "+86..."
-phone = "+8615214301539"
+phone = "+8615470910003"
 
 # 启用机器人签到系列功能, 默认启用, 设置为 false 以禁用:
 checkiner = true
@@ -112,7 +112,7 @@ messager = false
 
 # 第 2 个账号, 如需使用请将该段取消注释并修改, 也可以添加更多账号.
 # [[telegram.account]]
-# phone = "+8614818211973"
+# phone = "+8619972388653"
 # checkiner = true
 # monitor = false
 # messager = false
@@ -120,7 +120,7 @@ messager = false
 # ================================================================================
 # 站点相关设置
 # 当您需要禁用某些站点时, 请将该段取消注释并修改.
-# 该部分内容是根据 Embykeeper 7.1.25 生成的.
+# 该部分内容是根据 Embykeeper 7.1.26 生成的.
 # 详见: https://emby-keeper.github.io/guide/配置文件#site-子项
 # ================================================================================
 
@@ -203,18 +203,18 @@ concurrency = 1
 # [[subsonic.account]] # 第 1 个账号
 # 
 # # 站点域名和端口:
-# url = "https://www.miller.org:443"
+# url = "https://golden.com:443"
 # 
 # # 用户名和密码:
-# username = "linda55"
-# password = "5o_eJXcy#1"
+# username = "kylehanson"
+# password = "T01huoXT*z"
 # 
 # # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 # time = [300, 600]
 # 
 # [[subsonic.account]] # 第 2 个账号
-# url = "https://velasquez.com:443"
-# username = "leonardherman"
-# password = "ov@4BctpGN"
+# url = "https://henderson.org:443"
+# username = "scottjessica"
+# password = "jbmjG1a8)7"
 # time = [300, 600]
 
