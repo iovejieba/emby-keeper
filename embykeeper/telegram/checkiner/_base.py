@@ -410,9 +410,9 @@ class BotCheckin(BaseBotCheckin):
     async def send(self, cmd):
         """向机器人发送命令."""
         if self.chat_name:
-            await self.client.send_message(self.chat_name, cmd)
+            return await self.client.send_message(self.chat_name, cmd)
         else:
-            await self.client.send_message(self.bot_username, cmd)
+            return await self.client.send_message(self.bot_username, cmd)
 
     async def send_checkin(self, retry=False):
         """发送签到命令, 或依次发送签到命令序列."""
