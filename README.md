@@ -126,9 +126,14 @@ docker run -v $(pwd)/embykeeper:/app --rm -it --net=host embykeeper/embykeeper -
     - 旧机器人 (`tdck`) [机器人](https://t.me/tdck_emby_create_bot)
   - 惊蛰 (`jingzhe`): [频道](https://t.me/jz_emby) [群组](https://t.me/jingzhe_EMBY) [机器人](https://t.me/JingzheProbot)
   - 墨云阁 (`moyunge`): [频道](https://t.me/q98e1VZocwxkZDc1) [群组](https://t.me/mobaishishuaige) [机器人](https://t.me/MoYunGeBoss_bot)
-  - 电子书库 (`epub`): [频道](https://t.me/bookhsulife) [群组](https://t.me/libhsulife) [机器人](https://t.me/wenjian_emby_bot)
+  - 电子书库: [频道](https://t.me/bookhsulife) [群组](https://t.me/libhsulife)
+    - 群组内签到 (`epub_group`): [群组](https://t.me/libhsulife) [机器人](https://t.me/zhruonanbot)
+    - Emby 机器人签到 (`epub`): [机器人](https://t.me/akilecloud_bot)
   - Kiku (`kiku`): [频道](https://t.me/KikuEmbyNotice) [群组](https://t.me/KikuEmbyChat) [机器人](https://t.me/kikuemby_bot)
-  - 叶子 (`yezi`): [频道](https://t.me/yezi_emby) [群组](https://t.me/yeziemby) [机器人]([@](https://t.me/yeziemby_bot)
+  - 叶子 (`yezi`): [频道](https://t.me/yezi_emby) [群组](https://t.me/yeziemby) [机器人](https://t.me/yeziemby_bot)
+  - Ask (`ask`): [频道](https://t.me/ask_uni) [群组](https://t.me/Ask_Universal) [机器人](https://t.me/askUniversal_bot)
+  - DPeak (`dpeak`): [群组](https://t.me/EMBY_DPeak) [机器人](https://t.me/emby_dpeak_bot)
+  - Youno (`youno`): [频道](http://t.me/+jRxdcDjxgpViNDll) [群组](https://t.me/YounosEmby) [机器人](https://t.me/YounoEmby_bot)
 
   <!-- #endregion checkiner-sites -->
 
@@ -169,6 +174,7 @@ docker run -v $(pwd)/embykeeper:/app --rm -it --net=host embykeeper/embykeeper -
   - 其他非 Emby 相关 (默认禁用, 请参考[教程文档](https://emby-keeper.github.io/guide/配置文件#service-子项)启用):
     <!-- #region checkiner-other-sites -->
 
+    - HDHive (`hdhive`): [群组](https://t.me/alypzyhzq) [机器人](https://t.me/HDHiveBot)
     - 搜书神器 (`sssq`): [机器人](https://t.me/sosdbot?start=fromid_6489896414)
     - 纸片 DDoS (`zhipian`): [频道](https://t.me/PaperBotnet) [机器人](https://t.me/zhipianbot?start=2zbx04e)
     - 情报局社工库 (`infsgk`): [机器人](https://t.me/qbjSGKzhuquebot?start=NjQ4OTg5NjQxNA==)
