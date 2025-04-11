@@ -54,7 +54,25 @@ class Link:
 
         return await asyncio.gather(*[delete(m) for m in messages])
 
-    async def post(
+    async def post(self, *args, stop_grace: float = 0, **kw):
+        async def stop(task: asyncio.Task):
+            if stop_grace and not task.done():
+                await asyncio.sleep(stop_grace)
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+        
+        task = asyncio.create_task(self._post(*args, **kw))
+        stop_handler = async_partial(stop, task=task)
+        self.client.stop_handlers.append(stop_handler)
+        try:
+            return await task
+        finally:
+            self.client.stop_handlers.remove(stop_handler)
+    
+    async def _post(
         self,
         cmd,
         photo=None,
@@ -159,7 +177,10 @@ class Link:
                             self.log.warning(f"{name}出现未知错误.")
                             return False
                 finally:
-                    await self.client.remove_handler(handler, group=1)
+                    try:
+                        await self.client.remove_handler(handler, group=1)
+                    except:
+                        pass
 
         finally:
             Link.post_count -= 1
@@ -242,7 +263,7 @@ class Link:
             else:
                 return False
 
-    async def captcha(self, site: str, url: str = None):
+    async def captcha(self, site: str, url: str = None) -> Optional[str]:
         """向机器人发送验证码解析请求."""
         cmd = f"/captcha {self.instance} {site}"
         if url:
@@ -253,7 +274,7 @@ class Link:
         else:
             return None
 
-    async def captcha_content(self, site: str, url: str = None):
+    async def captcha_content(self, site: str, url: str = None) -> Optional[str]:
         """向机器人发送带验证码的远程网页解析请求."""
         cmd = f"/captcha {self.instance} {site}"
         if url:
@@ -264,7 +285,7 @@ class Link:
         else:
             return None
 
-    async def wssocks(self):
+    async def wssocks(self) -> Tuple[Optional[str], Optional[str]]:
         """向机器人发送逆向 Socks 代理隧道监听请求."""
         cmd = f"/wssocks {self.instance}"
         results = await self.post(cmd, timeout=20, name="请求新建代理隧道以跳过验证码")
@@ -273,7 +294,7 @@ class Link:
         else:
             return None, None
 
-    async def captcha_wssocks(self, token: str, url: str, user_agent: Optional[str] = None):
+    async def captcha_wssocks(self, token: str, url: str, user_agent: Optional[str] = None) -> Tuple[Optional[str], Optional[str]]:
         """向机器人发送通过代理隧道进行验证码解析请求."""
         cmd = f"/captcha_wssocks {self.instance} {token} {url}"
         if user_agent:
@@ -284,7 +305,7 @@ class Link:
         else:
             return None, None
 
-    async def pornemby_answer(self, question: str):
+    async def pornemby_answer(self, question: str) -> Tuple[Optional[str], Optional[str]]:
         """向机器人发送问题回答请求."""
         results = await self.post(
             f"/pornemby_answer {self.instance} {question}", timeout=20, name="请求问题回答"
@@ -294,7 +315,7 @@ class Link:
         else:
             return None, None
 
-    async def terminus_answer(self, question: str):
+    async def terminus_answer(self, question: str) -> Tuple[Optional[str], Optional[str]]:
         """向机器人发送问题回答请求."""
         results = await self.post(
             f"/terminus_answer {self.instance} {question}", timeout=20, name="请求问题回答"
@@ -304,7 +325,7 @@ class Link:
         else:
             return None, None
 
-    async def gpt(self, prompt: str):
+    async def gpt(self, prompt: str) -> Tuple[Optional[str], Optional[str]]:
         """向机器人发送智能回答请求."""
         results = await self.post(f"/gpt {self.instance} {prompt}", timeout=40, name="请求智能回答")
         if results:
@@ -312,7 +333,7 @@ class Link:
         else:
             return None, None
 
-    async def visual(self, photo, options: List[str], question=None):
+    async def visual(self, photo, options: List[str], question=None) -> Tuple[Optional[str], Optional[str]]:
         """向机器人发送视觉问题解答请求."""
         cmd = f"/visual {self.instance} {'/'.join(options)}"
         if question:
@@ -323,7 +344,7 @@ class Link:
         else:
             return None, None
 
-    async def ocr(self, photo):
+    async def ocr(self, photo) -> Optional[str]:
         """向机器人发送 OCR 解答请求."""
         cmd = f"/ocr {self.instance}"
         results = await self.post(cmd, photo=photo, timeout=20, name="请求验证码解答")
@@ -342,7 +363,7 @@ class Link:
         results = await self.post(f"/msg {self.instance} {message}", name="发送即时日志到 Telegram ")
         return bool(results)
 
-    async def infer(self, prompt: str):
+    async def infer(self, prompt: str) -> Tuple[Optional[str], Optional[str]]:
         """向机器人发送话术推测记录请求."""
         bio = BytesIO()
         bio.write(prompt.encode("utf-8"))
