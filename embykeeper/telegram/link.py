@@ -63,7 +63,7 @@ class Link:
                 await task
             except asyncio.CancelledError:
                 pass
-        
+
         task = asyncio.create_task(self._post(*args, **kw))
         stop_handler = async_partial(stop, task=task)
         self.client.stop_handlers.append(stop_handler)
@@ -71,7 +71,7 @@ class Link:
             return await task
         finally:
             self.client.stop_handlers.remove(stop_handler)
-    
+
     async def _post(
         self,
         cmd,
@@ -294,7 +294,9 @@ class Link:
         else:
             return None, None
 
-    async def captcha_wssocks(self, token: str, url: str, user_agent: Optional[str] = None) -> Tuple[Optional[str], Optional[str]]:
+    async def captcha_wssocks(
+        self, token: str, url: str, user_agent: Optional[str] = None
+    ) -> Tuple[Optional[str], Optional[str]]:
         """向机器人发送通过代理隧道进行验证码解析请求."""
         cmd = f"/captcha_wssocks {self.instance} {token} {url}"
         if user_agent:

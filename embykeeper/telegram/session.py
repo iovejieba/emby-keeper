@@ -76,7 +76,9 @@ class ClientsSession:
                 logger.debug(f'正在停止账号 "{client.phone_number}" 上的监听和任务.')
                 cls.pool.pop(phone, None)
                 if client.stop_handlers:
-                    logger.debug(f'开始执行账号 "{client.phone_number}" 的停止处理程序, 共 {len(client.stop_handlers)} 个.')
+                    logger.debug(
+                        f'开始执行账号 "{client.phone_number}" 的停止处理程序, 共 {len(client.stop_handlers)} 个.'
+                    )
                     try:
                         await asyncio.wait_for(
                             asyncio.gather(*[h() for h in client.stop_handlers], return_exceptions=True),
