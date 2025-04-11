@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 import sqlite3
 import struct
-from typing import Union
+from typing import List, Union
 import logging
 
 from rich.prompt import Prompt
@@ -96,7 +96,7 @@ class Dispatcher(dispatcher.Dispatcher):
 
             self.handler_worker_tasks = []
             for _ in range(self.client.workers):
-                self.handler_worker_tasks.append(self.loop.create_task(self.handler_worker()))
+                self.handler_worker_tasks.append(self.client.loop.create_task(self.handler_worker()))
 
             if not self.client.skip_updates:
                 await self.client.recover_gaps()
@@ -124,7 +124,7 @@ class Dispatcher(dispatcher.Dispatcher):
                 self.groups[group].append(handler)
                 # logger.debug(f"增加了 Telegram 更新处理器: {handler.__class__.__name__}.")
 
-        return self.loop.create_task(fn())
+        return self.client.loop.create_task(fn())
 
     def remove_handler(self, handler, group: int):
         async def fn():
@@ -134,7 +134,7 @@ class Dispatcher(dispatcher.Dispatcher):
                 self.groups[group].remove(handler)
                 # logger.debug(f"移除了 Telegram 更新处理器: {handler.__class__.__name__}.")
 
-        return self.loop.create_task(fn())
+        return self.client.loop.create_task(fn())
 
     async def handler_worker(self):
         while True:
