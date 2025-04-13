@@ -27,11 +27,11 @@ class AsyncTyper(typer.Typer):
                         sys.exit(e.exit_code)
                     except Exception as e:
                         print("\r", end="", flush=True)
-                        logger.critical(f"发生关键错误, {__name__.capitalize()} 将退出.")
+                        logger.critical(f"发生关键错误, {__product__.capitalize()} 将退出.")
                         show_exception(e, regular=False)
                         sys.exit(1)
                     else:
-                        logger.info(f"所有任务已完成, 欢迎您再次使用 {__name__.capitalize()}.")
+                        logger.info(f"所有任务已完成, 欢迎您再次使用 {__product__.capitalize()}.")
 
                 try:
                     loop = asyncio.new_event_loop()
@@ -329,9 +329,9 @@ async def main(
     config.public = public
 
     if public:
-        from .public import public_entrypoint
+        from .public import public_preparation
 
-        if not await public_entrypoint():
+        if not await public_preparation():
             raise typer.Exit(1)
     else:
         if not await config.reload_conf(config_file):
@@ -353,7 +353,7 @@ async def main(
         monitor = True
         messager = True
 
-    if config.mongodb:
+    if config.mongodb and not var.use_mongodb_config:
         logger.info(f"正在连接到 MongoDB 缓存, 请稍候.")
         try:
             from .cache import cache

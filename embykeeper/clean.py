@@ -23,6 +23,7 @@ def get_cache_options():
                 "7.1": {"name": "monitor.pornemby.answer.qa", "prefix": "monitor.pornemby.answer.qa"}
             },
         },
+        "8": {"name": "所有缓存", "special": "all"},
     }
 
 
@@ -41,13 +42,19 @@ def clean_cache(cache_key: str = None, cache_prefix: str = None):
     if cache_prefix is not None:
         # 清理指定前缀的所有缓存
         if cache_prefix == "all_except_credentials":
-            # 特殊处理：清理除凭据外所有缓存
-            credential_prefixes = ["emby.credential", "telegram.session_str"]
+            # 特殊处理：清理除凭据和配置外所有缓存
+            except_prefixes = ["emby.credential", "telegram.session_str", "config"]
             all_keys = cache.find_by_prefix("")
-            keys_to_delete = [k for k in all_keys if not any(k.startswith(p) for p in credential_prefixes)]
+            keys_to_delete = [k for k in all_keys if not any(k.startswith(p) for p in except_prefixes)]
             count = len(keys_to_delete)
             cache.delete_many(keys_to_delete)
-            return f"已清理除凭据外所有缓存，共 {count} 条"
+            return f"已清理除凭据和配置外所有缓存，共 {count} 条"
+        elif cache_prefix == "all":
+            # 特殊处理：清理所有缓存
+            all_keys = cache.find_by_prefix("")
+            count = len(all_keys)
+            cache.delete_many(all_keys)
+            return f"已清理除凭据和配置外所有缓存，共 {count} 条"
         else:
             # 常规前缀清理
             keys = cache.find_by_prefix(cache_prefix)
@@ -68,7 +75,7 @@ async def cleaner():
             keys = list(cache.find_by_prefix(option["prefix"]))
             count = len(keys)
             if option.get("show_keys", False):
-                # 显示凭据类型，需要显示具体的key
+                # 显示凭据类型，需要显示具体的 key
                 console.print(f"{key}. {option['name']} ({option['prefix']})")
                 for i, key_name in enumerate(keys, 1):
                     console.print(f"  {key}.{i}. {key_name}")
@@ -86,7 +93,7 @@ async def cleaner():
                 for i, key_name in enumerate(keys, 1):
                     console.print(f"    {child_key}.{i}. {key_name}")
         else:
-            # 特殊选项（如"除凭据外所有缓存"）
+            # 特殊选项
             console.print(f"{key}. {option['name']}")
 
     console.rule()

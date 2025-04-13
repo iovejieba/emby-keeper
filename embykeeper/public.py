@@ -5,11 +5,12 @@ from typing import List
 from loguru import logger
 from rich.prompt import Confirm, Prompt, IntPrompt, Confirm
 
+from .utils import show_exception
 from .config import ConfigManager, config
 from .schema import Config, TelegramAccount, EmbyAccount
 from .var import console
 from .log import pad
-from . import __url__
+from . import var, __url__
 
 
 async def convert_session(accounts: List[TelegramAccount]):
@@ -28,7 +29,7 @@ async def convert_session(accounts: List[TelegramAccount]):
     return accounts
 
 
-async def interactive_config():
+async def interactive_config(mongodb_url: str = None):
     from tomlkit import item
 
     cfg = Config()
@@ -38,11 +39,14 @@ async def interactive_config():
     logger.info(f"配置帮助详见: {__url__}.")
     logger.info(f"若需要重新开始, 请点击右上方的刷新按钮.")
     logger.info(f"若您需要更加高级的配置, 请使用右上角的 Config 按钮以修改配置文件.")
-
-    mongodb_url = Prompt.ask(
-        pad + "请输入 MongoDB 连接地址 [dark_green](mongodb://user:pass@host:port)[/]", console=console
-    )
-    cfg.mongodb = mongodb_url
+    
+    if not mongodb_url:
+        logger.info("请输入 MongoDB 连接地址 [dark_green](mongodb://user:pass@host:port)[/],")
+        mongodb_url = Prompt.ask(
+            pad + "回车以跳过, 但是可能导致记录的保活模拟设备环境变化:\n" + pad + "MongoDB URL", console=console
+        )
+    if mongodb_url:
+        cfg.mongodb = mongodb_url
 
     telegram_accounts = cfg.telegram.account
     while True:
@@ -155,15 +159,21 @@ async def interactive_config():
             console=console,
         )
     content = item(cfg.model_dump(exclude_none=True)).as_string().encode()
-    content = base64.b64encode(content)
-    logger.info(
-        f"您的配置[green]已生成完毕[/]! 您需要将以下内容写入托管平台的 EK_CONFIG 环境变量 ([red]SECRET[/]), 否则配置将在重启后丢失."
-    )
-    console.print()
-    console.rule("EK_CONFIG")
-    console.print(content.decode())
-    console.rule()
-    console.print()
+    content = base64.b64encode(content).decode()
+    if var.use_mongodb_config:
+        from .cache import cache
+        
+        cache.set('config', content)
+        logger.info(f"您的配置已生成完毕并已存储到 MongoDB 数据库.")
+    else:
+        logger.info(
+            f"您的配置[green]已生成完毕[/]! 您需要将以下内容写入托管平台的 EK_CONFIG 环境变量 ([red]SECRET[/]), 否则配置将在重启后丢失."
+        )
+        console.print()
+        console.rule("EK_CONFIG")
+        console.print(content)
+        console.rule()
+        console.print()
     start_now = Confirm.ask(pad + "是否立即启动?", default=True, console=console)
     if start_now:
         config.set(cfg)
@@ -172,18 +182,21 @@ async def interactive_config():
         return False
 
 
-async def prepare_config(env_config: str):
+async def prepare_config_str(config_str: str, mongodb_url: str = None):
     from tomlkit import item
 
-    cfg = ConfigManager.load_env_config(env_config)
+    cfg = ConfigManager.load_config_str(config_str)
     cfg = ConfigManager.validate_config(cfg)
     config.set(cfg)
     if not cfg:
         return False
 
     # Add MongoDB check
-    if not cfg.mongodb:
+    if (not cfg.mongodb) and (not mongodb_url):
         logger.warning("未设置 MongoDB 连接, 所有缓存数据将在重启后遗失或重置.")
+        
+    if mongodb_url:
+        cfg.mongodb = mongodb_url
 
     to_login = []
     for a in cfg.telegram.account:
@@ -193,16 +206,22 @@ async def prepare_config(env_config: str):
         logger.info("即将尝试登陆各个账号.")
         await convert_session(to_login)
         content = item(cfg.model_dump(exclude_none=True)).as_string().encode()
-        content = base64.b64encode(content)
-        logger.info(
-            f"您已登陆到 Telegram! 您需要将以下内容重新写入托管平台的 EK_CONFIG 环境变量 ([red]SECRET[/]), "
-            "否则登陆状态将在重启后丢失."
-        )
-        console.print()
-        console.rule("EK_CONFIG")
-        console.print(content.decode())
-        console.rule()
-        console.print()
+        content = base64.b64encode(content).decode()
+        if var.use_mongodb_config:
+            from .cache import cache
+            
+            cache.set('config', content)
+            logger.info(f"您已登陆到 Telegram! 相关凭据已存储到 MongoDB 数据库.")
+        else:
+            logger.info(
+                f"您已登陆到 Telegram! 您需要将以下内容重新写入托管平台的 EK_CONFIG 环境变量 ([red]SECRET[/]), "
+                "否则登陆状态将在重启后丢失."
+            )
+            console.print()
+            console.rule("EK_CONFIG")
+            console.print(content)
+            console.rule()
+            console.print()
         start_now = Confirm.ask(pad + "是否立即启动?", default=True, console=console)
         if start_now:
             config.set(cfg)
@@ -212,10 +231,33 @@ async def prepare_config(env_config: str):
     else:
         return True
 
+async def prepare_mongodb_config(mongodb_url: str):
+    logger.info(f"正在连接到 MongoDB 缓存, 请稍候.")
+    config.set(Config())
+    config.mongodb = mongodb_url
+    var.use_mongodb_config = True
+    try:
+        from .cache import cache
+        
+        config_str = cache.get("config", None)
+    except Exception as e:
+        logger.error(f"您已在环境变量定义 MongoDB 地址, 但 MongoDB 缓存连接失败: {e}, 程序将退出.")
+        show_exception(e, regular=False)
+        return False
+    
+    if not config_str:
+        return await interactive_config(mongodb_url)
+    else:
+        ok = await prepare_config_str(config_str, mongodb_url)
+        return ok
 
-async def public_entrypoint():
+async def public_preparation():
     env_config = os.environ.get(f"EK_CONFIG", None)
+    mongodb_url = os.environ.get(f"EK_MONGODB", None)
+    
+    if mongodb_url:
+        return await prepare_mongodb_config(mongodb_url)
     if env_config:
-        return await prepare_config(env_config)
+        return await prepare_config_str(env_config)
     else:
         return await interactive_config()

@@ -20,7 +20,19 @@ window.addEventListener('DOMContentLoaded', function() {
         statusMsgBadge.classList.remove("d-none");
         axios.post(basePrefix + '/config/save', {"config": editor.getDoc().getValue()})
             .then(function(response) {
-                document.getElementById('modal-data').textContent = response.data;
+                const modalBody = document.querySelector('.modal-body');
+                if (response.data) {
+                    document.getElementById('modal-data').textContent = response.data;
+                    modalBody.children[0].style.display = 'none';  // Hide Telegram message
+                    modalBody.children[1].style.display = 'block'; // Show hr
+                    modalBody.children[2].style.display = 'block'; // Show env var message
+                    modalBody.children[3].style.display = 'block'; // Show copy box
+                } else {
+                    modalBody.children[0].style.display = 'block'; // Show Telegram message
+                    modalBody.children[1].style.display = 'none';  // Hide hr
+                    modalBody.children[2].style.display = 'none';  // Hide env var message
+                    modalBody.children[3].style.display = 'none';  // Hide copy box
+                }
                 var saveModal = new bootstrap.Modal(document.getElementById('saveModal'));
                 saveModal.show();
                 statusMsgBadge.classList.add("d-none");

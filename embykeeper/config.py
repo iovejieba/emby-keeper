@@ -508,7 +508,7 @@ class ConfigManager(ProxyBase):
         self._observer = asyncio.create_task(observer())
 
     @staticmethod
-    def load_env_config(data: str):
+    def load_config_str(data: str):
         """从环境变量数据读入配置."""
 
         try:
@@ -530,7 +530,7 @@ class ConfigManager(ProxyBase):
         cfg_dict = {}
         env_config = os.environ.get(f"EK_CONFIG", None)
         if env_config:
-            cfg_dict.update(self.load_env_config(env_config))
+            cfg_dict.update(self.load_config_str(env_config))
         else:
             if self.windows:
                 default_conf_file = self.basedir / "config.toml"

@@ -24,10 +24,15 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify, a
 from flask_socketio import SocketIO
 from flask_login import LoginManager, login_user, login_required, current_user
 
+
 try:
     import tomllib
 except ImportError:
     import tomli as tomllib
+
+from embykeeper.config import config as ek_config
+from embykeeper.cache import cache as ek_cache
+from embykeeper.schema import Config
 
 from . import __version__
 
@@ -47,7 +52,7 @@ app.config["fd"] = None
 app.config["proc"] = None
 app.config["hist"] = ""
 app.config["faillog"] = []
-app.config["config"] = os.environ.get("EK_CONFIG", "")
+app.config["config"] = ""
 
 version = f"V{__version__}"
 
@@ -132,7 +137,10 @@ def config():
 def config_current():
     if not is_authenticated():
         return "Not authenticated", 401
-    data = app.config["config"]
+    if not app.config["mongodb"]:
+        data = app.config["config"]
+    else:
+        data = ek_cache.get("config", None)
     if not data:
         return "Config missing", 404
     try:
@@ -164,9 +172,12 @@ def config_save():
     # Use tomlkit to convert back to TOML string
     clean_data = tomlkit.dumps(clean_dict)
     encoded_data = base64.b64encode(clean_data.encode()).decode()
-    app.config["config"] = encoded_data
-    return jsonify(encoded_data), 200
-
+    if not app.config["mongodb"]:
+        app.config["config"] = encoded_data
+        return jsonify(encoded_data), 200
+    else:
+        ek_cache.set("config", encoded_data)
+        return "", 200
 
 @bp.route("/healthz")
 def healthz():
@@ -269,7 +280,7 @@ def start_proc(instant=False):
         stdin=slave_fd,
         stdout=slave_fd,
         stderr=slave_fd,
-        env={**os.environ, "EK_CONFIG": app.config["config"], "TZ": "Asia/Shanghai"},
+        env={**os.environ, "EK_CONFIG": app.config["config"], "EK_MONGODB": app.config["mongodb"], "TZ": "Asia/Shanghai"},
         preexec_fn=os.setsid,
     )
     socketio.start_background_task(target=disconnect_on_proc_exit, proc=p)
@@ -352,6 +363,10 @@ def run(
     # 注册蓝图时设置 url_prefix
     app.register_blueprint(bp, url_prefix=app.config["BASE_PREFIX"])
     app.config["config"] = os.environ.get("EK_CONFIG", "")
+    app.config["mongodb"] = os.environ.get("EK_MONGODB", "")
+    if app.config["mongodb"]:
+        ek_config.set(Config())
+        ek_config.mongodb = app.config["mongodb"]
     if not wait:
         start_proc(instant=True)
     logger.info(f"Embykeeper webserver started at {host}:{port} with prefix {prefix or '/'}")

@@ -10,7 +10,7 @@ from typing import Any, Coroutine, Iterable, Optional, Union
 
 from loguru import logger
 
-from . import var, __url__, __name__, __version__
+from . import __url__, __name__, __version__
 from .schema import ProxyConfig
 
 
@@ -107,6 +107,8 @@ def show_exception(e, regular=True):
         e: 异常对象
         regular: 是否为常规异常 (如网络错误等), 影响不同日志等级下提示信息的格式
     """
+    from . import var
+    
     if (regular and var.debug <= 1) or (not regular and var.debug == 0):
         var.console.rule()
         print(format_exception(e, regular=regular), flush=True, file=sys.stderr)
