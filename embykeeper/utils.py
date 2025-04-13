@@ -108,7 +108,7 @@ def show_exception(e, regular=True):
         regular: 是否为常规异常 (如网络错误等), 影响不同日志等级下提示信息的格式
     """
     from . import var
-    
+
     if (regular and var.debug <= 1) or (not regular and var.debug == 0):
         var.console.rule()
         print(format_exception(e, regular=regular), flush=True, file=sys.stderr)

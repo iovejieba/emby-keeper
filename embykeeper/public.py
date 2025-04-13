@@ -39,11 +39,12 @@ async def interactive_config(mongodb_url: str = None):
     logger.info(f"配置帮助详见: {__url__}.")
     logger.info(f"若需要重新开始, 请点击右上方的刷新按钮.")
     logger.info(f"若您需要更加高级的配置, 请使用右上角的 Config 按钮以修改配置文件.")
-    
+
     if not mongodb_url:
         logger.info("请输入 MongoDB 连接地址 [dark_green](mongodb://user:pass@host:port)[/],")
         mongodb_url = Prompt.ask(
-            pad + "回车以跳过, 但是可能导致记录的保活模拟设备环境变化:\n" + pad + "MongoDB URL", console=console
+            pad + "回车以跳过, 但是可能导致记录的保活模拟设备环境变化:\n" + pad + "MongoDB URL",
+            console=console,
         )
     if mongodb_url:
         cfg.mongodb = mongodb_url
@@ -162,8 +163,8 @@ async def interactive_config(mongodb_url: str = None):
     content = base64.b64encode(content).decode()
     if var.use_mongodb_config:
         from .cache import cache
-        
-        cache.set('config', content)
+
+        cache.set("config", content)
         logger.info(f"您的配置已生成完毕并已存储到 MongoDB 数据库.")
     else:
         logger.info(
@@ -194,7 +195,7 @@ async def prepare_config_str(config_str: str, mongodb_url: str = None):
     # Add MongoDB check
     if (not cfg.mongodb) and (not mongodb_url):
         logger.warning("未设置 MongoDB 连接, 所有缓存数据将在重启后遗失或重置.")
-        
+
     if mongodb_url:
         cfg.mongodb = mongodb_url
 
@@ -209,8 +210,8 @@ async def prepare_config_str(config_str: str, mongodb_url: str = None):
         content = base64.b64encode(content).decode()
         if var.use_mongodb_config:
             from .cache import cache
-            
-            cache.set('config', content)
+
+            cache.set("config", content)
             logger.info(f"您已登陆到 Telegram! 相关凭据已存储到 MongoDB 数据库.")
         else:
             logger.info(
@@ -231,6 +232,7 @@ async def prepare_config_str(config_str: str, mongodb_url: str = None):
     else:
         return True
 
+
 async def prepare_mongodb_config(mongodb_url: str):
     logger.info(f"正在连接到 MongoDB 缓存, 请稍候.")
     config.set(Config())
@@ -238,23 +240,24 @@ async def prepare_mongodb_config(mongodb_url: str):
     var.use_mongodb_config = True
     try:
         from .cache import cache
-        
+
         config_str = cache.get("config", None)
     except Exception as e:
         logger.error(f"您已在环境变量定义 MongoDB 地址, 但 MongoDB 缓存连接失败: {e}, 程序将退出.")
         show_exception(e, regular=False)
         return False
-    
+
     if not config_str:
         return await interactive_config(mongodb_url)
     else:
         ok = await prepare_config_str(config_str, mongodb_url)
         return ok
 
+
 async def public_preparation():
     env_config = os.environ.get(f"EK_CONFIG", None)
     mongodb_url = os.environ.get(f"EK_MONGODB", None)
-    
+
     if mongodb_url:
         return await prepare_mongodb_config(mongodb_url)
     if env_config:

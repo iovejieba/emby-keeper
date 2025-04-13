@@ -179,6 +179,7 @@ def config_save():
         ek_cache.set("config", encoded_data)
         return "", 200
 
+
 @bp.route("/healthz")
 def healthz():
     return "200 OK"
@@ -280,7 +281,12 @@ def start_proc(instant=False):
         stdin=slave_fd,
         stdout=slave_fd,
         stderr=slave_fd,
-        env={**os.environ, "EK_CONFIG": app.config["config"], "EK_MONGODB": app.config["mongodb"], "TZ": "Asia/Shanghai"},
+        env={
+            **os.environ,
+            "EK_CONFIG": app.config["config"],
+            "EK_MONGODB": app.config["mongodb"],
+            "TZ": "Asia/Shanghai",
+        },
         preexec_fn=os.setsid,
     )
     socketio.start_background_task(target=disconnect_on_proc_exit, proc=p)
