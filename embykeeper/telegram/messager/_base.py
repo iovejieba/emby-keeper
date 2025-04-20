@@ -4,7 +4,7 @@ import re
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
-from typing import Iterable, List, Optional, Union
+from typing import Iterable, List, Literal, Optional, Union
 
 import yaml
 from dateutil import parser
@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field, ValidationError
 from embykeeper import __name__ as __product__
 from embykeeper.data import get_data
 from embykeeper.var import debug
-from embykeeper.utils import show_exception, truncate_str, distribute_numbers
+from embykeeper.utils import show_exception, to_iterable, truncate_str, distribute_numbers
 from embykeeper.runinfo import RunContext, RunStatus
 from embykeeper.config import config
 from embykeeper.schema import TelegramAccount
@@ -86,9 +86,12 @@ class Messager:
     chat_name: str = None  # 群聊的名称
     default_messages: List[Union[str, MessageSchedule]] = []  # 默认的话术列表资源名
     additional_auth: List[str] = []  # 额外认证要求
-    min_interval: int = None  # 预设两条消息间的最小间隔时间
-    max_interval: int = None  # 预设两条消息间的最大间隔时间
-
+    min_interval: int = None  # 发送最小间隔 (秒)
+    max_interval: int = None  # 发送最大间隔 (秒)
+    at: Optional[List[str]] = None  # 时间区间, 例如 ["5:00AM", "9:00PM"]
+    possibility: Optional[float] = None  # 发送概率, 例如 1.00
+    only: Optional[Literal["weekday", "weekend"]] = None  # 仅在周末/周中发送
+    
     site_last_message_time = None
     site_lock = asyncio.Lock()
 
@@ -111,11 +114,11 @@ class Messager:
         self.ctx = context or RunContext.prepare()
         self.config = config or {}
         self.me = me
-        self.min_interval = config.get(
-            "min_interval",
-            config.get("interval", self.min_interval or 60),
-        )  # 两条消息间的最小间隔时间
-        self.max_interval = config.get("max_interval", self.max_interval)  # 两条消息间的最大间隔时间
+        self.min_interval = config.get("min_interval", config.get("interval", self.min_interval or 60))
+        self.max_interval = config.get("max_interval", self.max_interval)
+        self.at = config.get("max_interval", self.at)
+        self.possibility = config.get("possibility", self.possibility)
+        self.only = config.get("only", self.only)
         self.log = logger.bind(scheme="telemessager", name=self.name, username=me.name)
         self.timeline: List[MessagePlan] = []  # 消息计划序列
 
@@ -126,14 +129,18 @@ class Messager:
 
         material = MessageMaterialSchema.model_validate(data)
 
-        at = material.at
+        at = self.at or material.at
         assert len(at) == 2
         at = [parser.parse(t).time() for t in at]
+        
+        possibility = self.possibility or material.possibility
+        only = self.only or material.only
+        
         return _MessageSchedule(
             messages=material.messages,
             at=at,
-            possibility=material.possibility,
-            only=material.only,
+            possibility=possibility,
+            only=only,
         )
 
     def add(self, schedule: _MessageSchedule, use_multiply=False):
@@ -268,7 +275,7 @@ class Messager:
 
         messages = self.config.get("messages", [])
         if not messages:
-            messages = self.default_messages
+            messages = to_iterable(self.default_messages)
 
         schedules = []
         for m in messages:
