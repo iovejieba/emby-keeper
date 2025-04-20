@@ -1,7 +1,7 @@
 import random
 import re
 import string
-from typing import List, Union
+from typing import List, Optional, Union
 from loguru import logger
 from pydantic import BaseModel, ValidationError
 from pyrogram.types import Message
@@ -14,7 +14,7 @@ __ignore__ = True
 
 class TemplateAMonitorConfig(BaseModel):
     name: str = None
-    chat_name: Union[str, int] = None  # 监控的群聊名称
+    chat_name: Optional[Union[str, int]] = None  # 监控的群聊名称
     chat_allow_outgoing: bool = False  # 是否支持自己发言触发
     chat_user: Union[str, List[str]] = []  # 仅被列表中用户的发言触发 (支持 username / userid)
     chat_keyword: Union[str, List[str]] = []  # 仅当消息含有列表中的关键词时触发, 支持 regex
@@ -22,7 +22,7 @@ class TemplateAMonitorConfig(BaseModel):
     chat_probability: float = 1.0  # 发信概率 (0最低, 1最高)
     chat_delay: int = 0  # 发信延迟 (s)
     chat_follow_user: int = 0  # 需要等待 N 个用户发送 {chat_reply} 方可回复
-    chat_reply: str = None  # 回复的内容, 可以为恒定字符串或函数或异步函数
+    chat_reply: Optional[str] = None  # 回复的内容, 可以为恒定字符串或函数或异步函数
     allow_edit: bool = False  # 编辑消息内容后也触发
     trigger_interval: float = 2  # 每次触发的最低时间间隔
     trigger_sim: int = 1  # 同时触发的最大并行数
@@ -31,7 +31,7 @@ class TemplateAMonitorConfig(BaseModel):
     allow_text: bool = True  # 是否允许不带照片的消息
     send: bool = True  # 是否发送通知
     send_immediately: bool = True  # 是否发送即时日志, 不等待每日推送时间
-    try_register_bot: str = None  # 尝试注册的机器人名称 (需为: https://github.com/berry8838/Sakura_embyboss)
+    try_register_bot: Optional[str] = None  # 尝试注册的机器人名称 (需为: https://github.com/berry8838/Sakura_embyboss)
 
 
 class TemplateAMonitor(Monitor):
