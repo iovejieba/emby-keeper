@@ -14,7 +14,7 @@ __ignore__ = True
 
 class PornembyMessager(Messager):
     name = "Pornemby"
-    chat_name = "Pornemby"
+    chat_name = "embytestflight"
     default_messages = ["pornemby-common-wl@latest.yaml * 100"]
 
     async def init(self):

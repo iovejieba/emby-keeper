@@ -10,7 +10,7 @@ from . import Monitor
 class PornembyDoubleMonitor(Monitor):
     name = "Pornemby 怪兽自动翻倍"
     chat_user = ["PronembyTGBot2_bot", "PronembyTGBot3_bot", "PornembyBot", "Porn_Emby_Bot"]
-    chat_name = "Pornemby"
+    chat_name = ["embytestflight", "Pornemby"]
     chat_keyword = r"击杀者\s+(.*)\s+是否要奖励翻倍"
     additional_auth = ["pornemby_pack"]
     allow_edit = True

@@ -105,7 +105,7 @@ class Monitor:
     unique_cache = UniqueUsername()
 
     name: str = None  # 监控器名称
-    chat_name: Union[str, int] = None  # 监控的群聊名称
+    chat_name: Union[str, int, List[Union[str, int]]] = None  # 监控的群聊名称
     chat_allow_outgoing: bool = False  # 是否支持自己发言触发
     chat_user: Union[str, List[str]] = []  # 仅被列表中用户的发言触发 (支持 username / userid)
     chat_keyword: Union[str, List[str]] = []  # 仅当消息含有列表中的关键词时触发, 支持 regex
@@ -204,39 +204,42 @@ class Monitor:
             if not await self.init():
                 self.log.bind(log=True).warning(f"机器人状态初始化失败, 监控将停止.")
                 return self.ctx.finish(RunStatus.FAIL, "初始化失败")
-        chat = None
+        
+        chats = []
         if self.chat_name:
-            try:
-                chat = await self.client.get_chat(self.chat_name)
-            except UsernameNotOccupied:
-                self.log.warning(f'初始化错误: 群组 "{self.chat_name}" 不存在.')
-                return self.ctx.finish(RunStatus.IGNORE, "群组不存在")
-            except UserNotParticipant:
-                self.log.info(f'跳过监控: 尚未加入群组 "{chat.title}".')
-                return self.ctx.finish(RunStatus.IGNORE, "未加入群组")
-            except KeyError as e:
-                self.log.info(f"初始化错误: 无法访问, 您可能已被封禁.")
-                show_exception(e)
-                return self.ctx.finish(RunStatus.FAIL, "无法访问群组")
-            except (ChannelInvalid, ChannelPrivate) as e:
-                self.log.info(f"跳过监控: 私有群组, 未加入, 已跳过.")
-                return self.ctx.finish(RunStatus.IGNORE, "未加入群组")
-            except FloodWait as e:
-                self.log.info(f"初始化信息: Telegram 要求等待 {e.value} 秒.")
-                if e.value < 360:
-                    await asyncio.sleep(e.value)
+            for c in to_iterable(self.chat_name):
+                try:
+                    chat = await self.client.get_chat(c)
+                except UsernameNotOccupied:
+                    self.log.warning(f'初始化错误: 群组 "{self.chat_name}" 不存在.')
+                    return self.ctx.finish(RunStatus.IGNORE, "群组不存在")
+                except UserNotParticipant:
+                    self.log.info(f'跳过监控: 尚未加入群组 "{chat.title}".')
+                    return self.ctx.finish(RunStatus.IGNORE, "未加入群组")
+                except KeyError as e:
+                    self.log.info(f"初始化错误: 无法访问, 您可能已被封禁.")
+                    show_exception(e)
+                    return self.ctx.finish(RunStatus.FAIL, "无法访问群组")
+                except (ChannelInvalid, ChannelPrivate) as e:
+                    self.log.info(f"跳过监控: 私有群组, 未加入, 已跳过.")
+                    return self.ctx.finish(RunStatus.IGNORE, "未加入群组")
+                except FloodWait as e:
+                    self.log.info(f"初始化信息: Telegram 要求等待 {e.value} 秒.")
+                    if e.value < 360:
+                        await asyncio.sleep(e.value)
+                    else:
+                        self.log.info(
+                            f"初始化信息: Telegram 要求等待 {e.value} 秒, 您可能操作过于频繁, 监控器将停止."
+                        )
+                        return self.ctx.finish(RunStatus.FAIL, "操作过于频繁")
+                try:
+                    if chat.type in (ChatType.GROUP, ChatType.SUPERGROUP):
+                        await chat.get_member("me")
+                except UserNotParticipant:
+                    self.log.info(f'跳过监控: 尚未加入群组 "{chat.title}".')
+                    return self.ctx.finish(RunStatus.IGNORE, "未加入群组")
                 else:
-                    self.log.info(
-                        f"初始化信息: Telegram 要求等待 {e.value} 秒, 您可能操作过于频繁, 监控器将停止."
-                    )
-                    return self.ctx.finish(RunStatus.FAIL, "操作过于频繁")
-            try:
-                if chat.type in (ChatType.GROUP, ChatType.SUPERGROUP):
-                    await chat.get_member("me")
-            except UserNotParticipant:
-                self.log.info(f'跳过监控: 尚未加入群组 "{chat.title}".')
-                return self.ctx.finish(RunStatus.IGNORE, "未加入群组")
-
+                    chats.append(chat)
         if self.additional_auth:
             for a in self.additional_auth:
                 if not await Link(self.client).auth(a, log_func=self.log.info):
@@ -250,7 +253,8 @@ class Monitor:
         if self.notify_create_name:
             self.unique_name = self.get_unique_name()
 
-        if chat:
+        if chats:
+            chat = chats[0]
             if chat.username:
                 spec = (
                     f"[green]{chat.title}[/] [gray50](@{chat.username})[/]"
@@ -259,6 +263,8 @@ class Monitor:
                 )
             else:
                 spec = f"[green]{chat.title}[/]" if chat.title else f"[green]{chat.id}[/]"
+            if len(chats) > 1:
+                spec += ' 等多个群组'
         else:
             spec = "关键词: " + truncate_str(",".join(to_iterable(self.chat_keyword)), 60)
 

@@ -103,7 +103,7 @@ class ClientsSession:
         logger.info(f"正在停止所有 Telegram 账号上的的监听和任务.")
         await cls.clean_all(force=True)
 
-    def __init__(self, accounts: List[TelegramAccount], in_memory=True, proxy=None, basedir=None):
+    def __init__(self, accounts: List[TelegramAccount], in_memory=False, proxy=None, basedir=None):
         self.accounts = accounts
         self.phones = []
         self.done = asyncio.Queue()

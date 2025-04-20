@@ -9,7 +9,7 @@ __ignore__ = True
 
 class PornembyRegisterMonitor(Monitor):
     name = "Pornemby 抢注"
-    chat_name = "Pornemby"
+    chat_name = ["embytestflight", "Pornemby"]
     chat_user = "PornembyTGBot_bot"
     chat_keyword = "开 放 注 册"
     additional_auth = ["pornemby_pack"]

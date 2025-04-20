@@ -30,6 +30,7 @@ class _PornembyExamResultMonitor(Monitor):
 
 class _PornembyExamAnswerMonitor(Monitor):
     name = "Pornemby 科举"
+    chat_name = ["embytestflight", "Pornemby"]
     chat_user = [
         "pornemby_question_bot",
         "PronembyTGBot2_bot",

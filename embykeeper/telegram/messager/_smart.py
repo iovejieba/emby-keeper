@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Tuple
+from typing import TYPE_CHECKING, List, Tuple, Union
 
 from loguru import logger
 from pyrogram.types import User
@@ -38,13 +38,14 @@ class SmartMessager:
     at: Tuple[time, time] = None  # 可发送的时间范围
     msg_per_day: int = 10  # 每天发送的消息数量
     min_msg_gap = 5  # 最小消息间隔
+    force_day = False # 强制每条时间线在每个自然日运行
 
     site_last_message_time = None
     site_lock = asyncio.Lock()
 
     def __init__(
         self,
-        account: TelegramAccount,
+        account: Union[TelegramAccount, Client],
         me: User = None,
         context: RunContext = None,
         config: dict = None,
@@ -61,11 +62,13 @@ class SmartMessager:
         self.ctx = context
         self.config = config
         self.me = me
+        if not self.me and isinstance(account, Client):
+            self.me = self.account.me
         self.min_interval = config.get(
             "min_interval", config.get("interval", self.min_interval or 60)
         )  # 两条消息间的最小间隔时间
         self.max_interval = config.get("max_interval", self.max_interval)  # 两条消息间的最大间隔时间
-        self.log = logger.bind(scheme="telemessager", name=self.name, username=me.name)
+        self.log = logger.bind(scheme="telemessager", name=self.name, username=self.me.name)
         self.timeline: List[int] = []  # 消息计划序列
         self.example_messages = []
 
@@ -123,43 +126,77 @@ class SmartMessager:
 
             await self.send(dummy=True)
 
-        if self.at:
-            start_time, end_time = self.at
-        else:
-            start_time = time(9, 0, 0)
-            end_time = time(23, 0, 0)
+        completed_dates = []
 
-        start_datetime = datetime.combine(date.today(), start_time)
-        end_datetime = datetime.combine(date.today(), end_time)
+        while True:
+            if self.at:
+                start_time, end_time = self.at
+            else:
+                start_time = time(9, 0, 0)
+                end_time = time(23, 0, 0)
 
-        start_timestamp = start_datetime.timestamp()
-        end_timestamp = end_datetime.timestamp()
-
-        msg_per_day = self.config.get("msg_per_day", self.msg_per_day)
-
-        self.timeline = distribute_numbers(
-            start_timestamp, end_timestamp, msg_per_day, self.min_interval, self.max_interval
-        )
-
-        # 检查并调整早于当前时间的时间点到明天
-        now_timestamp = datetime.now().timestamp()
-        for i in range(len(self.timeline)):
-            if self.timeline[i] < now_timestamp:
-                self.timeline[i] += 86400
-
-        self.timeline = sorted(self.timeline)
-
-        self.ctx.start(RunStatus.RUNNING)
-        if self.timeline:
-            while True:
-                dt = datetime.fromtimestamp(self.timeline[0])
-                self.log.info(f"下一次发送将在 [blue]{dt.strftime('%m-%d %H:%M:%S')}[/] 进行.")
-                sleep_time = max(self.timeline[0] - datetime.now().timestamp(), 0)
+            if self.force_day:
+                start_datetime = datetime.combine(date.today(), start_time)
+            else:
+                start_datetime = datetime.now()
+            end_datetime = datetime.combine(date.today(), end_time)
+            
+            if self.force_day:
+                current_date = datetime.now().date()
+                if current_date in completed_dates:
+                    next_start_datetime = datetime.combine(date.today() + timedelta(days=1), start_time)
+                    sleep_time = (next_start_datetime - datetime.now()).total_seconds()
+                    self.log.info(f"将在明天 {next_start_datetime.strftime('%H:%M:%S')} 重新进行规划.")
+                    await asyncio.sleep(sleep_time)
+                    continue
+            
+            if start_datetime > end_datetime:
+                next_start_datetime = datetime.combine(date.today() + timedelta(days=1), start_time)
+                sleep_time = (next_start_datetime - datetime.now()).total_seconds()
+                self.log.info(f"已超过今日发送结束时间, 将在明天 {next_start_datetime.strftime('%H:%M:%S')} 重新进行规划.")
                 await asyncio.sleep(sleep_time)
-                await self.send()
-                self.timeline.pop(0)
-                if not self.timeline:
-                    break
+                continue
+
+            start_timestamp = start_datetime.timestamp()
+            end_timestamp = end_datetime.timestamp()
+
+            msg_per_day = self.config.get("msg_per_day", self.msg_per_day)
+
+            self.timeline = distribute_numbers(
+                start_timestamp, end_timestamp, msg_per_day, self.min_interval, self.max_interval
+            )
+            
+            # 检查并调整早于当前时间的时间点到明天
+            now_timestamp = datetime.now().timestamp()
+            indices_to_remove = []
+            for i in range(len(self.timeline)):
+                if self.timeline[i] < now_timestamp:
+                    if not self.force_day:
+                        self.timeline[i] += 86400
+                    else:
+                        indices_to_remove.append(i)
+            
+            # 删除不符合条件的时间
+            for i in reversed(indices_to_remove):
+                self.timeline.pop(i)
+
+            self.timeline = sorted(self.timeline)
+
+            self.ctx.start(RunStatus.RUNNING)
+            if self.timeline:
+                while True:
+                    dt = datetime.fromtimestamp(self.timeline[0])
+                    self.log.info(f"下一次发送将在 [blue]{dt.strftime('%m-%d %H:%M:%S')}[/] 进行.")
+                    sleep_time = max(self.timeline[0] - datetime.now().timestamp(), 0)
+                    await asyncio.sleep(sleep_time)
+                    await self.send()
+                    self.timeline.pop(0)
+                    if not self.timeline:
+                        if self.force_day:
+                            completed_dates.append(datetime.now().date())
+                        break
+            else:
+                self.log.info(f"未能成功规划发送时间线, 正在重新进行规划.")
 
     async def init(self):
         """可重写的初始化函数, 返回 False 将视为初始化错误."""
@@ -225,36 +262,42 @@ class SmartMessager:
             prompt += "\n请直接输出你的回答:"
         return prompt
 
-    async def send(self, dummy: bool = False):
-        async with ClientsSession([self.account]) as clients:
-            async for _, tg in clients:
-                chat = await tg.get_chat(self.chat_name)
-                log = self.log.bind(username=tg.me.name)
+    async def _send(self, tg: Client, dummy: bool = False):
+        chat = await tg.get_chat(self.chat_name)
+        log = self.log.bind(username=tg.me.name)
 
-                prompt = await self.get_infer_prompt(tg, log)
+        prompt = await self.get_infer_prompt(tg, log)
 
-                if not prompt:
-                    return
+        if not prompt:
+            return
 
-                answer, _ = await Link(tg).infer(prompt)
+        answer, _ = await Link(tg).infer(prompt)
 
-                if answer:
-                    if len(answer) > 50:
-                        log.info(f"智能推测水群内容过长, 将不发送消息.")
-                    elif "SKIP" in answer:
-                        log.info(f"智能推测此时不应该水群, 将不发送消息.")
-                    else:
-                        if dummy:
-                            log.info(
-                                f'当前情况下在聊天 "{chat.name}" 中推断可发送水群内容为: [gray50]{truncate_str(answer, 20)}[/]'
-                            )
-                        else:
-                            log.info(
-                                f'即将在5秒后向聊天 "{chat.name}" 发送: [gray50]{truncate_str(answer, 20)}[/]'
-                            )
-                            await asyncio.sleep(5)
-                            msg = await tg.send_message(chat.id, answer)
-                            log.info(f'已向聊天 "{chat.name}" 发送: [gray50]{truncate_str(answer, 20)}[/]')
-                            return msg
+        if answer:
+            if len(answer) > 50:
+                log.info(f"智能推测水群内容过长, 将不发送消息.")
+            elif "SKIP" in answer:
+                log.info(f"智能推测此时不应该水群, 将不发送消息.")
+            else:
+                if dummy:
+                    log.info(
+                        f'当前情况下在聊天 "{chat.name}" 中推断可发送水群内容为: [gray50]{truncate_str(answer, 20)}[/]'
+                    )
                 else:
-                    log.warning(f"智能推测水群内容失败, 将不发送消息.")
+                    log.info(
+                        f'即将在5秒后向聊天 "{chat.name}" 发送: [gray50]{truncate_str(answer, 20)}[/]'
+                    )
+                    await asyncio.sleep(5)
+                    msg = await tg.send_message(chat.id, answer)
+                    log.info(f'已向聊天 "{chat.name}" 发送: [gray50]{truncate_str(answer, 20)}[/]')
+                    return msg
+        else:
+            log.warning(f"智能推测水群内容失败, 将不发送消息.")
+
+    async def send(self, dummy: bool = False):
+        if isinstance(self.account, Client):
+            return await self._send(self.account, dummy=dummy)
+        else:
+            async with ClientsSession([self.account]) as clients:
+                async for _, tg in clients:
+                    return await self._send(tg, dummy=dummy)

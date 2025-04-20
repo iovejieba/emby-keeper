@@ -17,7 +17,7 @@ __ignore__ = True
 
 class PornembyAlertMonitor(Monitor):
     name = "Pornemby 风险急停监控"
-    chat_name = "Pornemby"
+    chat_name = ["embytestflight", "Pornemby"]
     additional_auth = ["pornemby_pack"]
     allow_edit = True
     debug_no_log = True

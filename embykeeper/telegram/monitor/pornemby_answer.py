@@ -19,6 +19,7 @@ QA_CACHE_KEY = "monitor.pornemby.answer.qa"
 
 class _PornembyAnswerResultMonitor(Monitor):
     name = "Pornemby 问题答案"
+    chat_name = ["embytestflight", "Pornemby"]
     chat_except_keyword = "猜猜是什么番号"
     chat_keyword = r"问题\d*：(.*?)\n+A:(.*)\n+B:(.*)\n+C:(.*)\n+D:(.*)\n+答案为：([ABCD])"
     additional_auth = ["pornemby_pack"]
@@ -34,7 +35,7 @@ class _PornembyAnswerResultMonitor(Monitor):
 
 class _PornembyAnswerAnswerMonitor(Monitor):
     name = "Pornemby 问题回答"
-    history_chat_name = "Pornemby"
+    history_chat_name = ["embytestflight", "Pornemby"]
     chat_user = [
         "pornemby_question_bot",
         "PronembyTGBot2_bot",
@@ -167,7 +168,7 @@ class _PornembyAnswerAnswerMonitor(Monitor):
 
 class PornembyAnswerMonitor:
     class PornembyAnswerResultMonitor(_PornembyAnswerResultMonitor):
-        chat_name = "Pornemby"
+        chat_name = ["embytestflight", "Pornemby"]
 
     class PornembyAnswerAnswerMonitor(_PornembyAnswerAnswerMonitor):
-        chat_name = "Pornemby"
+        chat_name = ["embytestflight", "Pornemby"]
