@@ -72,12 +72,16 @@ class DPeakCheckin(BotCheckin):
                     self.log.info(f"[yellow]签到成功[/]: + {add_points} 分.")
                     return await self.finish(RunStatus.SUCCESS, "签到成功")
                 else:
-                    code = result.get("code", "unknown")
-                    message = result.get("message", "未知错误")
-                    self.log.info(f"签到失败, 请求状态为 {code}: {message}.")
+                    error = result.get("error", None)
+                    if error:
+                        if '签到过了' in error:
+                            self.log.info(f"今日已经签到过了.")
+                            return await self.finish(RunStatus.NONEED, "今日已签到")
+                        self.log.info(f"签到失败: {error}.")
+                    else:
+                        self.log.info(f"签到失败, 请求状态为 {resp.status_code}:\n{result}.")
                     return await self.retry()
 
         except (RequestsError, OSError, JSONDecodeError) as e:
-            self.log.info(f"签到失败: 无法连接签到页面 ({e.__class__.__name__}).")
-            show_exception(e)
+            self.log.info(f"签到失败: 无法连接签到页面 ({e.__class__.__name__}: {e}).")
             return await self.retry()

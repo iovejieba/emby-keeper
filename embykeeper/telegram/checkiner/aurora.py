@@ -70,6 +70,5 @@ class AuroraCheckin(BotCheckin):
                 return await self.finish(RunStatus.SUCCESS, "签到成功")
 
         except (RequestsError, OSError, JSONDecodeError) as e:
-            self.log.info(f"签到失败: 无法连接签到页面 ({e.__class__.__name__}).")
-            show_exception(e)
+            self.log.info(f"签到失败: 无法连接签到页面 ({e.__class__.__name__}): {e}.")
             return await self.retry()

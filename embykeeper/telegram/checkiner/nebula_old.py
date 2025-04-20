@@ -14,6 +14,7 @@ from embykeeper.config import config
 from ..link import Link
 from . import BotCheckin
 
+__ignore__ = True
 
 class NebulaCheckin(BotCheckin):
     name = "Nebula"

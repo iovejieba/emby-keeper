@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Iterable, List, Tuple, Union
 from dateutil import parser
 from loguru import logger
 from pyrogram.types import User
+from pyrogram.errors import ChatWriteForbidden
 import yaml
 
 from embykeeper import __name__ as __product__
@@ -298,9 +299,13 @@ class SmartMessager:
                 else:
                     log.info(f'即将在5秒后向聊天 "{chat.name}" 发送: [gray50]{truncate_str(answer, 20)}[/]')
                     await asyncio.sleep(5)
-                    msg = await tg.send_message(chat.id, answer)
-                    log.info(f'已向聊天 "{chat.name}" 发送: [gray50]{truncate_str(answer, 20)}[/]')
-                    return msg
+                    try:
+                        msg = await tg.send_message(chat.id, answer)
+                    except ChatWriteForbidden:
+                        log.warning(f"群组已禁言, 将不发送消息.")
+                    else:
+                        log.info(f'已向聊天 "{chat.name}" 发送: [gray50]{truncate_str(answer, 20)}[/]')
+                        return msg
         else:
             log.warning(f"智能推测水群内容失败, 将不发送消息.")
 
