@@ -513,89 +513,92 @@ class Client(pyrogram.Client):
         )
 
     async def handle_updates(self, updates):
-        if isinstance(updates, (raw.types.Updates, raw.types.UpdatesCombined)):
-            is_min = any(
-                (
-                    await self.fetch_peers(updates.users),
-                    await self.fetch_peers(updates.chats),
+        try:
+            if isinstance(updates, (raw.types.Updates, raw.types.UpdatesCombined)):
+                is_min = any(
+                    (
+                        await self.fetch_peers(updates.users),
+                        await self.fetch_peers(updates.chats),
+                    )
                 )
-            )
 
-            users = {u.id: u for u in updates.users}
-            chats = {c.id: c for c in updates.chats}
+                users = {u.id: u for u in updates.users}
+                chats = {c.id: c for c in updates.chats}
 
-            for update in updates.updates:
-                channel_id = getattr(
-                    getattr(getattr(update, "message", None), "peer_id", None), "channel_id", None
-                ) or getattr(update, "channel_id", None)
+                for update in updates.updates:
+                    channel_id = getattr(
+                        getattr(getattr(update, "message", None), "peer_id", None), "channel_id", None
+                    ) or getattr(update, "channel_id", None)
 
-                pts = getattr(update, "pts", None)
-                pts_count = getattr(update, "pts_count", None)
+                    pts = getattr(update, "pts", None)
+                    pts_count = getattr(update, "pts_count", None)
 
-                if pts and not self.skip_updates:
-                    await self.storage.update_state(
+                    if pts and not self.skip_updates:
+                        await self.storage.update_state(
+                            (
+                                utils.get_channel_id(channel_id) if channel_id else 0,
+                                pts,
+                                None,
+                                updates.date,
+                                updates.seq,
+                            )
+                        )
+
+                    if isinstance(update, raw.types.UpdateNewChannelMessage) and is_min:
+                        message = update.message
+
+                        if not isinstance(message, raw.types.MessageEmpty):
+                            try:
+                                diff = await self.invoke(
+                                    raw.functions.updates.GetChannelDifference(
+                                        channel=await self.resolve_peer(utils.get_channel_id(channel_id)),
+                                        filter=raw.types.ChannelMessagesFilter(
+                                            ranges=[
+                                                raw.types.MessageRange(
+                                                    min_id=update.message.id, max_id=update.message.id
+                                                )
+                                            ]
+                                        ),
+                                        pts=pts - pts_count,
+                                        limit=pts,
+                                        force=False,
+                                    )
+                                )
+                            except (ChannelPrivate, PersistentTimestampOutdated, PersistentTimestampInvalid):
+                                pass
+                            else:
+                                if not isinstance(diff, raw.types.updates.ChannelDifferenceEmpty):
+                                    users.update({u.id: u for u in diff.users})
+                                    chats.update({c.id: c for c in diff.chats})
+
+                    self.dispatcher.updates_queue.put_nowait((update, users, chats))
+
+            elif isinstance(updates, (raw.types.UpdateShortMessage, raw.types.UpdateShortChatMessage)):
+                if not self.skip_updates:
+                    await self.storage.update_state((0, updates.pts, None, updates.date, None))
+
+                diff = await self.invoke(
+                    raw.functions.updates.GetDifference(
+                        pts=updates.pts - updates.pts_count, date=updates.date, qts=-1
+                    )
+                )
+
+                if diff.new_messages:
+                    self.dispatcher.updates_queue.put_nowait(
                         (
-                            utils.get_channel_id(channel_id) if channel_id else 0,
-                            pts,
-                            None,
-                            updates.date,
-                            updates.seq,
+                            raw.types.UpdateNewMessage(
+                                message=diff.new_messages[0],
+                                pts=updates.pts,
+                                pts_count=updates.pts_count,
+                            ),
+                            {u.id: u for u in diff.users},
+                            {c.id: c for c in diff.chats},
                         )
                     )
-
-                if isinstance(update, raw.types.UpdateNewChannelMessage) and is_min:
-                    message = update.message
-
-                    if not isinstance(message, raw.types.MessageEmpty):
-                        try:
-                            diff = await self.invoke(
-                                raw.functions.updates.GetChannelDifference(
-                                    channel=await self.resolve_peer(utils.get_channel_id(channel_id)),
-                                    filter=raw.types.ChannelMessagesFilter(
-                                        ranges=[
-                                            raw.types.MessageRange(
-                                                min_id=update.message.id, max_id=update.message.id
-                                            )
-                                        ]
-                                    ),
-                                    pts=pts - pts_count,
-                                    limit=pts,
-                                    force=False,
-                                )
-                            )
-                        except (ChannelPrivate, PersistentTimestampOutdated, PersistentTimestampInvalid):
-                            pass
-                        else:
-                            if not isinstance(diff, raw.types.updates.ChannelDifferenceEmpty):
-                                users.update({u.id: u for u in diff.users})
-                                chats.update({c.id: c for c in diff.chats})
-
-                self.dispatcher.updates_queue.put_nowait((update, users, chats))
-
-        elif isinstance(updates, (raw.types.UpdateShortMessage, raw.types.UpdateShortChatMessage)):
-            if not self.skip_updates:
-                await self.storage.update_state((0, updates.pts, None, updates.date, None))
-
-            diff = await self.invoke(
-                raw.functions.updates.GetDifference(
-                    pts=updates.pts - updates.pts_count, date=updates.date, qts=-1
-                )
-            )
-
-            if diff.new_messages:
-                self.dispatcher.updates_queue.put_nowait(
-                    (
-                        raw.types.UpdateNewMessage(
-                            message=diff.new_messages[0],
-                            pts=updates.pts,
-                            pts_count=updates.pts_count,
-                        ),
-                        {u.id: u for u in diff.users},
-                        {c.id: c for c in diff.chats},
-                    )
-                )
-            else:
-                if diff.other_updates:  # The other_updates list can be empty
-                    self.dispatcher.updates_queue.put_nowait((diff.other_updates[0], {}, {}))
-        elif isinstance(updates, raw.types.UpdateShort):
-            self.dispatcher.updates_queue.put_nowait((updates.update, {}, {}))
+                else:
+                    if diff.other_updates:  # The other_updates list can be empty
+                        self.dispatcher.updates_queue.put_nowait((diff.other_updates[0], {}, {}))
+            elif isinstance(updates, raw.types.UpdateShort):
+                self.dispatcher.updates_queue.put_nowait((updates.update, {}, {}))
+        except OSError as e:
+            logger.info(f"与 Telegram 服务器连接错误: {e}")
