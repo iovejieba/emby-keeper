@@ -24,7 +24,6 @@ class ConfigModel(BaseModel):
             )
         return values
 
-
 class UseStr(str):
     @classmethod
     def __get_validators__(cls):
@@ -37,7 +36,7 @@ class UseStr(str):
         return v
 
 
-class UseHttpUrl(str, HttpUrl):
+class UseHttpUrl(HttpUrl):
     @classmethod
     def __get_validators__(cls):
         yield cls.validate
@@ -377,7 +376,6 @@ def format_errors(e: ValidationError) -> str:
 if __name__ == "__main__":
     import sys
     import tomli
-    import pprint
 
     if len(sys.argv) < 2:
         print("Usage: python schema.py <config.toml>")
@@ -387,7 +385,7 @@ if __name__ == "__main__":
         with open(sys.argv[1], "rb") as f:
             config_dict = tomli.load(f)
         config = Config(**config_dict)
-        pprint.pprint(config.model_dump())
+        print(config.model_dump_json(indent=2))
     except FileNotFoundError:
         print(f"错误: 配置文件 '{sys.argv[1]}' 未找到")
         sys.exit(1)

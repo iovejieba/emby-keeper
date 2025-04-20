@@ -1,4 +1,5 @@
 import base64
+import json
 import os
 from typing import List
 
@@ -159,7 +160,7 @@ async def interactive_config(mongodb_url: str = None):
             show_default=True,
             console=console,
         )
-    content = item(cfg.model_dump(exclude_none=True)).as_string().encode()
+    content = item(json.loads(cfg.model_dump_json(exclude_none=True))).as_string().encode()
     content = base64.b64encode(content).decode()
     if var.use_mongodb_config:
         from .cache import cache
@@ -206,7 +207,7 @@ async def prepare_config_str(config_str: str, mongodb_url: str = None):
     if to_login:
         logger.info("即将尝试登陆各个账号.")
         await convert_session(to_login)
-        content = item(cfg.model_dump(exclude_none=True)).as_string().encode()
+        content = item(json.loads(cfg.model_dump_json(exclude_none=True))).as_string().encode()
         content = base64.b64encode(content).decode()
         if var.use_mongodb_config:
             from .cache import cache
