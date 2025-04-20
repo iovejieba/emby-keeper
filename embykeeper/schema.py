@@ -24,6 +24,7 @@ class ConfigModel(BaseModel):
             )
         return values
 
+
 class UseStr(str):
     @classmethod
     def __get_validators__(cls):
