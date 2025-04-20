@@ -74,7 +74,7 @@ class DPeakCheckin(BotCheckin):
                 else:
                     error = result.get("error", None)
                     if error:
-                        if '签到过了' in error:
+                        if "签到过了" in error:
                             self.log.info(f"今日已经签到过了.")
                             return await self.finish(RunStatus.NONEED, "今日已签到")
                         self.log.info(f"签到失败: {error}.")
