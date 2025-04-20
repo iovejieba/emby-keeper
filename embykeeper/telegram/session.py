@@ -4,9 +4,13 @@ import binascii
 import pickle
 import struct
 import tempfile
+import glob
+import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import List
+import os
+import random
 
 import httpx
 from pyrogram.errors import ApiIdPublishedFlood, AuthKeyDuplicated, BadMsgNotification, RPCError, Unauthorized
@@ -248,6 +252,25 @@ class ClientsSession:
         try:
             self.basedir.mkdir(parents=True, exist_ok=True)
             logger.info(f'登录至账号 "{account.phone}", 请耐心等待.')
+
+            # Clean up old suffixed session files that are not locked when not in memory mode
+            if not self.in_memory:
+                session_base = str(self.basedir / f"{account.phone}")
+                for session_file in glob.glob(f"{session_base}_[0-9]*.session"):
+                    try:
+                        # Try to open the database with immediate timeout
+                        conn = sqlite3.connect(session_file, timeout=0.1)
+                        conn.close()
+                        # If we can open it, it's not locked, so we can delete it
+                        try:
+                            os.remove(session_file)
+                            logger.debug(f"已清理未被占用的会话文件: {session_file}")
+                        except OSError:
+                            pass
+                    except sqlite3.OperationalError:
+                        # Database is locked by another process
+                        pass
+
             for _ in range(3):
                 session_str_src = None
                 session_str = account.session
@@ -292,24 +315,36 @@ class ClientsSession:
                         else:
                             logger.warning(f'登录账号 "{account.phone}" 尝试次数超限, 将被跳过.')
                             return None
+                
+                client_params = {
+                    "app_version": __version__,
+                    "device_model": "A320MH",
+                    "name": account.phone,
+                    "system_version": "4.16.30-vxEmby",
+                    "api_id": account.api_id or API_ID,
+                    "api_hash": account.api_hash or API_HASH,
+                    "phone_number": account.phone,
+                    "session_string": session_str,
+                    "in_memory": self.in_memory,
+                    "proxy": self.proxy.model_dump() if self.proxy else None,
+                    "workdir": str(self.basedir),
+                    "sleep_threshold": 30,
+                    "workers": 16,
+                }
+                
                 try:
-                    client = Client(
-                        app_version=__version__,
-                        device_model="A320MH",
-                        name=account.phone,
-                        system_version="4.16.30-vxEmby",
-                        api_id=account.api_id or API_ID,
-                        api_hash=account.api_hash or API_HASH,
-                        phone_number=account.phone,
-                        session_string=session_str,
-                        in_memory=self.in_memory,
-                        proxy=self.proxy.model_dump() if self.proxy else None,
-                        workdir=str(self.basedir),
-                        sleep_threshold=30,
-                        workers=16,
-                    )
+                    client = Client(**client_params)
                     try:
                         await asyncio.wait_for(client.start(), 20)
+                    except sqlite3.OperationalError as e:
+                        if "database is locked" in str(e) and not self.in_memory:
+                            suffix = ''.join(str(random.randint(0, 9)) for _ in range(6))
+                            client_params["name"] = f"{account.phone}_{suffix}"
+                            logger.debug(f'会话文件被锁定, 正在尝试使用新文件: {client_params["name"]}')
+                            client = Client(**client_params)
+                            await asyncio.wait_for(client.start(), 20)
+                        else:
+                            raise
                     except asyncio.TimeoutError:
                         if self.proxy:
                             logger.error(f"无法连接到 Telegram 服务器, 请检查您代理的可用性.")
