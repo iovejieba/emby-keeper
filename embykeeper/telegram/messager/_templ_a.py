@@ -9,17 +9,20 @@ __ignore__ = True
 
 class TemplateAMessagerConfig(BaseModel):
     name: str = None
-    chat_name: Optional[Union[str, int]] = None   # 发送群聊名称
+    chat_name: Optional[Union[str, int]] = None  # 发送群聊名称
     messages: List[str] = None  # 使用的语料, 与 message_lists 二选一
-    message_lists: Union[str, List[str]] = []  # 使用的语料列表, 例如 ["some-wl@v1.yaml * 1000"], 放置在 basedir 中, 且 @v1.yaml 尾缀是必须的
+    message_lists: Union[str, List[str]] = (
+        []
+    )  # 使用的语料列表, 例如 ["some-wl@v1.yaml * 1000"], 放置在 basedir 中, 且 @v1.yaml 尾缀是必须的
     min_interval: Optional[int] = None  # 发送最小间隔 (秒)
     max_interval: Optional[int] = None  # 发送最大间隔 (秒)
     at: Optional[List[str]] = None  # 时间区间, 例如 ["5:00AM", "9:00PM"]
     possibility: Optional[float] = None  # 发送概率, 例如 1.00
     only: Optional[Literal["weekday", "weekend"]] = None  # 仅在周末/周中发送
-    
+
     # Backward compatibility
     interval: Optional[int] = None
+
 
 class TemplateAMessager(Messager):
     additional_auth = ["prime"]
@@ -42,6 +45,7 @@ class TemplateAMessager(Messager):
             return False
         self.log = logger.bind(scheme="telemessager", name=self.name, username=self.me.name)
         return True
+
 
 def use(**kw):
     return type("TemplatedClass", (TemplateAMessager,), kw)

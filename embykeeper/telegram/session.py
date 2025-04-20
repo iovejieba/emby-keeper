@@ -314,7 +314,7 @@ class ClientsSession:
                         else:
                             logger.warning(f'登录账号 "{account.phone}" 尝试次数超限, 将被跳过.')
                             return None
-                
+
                 client_params = {
                     "app_version": __version__,
                     "device_model": "A320MH",
@@ -330,14 +330,14 @@ class ClientsSession:
                     "sleep_threshold": 30,
                     "workers": 16,
                 }
-                
+
                 try:
                     client = Client(**client_params)
                     try:
                         await asyncio.wait_for(client.start(), 20)
                     except sqlite3.OperationalError as e:
                         if "database is locked" in str(e) and not self.in_memory:
-                            suffix = ''.join(str(random.randint(0, 9)) for _ in range(6))
+                            suffix = "".join(str(random.randint(0, 9)) for _ in range(6))
                             client_params["name"] = f"{account.phone}_{suffix}"
                             logger.debug(f'会话文件被锁定, 正在尝试使用新文件: {client_params["name"]}')
                             client = Client(**client_params)

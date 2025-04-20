@@ -91,7 +91,7 @@ class Messager:
     at: Optional[List[str]] = None  # 时间区间, 例如 ["5:00AM", "9:00PM"]
     possibility: Optional[float] = None  # 发送概率, 例如 1.00
     only: Optional[Literal["weekday", "weekend"]] = None  # 仅在周末/周中发送
-    
+
     site_last_message_time = None
     site_lock = asyncio.Lock()
 
@@ -132,10 +132,10 @@ class Messager:
         at = self.at or material.at
         assert len(at) == 2
         at = [parser.parse(t).time() for t in at]
-        
+
         possibility = self.possibility or material.possibility
         only = self.only or material.only
-        
+
         return _MessageSchedule(
             messages=material.messages,
             at=at,

@@ -118,7 +118,7 @@ class SmartMessager:
                 if messages_spec and (not isinstance(messages_spec, str)):
                     self.log.warning(f"发生错误: 参考语言风格列表只能为字符串, 代表远端或本地文件.")
                     return False
-                
+
                 if messages_spec:
                     messages_file = await self.get_spec_path(messages_spec)
                     with open(messages_file, "r") as f:
@@ -139,7 +139,7 @@ class SmartMessager:
             else:
                 start_time = time(0, 0, 0)
                 end_time = time(23, 59, 59)
-            
+
             if isinstance(start_time, str):
                 start_time = parser.parse(start_time).time()
             if isinstance(end_time, str):

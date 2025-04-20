@@ -278,7 +278,7 @@ class Emby:
             except RequestsError as e:
                 last_err = e
                 await asyncio.sleep(random.random() + 0.5)
-        
+
         if last_err:
             error_msg = re.sub(r"\s+See\s+.*?\s+first for more details\.\.?", "", str(last_err))
             raise EmbyConnectError(f"{last_err.__class__.__name__}: {error_msg}")
