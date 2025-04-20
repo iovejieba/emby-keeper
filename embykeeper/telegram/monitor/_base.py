@@ -204,7 +204,7 @@ class Monitor:
             if not await self.init():
                 self.log.bind(log=True).warning(f"机器人状态初始化失败, 监控将停止.")
                 return self.ctx.finish(RunStatus.FAIL, "初始化失败")
-        
+
         chats = []
         if self.chat_name:
             for c in to_iterable(self.chat_name):
@@ -264,7 +264,7 @@ class Monitor:
             else:
                 spec = f"[green]{chat.title}[/]" if chat.title else f"[green]{chat.id}[/]"
             if len(chats) > 1:
-                spec += ' 等多个群组'
+                spec += " 等多个群组"
         else:
             spec = "关键词: " + truncate_str(",".join(to_iterable(self.chat_keyword)), 60)
 

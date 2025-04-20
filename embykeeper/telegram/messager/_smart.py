@@ -38,7 +38,7 @@ class SmartMessager:
     at: Tuple[time, time] = None  # 可发送的时间范围
     msg_per_day: int = 10  # 每天发送的消息数量
     min_msg_gap = 5  # 最小消息间隔
-    force_day = False # 强制每条时间线在每个自然日运行
+    force_day = False  # 强制每条时间线在每个自然日运行
 
     site_last_message_time = None
     site_lock = asyncio.Lock()
@@ -140,7 +140,7 @@ class SmartMessager:
             else:
                 start_datetime = datetime.now()
             end_datetime = datetime.combine(date.today(), end_time)
-            
+
             if self.force_day:
                 current_date = datetime.now().date()
                 if current_date in completed_dates:
@@ -149,11 +149,13 @@ class SmartMessager:
                     self.log.info(f"将在明天 {next_start_datetime.strftime('%H:%M:%S')} 重新进行规划.")
                     await asyncio.sleep(sleep_time)
                     continue
-            
+
             if start_datetime > end_datetime:
                 next_start_datetime = datetime.combine(date.today() + timedelta(days=1), start_time)
                 sleep_time = (next_start_datetime - datetime.now()).total_seconds()
-                self.log.info(f"已超过今日发送结束时间, 将在明天 {next_start_datetime.strftime('%H:%M:%S')} 重新进行规划.")
+                self.log.info(
+                    f"已超过今日发送结束时间, 将在明天 {next_start_datetime.strftime('%H:%M:%S')} 重新进行规划."
+                )
                 await asyncio.sleep(sleep_time)
                 continue
 
@@ -165,7 +167,7 @@ class SmartMessager:
             self.timeline = distribute_numbers(
                 start_timestamp, end_timestamp, msg_per_day, self.min_interval, self.max_interval
             )
-            
+
             # 检查并调整早于当前时间的时间点到明天
             now_timestamp = datetime.now().timestamp()
             indices_to_remove = []
@@ -175,7 +177,7 @@ class SmartMessager:
                         self.timeline[i] += 86400
                     else:
                         indices_to_remove.append(i)
-            
+
             # 删除不符合条件的时间
             for i in reversed(indices_to_remove):
                 self.timeline.pop(i)
@@ -284,9 +286,7 @@ class SmartMessager:
                         f'当前情况下在聊天 "{chat.name}" 中推断可发送水群内容为: [gray50]{truncate_str(answer, 20)}[/]'
                     )
                 else:
-                    log.info(
-                        f'即将在5秒后向聊天 "{chat.name}" 发送: [gray50]{truncate_str(answer, 20)}[/]'
-                    )
+                    log.info(f'即将在5秒后向聊天 "{chat.name}" 发送: [gray50]{truncate_str(answer, 20)}[/]')
                     await asyncio.sleep(5)
                     msg = await tg.send_message(chat.id, answer)
                     log.info(f'已向聊天 "{chat.name}" 发送: [gray50]{truncate_str(answer, 20)}[/]')

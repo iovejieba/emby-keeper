@@ -9,11 +9,12 @@ from embykeeper.config import config
 
 from . import BotCheckin
 
+
 class DPeakCheckin(BotCheckin):
     name = "DPeak"
     bot_username = "emby_dpeak_bot"
     additional_auth = ["prime"]
-    
+
     async def send_checkin(self, **kw):
         try:
             async with AsyncSession(
@@ -22,11 +23,9 @@ class DPeakCheckin(BotCheckin):
                 tgid = self.client.me.id
                 current_time = datetime.now()
                 date_str = current_time.strftime("%Y-%m-%d")
-                
+
                 # Get info
-                resp: Response = await session.get(
-                    f"https://miniapp.bwihz.cn/records/checkins/{tgid}.json"
-                )
+                resp: Response = await session.get(f"https://miniapp.bwihz.cn/records/checkins/{tgid}.json")
                 if resp.ok:
                     result = resp.json()
                     last_checkin = result["lastCheckIn"]
@@ -39,14 +38,10 @@ class DPeakCheckin(BotCheckin):
                     last_checkin = date_str
                     streak = 0
                     checkin_history = {}
-                
+
                 # First request to get token
                 resp: Response = await session.post(
-                    "https://miniapp.bwihz.cn/api/token.php",
-                    json={
-                        "tgid": tgid,
-                        "action": "checkin"
-                    }
+                    "https://miniapp.bwihz.cn/api/token.php", json={"tgid": tgid, "action": "checkin"}
                 )
                 token_data = resp.json()
                 token = token_data["token"]
@@ -67,8 +62,7 @@ class DPeakCheckin(BotCheckin):
                     "token": token,
                 }
                 resp = await session.post(
-                    "https://miniapp.bwihz.cn/api/checkin_record.php",
-                    json=checkin_data
+                    "https://miniapp.bwihz.cn/api/checkin_record.php", json=checkin_data
                 )
                 result = resp.json()
 
