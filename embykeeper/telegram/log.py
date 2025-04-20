@@ -10,7 +10,7 @@ from embykeeper.utils import show_exception
 from .link import Link
 from .session import ClientsSession
 
-logger = logger.bind(scheme="telenotifier")
+logger = logger.bind(scheme="telenotifier", nonotify=True)
 
 
 class TelegramStream(io.TextIOWrapper):

@@ -48,7 +48,7 @@ from embykeeper.utils import async_partial, show_exception
 
 var.tele_used.set()
 
-logger = logger.bind(scheme="telegram")
+logger = logger.bind(scheme="telegram", nonotify=True)
 
 
 def _name(self: Union[types.User, types.Chat]):

@@ -37,7 +37,7 @@ class UseStr(str):
         return v
 
 
-class UseHttpUrl(HttpUrl):
+class UseHttpUrl(str, HttpUrl):
     @classmethod
     def __get_validators__(cls):
         yield cls.validate

@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import List
 
 import httpx
-from loguru import logger
 from pyrogram.errors import ApiIdPublishedFlood, AuthKeyDuplicated, BadMsgNotification, RPCError, Unauthorized
 from pyrogram.storage.storage import Storage
 from rich.prompt import Prompt

@@ -8,7 +8,7 @@ from .session import ClientsSession
 
 from .log import TelegramStream
 
-logger = logger.bind(scheme="telegram")
+logger = logger.bind(scheme="telegram", nonotify=True)
 
 
 async def start_notifier():
@@ -16,14 +16,16 @@ async def start_notifier():
 
     def _filter_log(record):
         notify = record.get("extra", {}).get("log", None)
-        if notify or record["level"].no == logging.ERROR:
+        nonotify = record.get("extra", {}).get("nonotify", None)
+        if (not nonotify) and (notify or record["level"].no == logging.ERROR):
             return True
         else:
             return False
 
     def _filter_msg(record):
         notify = record.get("extra", {}).get("msg", None)
-        if notify:
+        nonotify = record.get("extra", {}).get("nonotify", None)
+        if (not nonotify) and notify:
             return True
         else:
             return False
