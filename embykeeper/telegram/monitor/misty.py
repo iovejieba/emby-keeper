@@ -87,13 +87,16 @@ class MistyMonitor(Monitor):
                         if not await self.init(force_lock=False):
                             self.failed.set()
                         return
-                    elif "用户名" in msg.text:
+                    elif "用户名" in msg.text or "账号" in msg.text:
                         msg = await wr(self.unique_name)
-                        if "密码" in msg.text:
-                            await self.client.send_message(self.bot_username, "/cancel")
+                        if "注册成功" in msg.text:
                             self.log.bind(msg=True).info(
                                 f'已向 Bot @{self.bot_username} 发送了用户注册申请: "{self.unique_name}", 请检查结果.'
                             )
+                    else:
+                        self.log.bind(msg=True).info(f"检测到异常输出, 抢注失败, 停止监控: {msg.text}.")
+                        self.failed.set()
+                        return
                 except asyncio.TimeoutError:
                     pass
             else:
