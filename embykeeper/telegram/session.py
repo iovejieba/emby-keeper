@@ -93,7 +93,6 @@ class ClientsSession:
                         logger.debug("账号的退出处理程序执行完成, 开始清理监听.")
                 else:
                     logger.debug("未注册退出处理程序, 开始清理监听.")
-                await client.dispatcher.stop()
                 await client.stop()
                 logger.debug(f'已停止账号 "{client.phone_number}" 的监听和任务.')
 

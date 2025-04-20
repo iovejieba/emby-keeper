@@ -33,7 +33,7 @@ class _MessageSchedule:
     """定义一个发送规划, 即在特定时间段内某些消息中的一个有一定几率被发送."""
 
     messages: Iterable[str]
-    at: Union[Iterable[Union[str, time]], Union[str, time]] = ("0:00", "23:59")
+    at: Iterable[Union[str, time]] = ("0:00", "23:59")
     possibility: float = 1.0
     multiply: int = 1
     only: str = None
@@ -45,7 +45,7 @@ class MessageSchedule:
 
     spec: str = None
     messages: Iterable[str] = None
-    at: Union[Iterable[Union[str, time]], Union[str, time]] = None
+    at: Iterable[Union[str, time]] = None
     possibility: float = None
     only: str = None
     multiply: int = None
@@ -74,7 +74,7 @@ class MessageMaterialSchema(BaseModel):
     """语料文件 Schema"""
 
     messages: List[str]
-    at: List[str] = Field(default=["9:00", "23:00"])
+    at: List[str] = Field(default=["00:00", "23:59"])
     possibility: Optional[float] = Field(default=1.0)
     only: Optional[str] = Field(default=None)
 

@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime
+from datetime import datetime, time
 
 from ..lock import (
     pornemby_nohp,

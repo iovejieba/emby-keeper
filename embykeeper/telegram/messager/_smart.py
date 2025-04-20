@@ -3,8 +3,9 @@ from __future__ import annotations
 import asyncio
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Tuple, Union
+from typing import TYPE_CHECKING, Iterable, List, Tuple, Union
 
+from dateutil import parser
 from loguru import logger
 from pyrogram.types import User
 import yaml
@@ -31,11 +32,11 @@ class SmartMessager:
 
     name: str = None  # 水群器名称
     chat_name: str = None  # 群聊的名称
-    default_messages: str = None  # 语言风格参考话术列表资源名
+    style_message_list: str = None  # 语言风格参考话术列表资源名
     additional_auth: List[str] = []  # 额外认证要求
     min_interval: int = None  # 预设两条消息间的最小间隔时间
     max_interval: int = None  # 预设两条消息间的最大间隔时间
-    at: Tuple[time, time] = None  # 可发送的时间范围
+    at: Iterable[Union[str, time]] = None  # 可发送的时间范围
     msg_per_day: int = 10  # 每天发送的消息数量
     min_msg_gap = 5  # 最小消息间隔
     force_day = False  # 强制每条时间线在每个自然日运行
@@ -70,7 +71,7 @@ class SmartMessager:
         self.max_interval = config.get("max_interval", self.max_interval)  # 两条消息间的最大间隔时间
         self.log = logger.bind(scheme="telemessager", name=self.name, username=self.me.name)
         self.timeline: List[int] = []  # 消息计划序列
-        self.example_messages = []
+        self.style_messages = []
 
     async def get_spec_path(self, spec):
         """下载话术文件对应的本地或云端文件."""
@@ -109,16 +110,20 @@ class SmartMessager:
                 self.log.warning(f"状态初始化失败, 自动水群将停止.")
                 return False
 
-            messages_spec = self.config.get("messages", self.default_messages)
-            if messages_spec and (not isinstance(messages_spec, str)):
-                self.log.warning(f"发生错误: 参考语言风格列表只能为字符串, 代表远端或本地文件.")
-                return False
-
-            if messages_spec:
-                messages_file = await self.get_spec_path(messages_spec)
-                with open(messages_file, "r") as f:
-                    data = yaml.safe_load(f)
-                    self.example_messages = data.get("messages", [])[:100]
+            messages = self.config.get("style_messages", None)
+            if messages is not None:
+                self.style_messages = messages[:100]
+            else:
+                messages_spec = self.config.get("style_message_list", self.style_message_list)
+                if messages_spec and (not isinstance(messages_spec, str)):
+                    self.log.warning(f"发生错误: 参考语言风格列表只能为字符串, 代表远端或本地文件.")
+                    return False
+                
+                if messages_spec:
+                    messages_file = await self.get_spec_path(messages_spec)
+                    with open(messages_file, "r") as f:
+                        data = yaml.safe_load(f)
+                        self.style_messages = data.get("messages", [])[:100]
 
             self.log.bind(username=tg.me.name).info(
                 f"即将预测当前状态下应该发送的水群消息, 但不会实际发送, 仅用于测试."
@@ -132,8 +137,13 @@ class SmartMessager:
             if self.at:
                 start_time, end_time = self.at
             else:
-                start_time = time(9, 0, 0)
-                end_time = time(23, 0, 0)
+                start_time = time(0, 0, 0)
+                end_time = time(23, 59, 59)
+            
+            if isinstance(start_time, str):
+                start_time = parser.parse(start_time).time()
+            if isinstance(end_time, str):
+                end_time = parser.parse(end_time).time()
 
             if self.force_day:
                 start_datetime = datetime.combine(date.today(), start_time)
@@ -230,9 +240,9 @@ class SmartMessager:
             context.append(ctx)
 
         prompt = "我需要你在一个群聊中进行合理的回复."
-        if self.example_messages:
+        if self.style_messages:
             prompt += "\n该群聊的聊天风格类似于以下条目:\n\n"
-            for msg in self.example_messages:
+            for msg in self.style_messages:
                 prompt += f"- {msg}\n"
         if context:
             prompt += "\n该群聊最近的几条消息及其特征为 (最早到晚):\n\n"

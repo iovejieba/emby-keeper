@@ -91,7 +91,7 @@ def get_cls(type: str, names: List[str] = None) -> List[Type]:
 
     results = []
     for name in names:
-        match = re.match(r"templ_(\w+)<(\w+)>", name)
+        match = re.match(r"templ_(\w+)<@?(\w+)>", name)
         if match:
             try:
                 module = import_module(f"{__telechecker__}.{sub}._templ_{match.group(1).lower()}")
@@ -106,9 +106,9 @@ def get_cls(type: str, names: List[str] = None) -> List[Type]:
                 elif type == "monitor":
                     results.append(func(name=f"{match.group(2)}", templ_name=name))
                 elif type == "messager":
-                    results.append(func(chat_name=match.group(2), name=f"@{match.group(2)}", templ_name=name))
+                    results.append(func(name=f"@{match.group(2)}", templ_name=name))
             except ImportError:
-                all_names = get_names(type)
+                all_names = get_names(type, allow_ignore=True)
                 logger.warning(f'您配置的 "{type}" 不支持站点 "{name}", 请从以下站点中选择:')
                 logger.warning(", ".join(all_names))
         else:
@@ -126,7 +126,7 @@ def get_cls(type: str, names: List[str] = None) -> List[Type]:
                         f'类名应以 "{expected_name.capitalize() + suffix.capitalize()}" 开头.'
                     )
             except ImportError:
-                all_names = get_names(type)
+                all_names = get_names(type, allow_ignore=True)
                 logger.warning(f'您配置的 "{type}" 不支持站点 "{name}", 请从以下站点中选择:')
                 logger.warning(", ".join(all_names))
     return results

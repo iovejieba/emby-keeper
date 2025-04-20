@@ -39,10 +39,10 @@ async def main(config_file: Path):
             messager = SmartPornembyMessager(
                 {}, config={}, me=tg.me, basedir=Path(user_data_dir(__product__))
             )
-            messages_file = await messager.get_spec_path(messager.default_messages)
+            messages_file = await messager.get_spec_path(messager.style_message_list)
             with open(messages_file, "r") as f:
                 data = yaml.safe_load(f)
-                messager.example_messages = data.get("messages", [])[:100]
+                messager.style_messages = data.get("messages", [])[:100]
             messages: List[Message] = []
             async for message in tg.get_chat_history(messager.chat_name):
                 messages.append(message)
@@ -71,9 +71,9 @@ async def main(config_file: Path):
                     use_time = last_msg.date + timedelta(minutes=2)
 
                     prompt = "我需要你在一个群聊中进行合理的回复."
-                    if messager.example_messages:
+                    if messager.style_messages:
                         prompt += "\n该群聊的聊天风格类似于以下条目:\n\n"
-                        for msg in messager.example_messages:
+                        for msg in messager.style_messages:
                             prompt += f"- {msg}\n"
                     if context:
                         prompt += "\n该群聊最近的几条消息及其特征为 (最早到晚):\n\n"
