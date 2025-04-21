@@ -24,8 +24,8 @@ class PornembyAlertMonitor(Monitor):
     trigger_interval = 0
     trigger_sem = None
 
-    user_alert_keywords = ["脚本", "真人", "admin", "全是", "举报", "每次", "机器人", "report"]
-    admin_alert_keywords = ["不要", "封", "ban", "warn", "踢", "抓"]
+    user_alert_keywords = ["脚本", "真人", "@admin", "机器人", "/report"]
+    admin_alert_keywords = ["封脚本", "抓脚本"]
     alert_reply_keywords = ["真人", "脚本", "每次", "在吗", "机器", "封", "warn", "ban", "回", "说"]
     alert_reply_except_keywords = ["不要回复", "别回复", "勿回复"]
     reply_words = ["?" * (i + 1) for i in range(3)] + ["嗯?", "欸?", "🤔"]

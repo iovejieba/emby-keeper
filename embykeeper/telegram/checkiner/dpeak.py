@@ -30,9 +30,6 @@ class DPeakCheckin(BotCheckin):
                     result = resp.json()
                     last_checkin = result["lastCheckIn"]
                     streak = result["streak"]
-                    if last_checkin == date_str:
-                        self.log.info(f"今日已经签到过了.")
-                        return await self.finish(RunStatus.NONEED, "今日已签到")
                     checkin_history = result.get("checkInHistory", {})
                 else:
                     last_checkin = date_str

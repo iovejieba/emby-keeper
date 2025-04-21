@@ -1,6 +1,6 @@
 import asyncio
 from contextlib import asynccontextmanager
-from datetime import time
+from datetime import datetime, time
 import random
 
 from pyrogram import filters
@@ -10,11 +10,10 @@ from pyrogram.enums import MessageEntityType
 from embykeeper.runinfo import RunStatus
 
 from ..messager._smart import SmartMessager
-from ..lock import (
-    pornemby_messager_mids,
-    pornemby_alert,
-)
+from ..lock import pornemby_alert
 from . import BotCheckin
+
+__ignore__ = True
 
 
 class SmartPornembyCheckinMessager(SmartMessager):
@@ -53,6 +52,15 @@ class PornembyCheckin(BotCheckin):
             return False
 
         mention = filters.create(mention_user_filter, user_id=self.client.me.id)
+
+        today_start = datetime.combine(datetime.now().date(), time(0, 0))
+        async for m in self.client.search_messages(
+            self.chat_name, "签到成功", max_date=today_start, from_user=self.bot_username
+        ):
+            if await mention(self.client, m):
+                self.log.info(f"今日已经签到过了.")
+                return await self.finish(RunStatus.NONEED, "今日已签到")
+
         messager = SmartPornembyCheckinMessager(
             self.client, config={"extra_prompt": "请注意: 回复中必须含有签到两个字, 且长度大于8个字!"}
         )
