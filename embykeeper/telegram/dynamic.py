@@ -58,7 +58,7 @@ def get_cls(type: str, names: List[str] = None) -> List[Type]:
     else:
         names = to_iterable(names)
 
-    names = [n.strip().lower() for n in names]
+    names = [n.strip() for n in names]
 
     exclude_names = set(name[1:] for name in names if name.startswith("-"))
     include_names = set(name[1:] for name in names if name.startswith("+"))
