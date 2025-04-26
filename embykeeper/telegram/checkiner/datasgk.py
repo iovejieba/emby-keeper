@@ -2,6 +2,7 @@ from . import BotCheckin
 
 __ignore__ = True
 
+
 class DataSGKCheckin(BotCheckin):
     name = "数据社工库"
     bot_username = "DataSGK_bot"

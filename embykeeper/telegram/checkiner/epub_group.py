@@ -19,7 +19,7 @@ class EPubGroupCheckin(BotCheckin):
             if msg:
                 self.mid = msg.id
         except ChatWriteForbidden:
-            self.log.info('被禁言, 准备 2 分钟后重新签到.')
+            self.log.info("被禁言, 准备 2 分钟后重新签到.")
             await asyncio.sleep(120)
             await self.retry()
 
@@ -27,4 +27,3 @@ class EPubGroupCheckin(BotCheckin):
         mid = getattr(self, "mid", None)
         if mid and message.reply_to_message_id == mid:
             return await super().message_handler(client, message, type=type)
-    
