@@ -432,7 +432,10 @@ class ClientsSession:
                         self.lock.release()
                         await self.pool[a.phone]
                         await self.lock.acquire()
-                    client, ref = self.pool[a.phone]
+                    result = self.pool[a.phone]
+                    if not result:
+                        await self.done.put((a, None))
+                    client, ref = result
                     ref += 1
                     self.pool[a.phone] = (client, ref)
                     self.phones.append(a.phone)
