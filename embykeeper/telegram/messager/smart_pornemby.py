@@ -6,6 +6,7 @@ from ..lock import (
     pornemby_nohp,
     pornemby_messager_enabled,
     pornemby_messager_mids,
+    pornemby_messager_mids_lock,
     pornemby_alert,
 )
 
@@ -22,7 +23,9 @@ class SmartPornembyMessager(SmartMessager):
     async def init(self):
         self.lock = asyncio.Lock()
         pornemby_messager_enabled[self.me.id] = True
-        pornemby_messager_mids[self.me.id] = []
+        async with pornemby_messager_mids_lock:
+            if self.me.id not in pornemby_messager_mids:
+                pornemby_messager_mids[self.me.id] = []
         return True
 
     async def send(self, dummy=False):

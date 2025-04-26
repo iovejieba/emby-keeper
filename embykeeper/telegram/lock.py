@@ -12,6 +12,7 @@ pornemby_nohp = {}  # uid: date
 pornemby_messager_enabled = {}  # uid: bool
 pornemby_alert = {}  # uid: bool
 pornemby_messager_mids = {}  # uid: list(mid)
+pornemby_messager_mids_lock = asyncio.Lock()
 
 super_ad_shown = {}  # uid: bool
 super_ad_shown_lock = asyncio.Lock()

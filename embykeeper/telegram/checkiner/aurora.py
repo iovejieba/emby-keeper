@@ -6,7 +6,7 @@ from pyrogram.raw.functions.users import GetFullUser
 from pyrogram.raw.functions.messages import RequestWebView
 
 from embykeeper.runinfo import RunStatus
-from embykeeper.utils import get_proxy_str, show_exception
+from embykeeper.utils import get_proxy_str
 from embykeeper.config import config
 
 from . import BotCheckin

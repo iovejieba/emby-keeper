@@ -10,14 +10,14 @@ from pyrogram.enums import MessageEntityType
 from embykeeper.runinfo import RunStatus
 
 from ..messager._smart import SmartMessager
-from ..lock import pornemby_alert
+from ..lock import pornemby_alert, pornemby_messager_mids_lock, pornemby_messager_mids
 from . import BotCheckin
 
 __ignore__ = True
 
 
 class SmartPornembyCheckinMessager(SmartMessager):
-    name = "Pornemby 主群签到"
+    name = "Pornemby 主群发言"
     chat_name = "pornemby"
     default_messages = "pornemby-checkin-wl@latest.yaml"
     additional_auth = ["pornemby_pack"]
@@ -25,18 +25,28 @@ class SmartPornembyCheckinMessager(SmartMessager):
     force_day = True
     at = [time(6, 0), time(23, 59)]
 
+    async def init(self):
+        async with pornemby_messager_mids_lock:
+            if self.me.id not in pornemby_messager_mids:
+                pornemby_messager_mids[self.me.id] = []
+        return True
+
     async def send(self, dummy=False):
         if pornemby_alert.get(self.me.id, False):
             self.log.info(f"由于风险急停取消发送.")
             return
-        return await super().send(dummy=dummy)
+        message = await super().send(dummy=dummy)
+        if message:
+            pornemby_messager_mids[self.me.id].append(message)
+        return message
 
 
-class PornembyCheckin(BotCheckin):
-    name = "Pornemby"
+class PornembyGroupCheckin(BotCheckin):
+    name = "Pornemby 主群发言"
     bot_username = "Porn_Emby_Bot"
     chat_name = "Pornemby"
     additional_auth = ["pornemby_pack"]
+    bot_use_captcha = False
 
     @asynccontextmanager
     async def listener(self):
