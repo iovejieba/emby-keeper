@@ -295,7 +295,8 @@ async def main(
     var.debug = verbosity
     if verbosity >= 3:
         level = 0
-        logging.getLogger("pyrogram.session").setLevel(20)
+        if verbosity < 4:
+            logging.getLogger("pyrogram.session").setLevel(20)
         logging.getLogger("hpack").setLevel(20)
         asyncio.get_event_loop().set_debug(True)
         apply_logging_adapter(level=10)
