@@ -1,6 +1,8 @@
+import asyncio
 from . import BotCheckin
 
 from pyrogram.types import Message
+from pyrogram.errors import ChatWriteForbidden
 
 __ignore__ = True
 
@@ -11,9 +13,14 @@ class EPubGroupCheckin(BotCheckin):
     bot_username = "zhruonanbot"
 
     async def send_checkin(self, retry=False):
-        msg = await self.send("签到")
-        if msg:
-            self.mid = msg.id
+        try:
+            msg = await self.send("签到")
+            if msg:
+                self.mid = msg.id
+        except ChatWriteForbidden:
+            self.log.info('被禁言, 准备 2 分钟后重新签到.')
+            await asyncio.sleep(120)
+            await self.retry()
 
     async def on_text(self, message: Message, text: str):
         mid = getattr(self, "mid", None)
