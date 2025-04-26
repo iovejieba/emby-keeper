@@ -11,6 +11,7 @@ class TestGroupCheckin(BotCheckin):
     name = "群组签到测试"
     chat_name = "api_group"
     bot_checkin_cmd = "签到"
+    bot_use_captcha = False
 
     async def send_checkin(self, **kw):
         cmd = random.choice(to_iterable(self.bot_checkin_cmd))

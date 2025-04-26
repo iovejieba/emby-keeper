@@ -8,3 +8,4 @@ class AkileGroupCheckin(BotCheckin):
     chat_name = "akileChat"
     bot_checkin_cmd = ["/checkin@akilecloud_bot"]
     bot_account_fail_keywords = ["未绑定"]
+    bot_use_captcha = False

@@ -12,6 +12,7 @@ class EPubGroupChatCheckin(BotCheckin):
     name = "EPub 电子书库群组每日发言"
     chat_name = "libhsulife"
     additional_auth = ["prime"]
+    bot_use_captcha = False
 
     async def send_checkin(self, retry=False):
         for _ in range(3):
@@ -47,5 +48,5 @@ class EPubGroupChatCheckin(BotCheckin):
         else:
             return await self.fail(message="无法生成发言内容")
 
-    async def on_text(self, message, text):
+    async def message_handler(*args, **kw):
         return
