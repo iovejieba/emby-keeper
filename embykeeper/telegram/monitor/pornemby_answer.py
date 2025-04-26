@@ -19,7 +19,6 @@ QA_CACHE_KEY = "monitor.pornemby.answer.qa"
 
 class _PornembyAnswerResultMonitor(Monitor):
     name = "Pornemby 问题答案"
-    chat_name = ["embytestflight", "Pornemby"]
     chat_except_keyword = "猜猜是什么番号"
     chat_keyword = r"问题\d*：(.*?)\n+A:(.*)\n+B:(.*)\n+C:(.*)\n+D:(.*)\n+答案为：([ABCD])"
     additional_auth = ["pornemby_pack"]

@@ -30,7 +30,6 @@ class _PornembyExamResultMonitor(Monitor):
 
 class _PornembyExamAnswerMonitor(Monitor):
     name = "Pornemby 科举"
-    chat_name = ["embytestflight", "Pornemby"]
     chat_user = [
         "pornemby_question_bot",
         "PronembyTGBot2_bot",
@@ -313,7 +312,7 @@ class _PornembyExamAnswerMonitor(Monitor):
 
 class PornembyExamMonitor:
     class PornembyExamResultMonitor(_PornembyExamResultMonitor):
-        chat_name = "Pornemby"
+        chat_name = ["embytestflight", "Pornemby"]
 
     class PornembyExamAnswerMonitor(_PornembyExamAnswerMonitor):
-        chat_name = "Pornemby"
+        chat_name = ["embytestflight", "Pornemby"]
