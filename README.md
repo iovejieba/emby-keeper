@@ -131,10 +131,12 @@ docker run -v $(pwd)/embykeeper:/app --rm -it --net=host embykeeper/embykeeper -
     - 群组内发送八条随机诗句消息 (`epub_group_chat`): [群组](https://t.me/libhsulife)
   - Kiku (`kiku`): [频道](https://t.me/KikuEmbyNotice) [群组](https://t.me/KikuEmbyChat) [机器人](https://t.me/kikuemby_bot)
   - 叶子 (`yezi`): [频道](https://t.me/yezi_emby) [群组](https://t.me/yeziemby) [机器人](https://t.me/yeziemby_bot)
+  - 叶子高码 (`yezigm`): [频道](https://t.me/yezi_emby) [群组](https://t.me/yeziemby) [机器人](https://t.me/yezigm_bot)
   - Ask (`ask`): [频道](https://t.me/ask_uni) [群组](https://t.me/Ask_Universal) [机器人](https://t.me/askUniversal_bot)
   - DPeak (`dpeak`): [群组](https://t.me/EMBY_DPeak) [机器人](https://t.me/emby_dpeak_bot)
   - Youno (`youno`): [频道](http://t.me/+jRxdcDjxgpViNDll) [群组](https://t.me/YounosEmby) [机器人](https://t.me/YounoEmby_bot)
   - Lemby (`lemby`): [频道](https://t.me/Lemby_Channel) [群组](https://t.me/Lemby_Group) [机器人](https://t.me/LembyPremium_BOT)
+  - 南瓜音乐 (`nangua`): [频道](https://t.me/nanguadd) [群组](https://t.me/nanguade) [机器人](https://t.me/nanguadebot)
 
   <!-- #endregion checkiner-sites -->
 

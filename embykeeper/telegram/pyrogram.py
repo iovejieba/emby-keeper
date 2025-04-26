@@ -398,25 +398,6 @@ class Client(pyrogram.Client):
         else:
             return self.dispatcher.remove_handler(handler, group)
 
-    async def invoke(self, query, *args, **kw):
-        last_error = None
-        for _ in range(3):
-            try:
-                return await super().invoke(query, *args, **kw)
-            except OSError as e:
-                last_error = e
-                await asyncio.sleep(0.5)
-                continue
-            except (
-                sqlite3.ProgrammingError
-            ) as e:  # Cannot operate on a closed database. The client is stopping.
-                raise asyncio.CancelledError() from None
-        else:
-            raise OSError(
-                f"执行 Telegram 请求由于网络因素而失败, 且重试超限."
-                f"({last_error.__class__.__name__} for {query.__class__.__name__})"
-            )
-
     @asynccontextmanager
     async def catch_reply(self, chat_id: Union[int, str], outgoing=False, filter=None):
         async def handler_func(client, message, future: asyncio.Future):
@@ -602,3 +583,5 @@ class Client(pyrogram.Client):
                 self.dispatcher.updates_queue.put_nowait((updates.update, {}, {}))
         except OSError as e:
             logger.info(f"与 Telegram 服务器连接错误: {e}")
+        except sqlite3.ProgrammingError:
+            return
