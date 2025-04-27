@@ -20,3 +20,4 @@ jobs:
           close-issue-message: '该 Issue 因长时间无活动而关闭, 若您有疑问请继续评论.'
           days-before-stale: 30
           days-before-close: 5
+          exempt-issue-labels: nostale
