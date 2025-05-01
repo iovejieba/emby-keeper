@@ -11,6 +11,7 @@ from embykeeper.config import config
 
 from . import BotCheckin
 
+__ignore__ = True
 
 class AuroraCheckin(BotCheckin):
     name = "Aurora Media"

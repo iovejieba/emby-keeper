@@ -19,6 +19,7 @@ class SmartPornembyMessager(SmartMessager):
     style_message_list = "pornemby-common-wl@latest.yaml"
     additional_auth = ["pornemby_pack"]
     msg_per_day = 100
+    extra_prompt = "输出内容必须大于 8 个字符, 包括符号"
 
     async def init(self):
         self.lock = asyncio.Lock()

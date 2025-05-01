@@ -3,13 +3,16 @@ from __future__ import annotations
 import asyncio
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, List, Tuple, Union
+import random
+from typing import TYPE_CHECKING, Iterable, List, Union
 
 from dateutil import parser
 from loguru import logger
 from pyrogram.types import User
 from pyrogram.errors import ChatWriteForbidden
+from thefuzz import fuzz
 import yaml
+from cachetools import LRUCache
 
 from embykeeper import __name__ as __product__
 from embykeeper.data import get_data
@@ -41,9 +44,17 @@ class SmartMessager:
     msg_per_day: int = 10  # 每天发送的消息数量
     min_msg_gap = 5  # 最小消息间隔
     force_day = False  # 强制每条时间线在每个自然日运行
+    max_length = 50  # 最大消息长度
+    filter_recent_similarity = 0.6  # 过滤相似消息的相似度阈值
+    extra_prompt = ""  # 附加提示词
+    max_count_recent_5: int = 1
+    max_count_recent_10: int = 1
 
     site_last_message_time = None
     site_lock = asyncio.Lock()
+    
+    latest_message_cache = LRUCache(maxsize=100)
+    last_latest_message_id = None
 
     def __init__(
         self,
@@ -70,7 +81,7 @@ class SmartMessager:
             "min_interval", config.get("interval", self.min_interval or 60)
         )  # 两条消息间的最小间隔时间
         self.max_interval = config.get("max_interval", self.max_interval)  # 两条消息间的最大间隔时间
-        self.log = logger.bind(scheme="telemessager", name=self.name, username=self.me.name)
+        self.log = logger.bind(scheme="telemessager", name=self.name, username=self.me.full_name)
         self.timeline: List[int] = []  # 消息计划序列
         self.style_messages = []
 
@@ -126,7 +137,7 @@ class SmartMessager:
                         data = yaml.safe_load(f)
                         self.style_messages = data.get("messages", [])[:100]
 
-            self.log.bind(username=tg.me.name).info(
+            self.log.bind(username=tg.me.full_name).info(
                 f"即将预测当前状态下应该发送的水群消息, 但不会实际发送, 仅用于测试."
             )
 
@@ -234,8 +245,8 @@ class SmartMessager:
                 spec.append(f"回复了消息: {truncate_str(str(rmsg.caption or rmsg.text or ''), 60)}")
             spec = " ".join(spec)
             ctx = truncate_str(text, 180)
-            if msg.from_user and msg.from_user.name:
-                ctx = f"{msg.from_user.name}说: {ctx}"
+            if msg.from_user and msg.from_user.full_name:
+                ctx = f"{msg.from_user.full_name}说: {ctx}"
             if spec:
                 ctx += f" ({spec})"
             context.append(ctx)
@@ -250,7 +261,7 @@ class SmartMessager:
             for ctx in list(reversed(context)):
                 prompt += f"- {ctx}\n"
         prompt += "\n其他信息:\n\n"
-        prompt += f"- 我的用户名: {tg.me.name}\n"
+        prompt += f"- 我的用户名: {tg.me.full_name}\n"
         prompt += f'- 当前时间: {(time or datetime.now()).strftime("%Y-%m-%d %H:%M:%S")}\n'
         use_prompt = self.config.get("prompt")
         if use_prompt:
@@ -271,13 +282,15 @@ class SmartMessager:
                 "10. 输出内容请勿重复自己之前说过的话\n\n"
             )
             if extra_prompt:
-                prompt += f"{extra_prompt}"
+                prompt += f"{extra_prompt}\n"
+            if self.extra_prompt:
+                prompt += f"{self.extra_prompt}\n"
             prompt += "\n请直接输出你的回答:"
         return prompt
 
     async def _send(self, tg: Client, dummy: bool = False):
         chat = await tg.get_chat(self.chat_name)
-        log = self.log.bind(username=tg.me.name)
+        log = self.log.bind(username=tg.me.full_name)
 
         prompt = await self.get_infer_prompt(tg, log)
 
@@ -287,24 +300,64 @@ class SmartMessager:
         answer, _ = await Link(tg).infer(prompt)
 
         if answer:
-            if len(answer) > 50:
+            if self.max_length and len(answer) > self.max_length:
                 log.info(f"智能推测水群内容过长, 将不发送消息.")
             elif "SKIP" in answer:
                 log.info(f"智能推测此时不应该水群, 将不发送消息.")
             else:
                 if dummy:
                     log.info(
-                        f'当前情况下在聊天 "{chat.name}" 中推断可发送水群内容为: [gray50]{truncate_str(answer, 20)}[/]'
+                        f'当前情况下在聊天 "{chat.full_name}" 中推断可发送水群内容为: [gray50]{truncate_str(answer, 20)}[/]'
                     )
                 else:
-                    log.info(f'即将在5秒后向聊天 "{chat.name}" 发送: [gray50]{truncate_str(answer, 20)}[/]')
+                    if self.site_last_message_time:
+                        need_sec = random.randint(5, 10)
+                        while self.site_last_message_time + timedelta(seconds=need_sec) > datetime.now() :
+                            await asyncio.sleep(1)
+                    if self.max_count_recent_5 or self.max_count_recent_10:
+                        try:
+                            recent_messages = []
+                            async for msg in tg.get_chat_history(self.chat_name, limit=10):
+                                recent_messages.append(msg)
+                            
+                            my_recent_5 = sum(1 for msg in recent_messages[:5] if msg.from_user and msg.from_user.id == tg.me.id)
+                            my_recent_10 = sum(1 for msg in recent_messages[:10] if msg.from_user and msg.from_user.id == tg.me.id)
+                            
+                            if my_recent_5 >= self.max_count_recent_5:
+                                self.log.info(f"跳过发送: 已在最近 5 条消息中发送了 {my_recent_5} 条 (上限 {self.max_count_recent_5} )")
+                                return None
+                            
+                            if my_recent_10 >= self.max_count_recent_10:
+                                self.log.info(f"跳过发送: 已在最近 10 条消息中发送了 {my_recent_10} 条 (上限 {self.max_count_recent_10} )")
+                                return None
+                        except Exception as e:
+                            self.log.warning(f"检查近期消息数量失败: {e}")
+                            show_exception(e, regular=False)
+                            return None
+                    if self.filter_recent_similarity:
+                        try:
+                            async for msg in tg.get_chat_history(self.chat_name, limit=50, min_id=self.last_latest_message_id or 0):
+                                if msg.text:
+                                    self.latest_message_cache[msg.id] = msg.text
+                                    if not self.last_latest_message_id or msg.id > self.last_latest_message_id:
+                                        self.last_latest_message_id = msg.id
+                            for recent_msg in self.latest_message_cache.values():
+                                similarity = fuzz.ratio(answer.lower(), recent_msg.lower()) / 100.0
+                                if similarity > self.filter_recent_similarity:
+                                    self.log.info(f"跳过发送: 找到相似度为 {similarity:.2f} 的近期消息")
+                                    return None
+                        except Exception as e:
+                            self.log.warning(f"检查消息相似度失败: {e}")
+                            show_exception(e, regular=False)
+                            return None
+                    log.info(f'即将在5秒后向聊天 "{chat.full_name}" 发送: [gray50]{truncate_str(answer, 20)}[/]')
                     await asyncio.sleep(5)
                     try:
                         msg = await tg.send_message(chat.id, answer)
                     except ChatWriteForbidden:
                         log.warning(f"群组已禁言, 将不发送消息.")
                     else:
-                        log.info(f'已向聊天 "{chat.name}" 发送: [gray50]{truncate_str(answer, 20)}[/]')
+                        log.info(f'已向聊天 "{chat.full_name}" 发送: [gray50]{truncate_str(answer, 20)}[/]')
                         return msg
         else:
             log.warning(f"智能推测水群内容失败, 将不发送消息.")

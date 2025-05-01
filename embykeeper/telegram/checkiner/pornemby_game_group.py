@@ -12,6 +12,7 @@ class PornembyGameGroupCheckin(BotCheckin):
     chat_name = "embytestflight"
     additional_auth = ["pornemby_pack"]
     bot_use_captcha = False
+    extra_prompt = "输出内容必须大于 8 个字符, 包括符号"
 
     async def send_checkin(self, retry=False):
         if pornemby_alert.get(self.client.me.id, False):
@@ -19,7 +20,7 @@ class PornembyGameGroupCheckin(BotCheckin):
             return await self.fail(message="由于风险急停不进行发言")
 
         for _ in range(3):
-            min_letters = self.config.get("min_letters", self.config.get("letters", 7))
+            min_letters = self.config.get("min_letters", self.config.get("letters", 8))
             max_letters = self.config.get("max_letters", 15)
             prompt = self.config.get(
                 "prompt",

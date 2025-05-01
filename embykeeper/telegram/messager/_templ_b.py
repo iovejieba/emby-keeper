@@ -22,12 +22,16 @@ class TemplateBMessagerConfig(BaseModel):
     force_day: bool = False  # 强制每条时间线在每个自然日运行
     prompt: Optional[str] = None  # 使用的提示词
     extra_prompt: Optional[str] = None  # 追加的提示词
+    max_length = 50  # 最大消息长度
+    filter_recent_similarity = 0.6  # 过滤相似消息的相似度阈值
+    max_count_recent_5: int = 1
+    max_count_recent_10: int = 1
 
     # Backward compatibility
     interval: Optional[int] = None
 
 
-class TemplateAMessager(SmartMessager):
+class TemplateBMessager(SmartMessager):
     additional_auth = ["prime"]
 
     async def init(self):
@@ -43,13 +47,17 @@ class TemplateAMessager(SmartMessager):
         self.msg_per_day = self.t_config.msg_per_day or self.msg_per_day
         self.min_msg_gap = self.t_config.min_msg_gap
         self.force_day = self.t_config.force_day
+        self.max_length = self.t_config.max_length
+        self.filter_recent_similarity = self.t_config.filter_recent_similarity
+        self.max_count_recent_5 = self.t_config.max_count_recent_5
+        self.max_count_recent_10 = self.t_config.max_count_recent_10
         # style_messages/ min_interval / max_interval / msg_per_day / prompt / extra_prompt 由 config 读取
         if not self.chat_name:
             self.log.warning(f"初始化失败: 没有定义任何目标群组, 请参考教程进行配置.")
             return False
-        self.log = logger.bind(scheme="telemessager", name=self.name, username=self.me.name)
+        self.log = logger.bind(scheme="telemessager", name=self.name, username=self.me.full_name)
         return True
 
 
 def use(**kw):
-    return type("TemplatedClass", (TemplateAMessager,), kw)
+    return type("TemplatedClass", (TemplateBMessager,), kw)

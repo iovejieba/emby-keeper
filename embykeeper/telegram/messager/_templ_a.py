@@ -19,6 +19,8 @@ class TemplateAMessagerConfig(BaseModel):
     at: Optional[List[str]] = None  # 时间区间, 例如 ["5:00AM", "9:00PM"]
     possibility: Optional[float] = None  # 发送概率, 例如 1.00
     only: Optional[Literal["weekday", "weekend"]] = None  # 仅在周末/周中发送
+    max_count_recent_5: int = 1
+    max_count_recent_10: int = 1
 
     # Backward compatibility
     interval: Optional[int] = None
@@ -38,12 +40,14 @@ class TemplateAMessager(Messager):
         self.default_messages = self.t_config.message_lists
         self.at = self.t_config.at
         self.possibility = self.t_config.possibility
-        # messages / min_interval / max_interval 由 config 读取
         self.only = self.t_config.only
+        self.max_count_recent_5 = self.t_config.max_count_recent_5
+        self.max_count_recent_10 = self.t_config.max_count_recent_10
+        # messages / min_interval / max_interval 由 config 读取
         if not self.chat_name:
             self.log.warning(f"初始化失败: 没有定义任何目标群组, 请参考教程进行配置.")
             return False
-        self.log = logger.bind(scheme="telemessager", name=self.name, username=self.me.name)
+        self.log = logger.bind(scheme="telemessager", name=self.name, username=self.me.full_name)
         return True
 
 

@@ -38,8 +38,8 @@ async def call_infer(tg: Client, url: str = None, analyze: Path = None):
                 spec.append(f"回复了消息: {truncate_str(str(rmsg.caption or rmsg.text or ''), 60)}")
             spec = " ".join(spec)
             ctx = truncate_str(text, 180)
-            if msg.from_user.name:
-                ctx = f"{msg.from_user.name}说: {ctx}"
+            if msg.from_user.full_name:
+                ctx = f"{msg.from_user.full_name}说: {ctx}"
             if spec:
                 ctx += f" ({spec})"
             context.append(ctx)

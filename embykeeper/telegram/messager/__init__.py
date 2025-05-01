@@ -3,9 +3,13 @@ import typing as _t
 
 if _t.TYPE_CHECKING:
     from ._base import Messager, MessagePlan, MessageSchedule
+    from ._templ_a import TemplateAMessagerConfig, TemplateAMessager
+    from ._templ_b import TemplateBMessagerConfig, TemplateBMessager
 
 MENU = {
     "._base": ["Messager", "MessagePlan", "MessageSchedule"],
+    "._templ_a": ["TemplateAMessagerConfig", "TemplateAMessager"],
+    "._templ_b": ["TemplateBMessagerConfig", "TemplateBMessager"],
 }
 
 

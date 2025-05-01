@@ -35,7 +35,7 @@ async def main(config_file: Path):
         http_client=httpx.AsyncClient(proxy=proxy),
     )
     async with ClientsSession(config.telegram.account[:1]) as clients:
-        async for tg in clients:
+        async for a, tg in clients:
             messager = SmartPornembyMessager(
                 {}, config={}, me=tg.me, basedir=Path(user_data_dir(__product__))
             )
@@ -61,8 +61,8 @@ async def main(config_file: Path):
                             )
                         spec = " ".join(spec)
                         ctx = truncate_str(text, 180)
-                        if msg.from_user and msg.from_user.name:
-                            ctx = f"{msg.from_user.name}说: {ctx}"
+                        if msg.from_user and msg.from_user.full_name:
+                            ctx = f"{msg.from_user.full_name}说: {ctx}"
                         if spec:
                             ctx += f" ({spec})"
                         context.append(ctx)
@@ -80,7 +80,7 @@ async def main(config_file: Path):
                         for ctx in list(reversed(context)):
                             prompt += f"- {ctx}\n"
                     prompt += "\n其他信息:\n\n"
-                    prompt += f"- 我的用户名: {tg.me.name}\n"
+                    prompt += f"- 我的用户名: {tg.me.full_name}\n"
                     prompt += f'- 当前时间: {use_time.strftime("%Y-%m-%d %H:%M:%S")}\n'
                     prompt += (
                         "\n请根据以上的信息, 给出一个合理的回复, 要求:\n"

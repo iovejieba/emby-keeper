@@ -40,7 +40,6 @@ class TemplateAMonitor(Monitor):
     init_first = True
     additional_auth = ["prime"]
     notify_create_name = True
-    debug_no_log = True
 
     async def init(self):
         try:
@@ -67,14 +66,14 @@ class TemplateAMonitor(Monitor):
         if (not self.chat_keyword) and (not self.chat_user) and (not self.chat_name):
             self.log.warning(f"初始化失败: 没有定义任何监控项, 请参考教程进行配置.")
             return False
-        self.log = logger.bind(scheme="telemonitor", name=self.name, username=self.client.me.name)
+        self.log = logger.bind(scheme="telemonitor", name=self.name, username=self.client.me.full_name)
         return True
 
     async def on_trigger(self, message: Message, key, reply):
         content = message.text or message.caption
         if self.t_config.send:
             if message.from_user:
-                msg = f"监控器 {self.name} 收到来自 {message.from_user.name} 的关键消息: {content}"
+                msg = f"监控器 {self.name} 收到来自 {message.from_user.full_name} 的关键消息: {content}"
             else:
                 msg = f"监控器 {self.name} 收到关键消息: {content}"
             if self.t_config.send_immediately:
@@ -90,7 +89,9 @@ class TemplateAMonitor(Monitor):
                     f"监控器 {self.name} 成功注册机器人 {self.t_config.try_register_bot}."
                 )
         else:
-            await super().on_trigger(message, key, reply)
+            if reply:
+                return await self.client.send_message(message.chat.id, reply)
+            self.log.info(f"已向 {message.chat.username or message.chat.full_name} or .")
 
     def get_unique_name(self):
         if not self.t_config.try_register_bot:

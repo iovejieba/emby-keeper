@@ -24,6 +24,7 @@ class SmartPornembyCheckinMessager(SmartMessager):
     msg_per_day = 1
     force_day = True
     at = [time(6, 0), time(23, 59)]
+    extra_prompt = "输出内容必须大于 8 个字符, 包括符号"
 
     async def init(self):
         async with pornemby_messager_mids_lock:

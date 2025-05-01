@@ -82,11 +82,11 @@ class UniqueUsername(dict):
     @staticmethod
     def get_unique(user: User):
         """获得一个独特名称, 该名称将在程序运行全周期一致."""
-        log = logger.bind(scheme="telemonitor", username=user.name)
+        log = logger.bind(scheme="telemonitor", username=user.full_name)
         if user.username:
             unique = user.username
         else:
-            unique: str = user.name.lower()
+            unique: str = user.full_name.lower()
         unique = re.sub(r"[^A-Za-z0-9]", "", unique)
         random_bits = 10 - len(unique)
         if random_bits:
@@ -147,7 +147,7 @@ class Monitor:
         self.ctx = context or RunContext.prepare()
 
         self.config = config
-        self.log = logger.bind(scheme="telemonitor", name=self.name, username=client.me.name)
+        self.log = logger.bind(scheme="telemonitor", name=self.name, username=client.me.full_name)
         self.session = None
         self.failed = asyncio.Event()
         if self.trigger_sim:
@@ -265,10 +265,14 @@ class Monitor:
                 spec = f"[green]{chat.title}[/]" if chat.title else f"[green]{chat.id}[/]"
             if len(chats) > 1:
                 spec += " 等多个群组"
-        else:
+        elif self.chat_keyword:
             spec = "关键词: " + truncate_str(",".join(to_iterable(self.chat_keyword)), 60)
-
-        self.log.info(f"开始监视: {spec}.")
+        else:
+            spec = None
+        if spec:
+            self.log.info(f"开始监视: {spec}.")
+        else:
+            self.log.info(f"开始监视.")
         self.ctx.status = RunStatus.RUNNING
 
         async with self.listener():
@@ -347,7 +351,7 @@ class Monitor:
                 show_exception(e, regular=False)
             else:
                 raise
-        finally:
+        else:
             message.continue_propagation()
 
     async def message_handler(self, client: Client, message: Message):
@@ -386,7 +390,7 @@ class Monitor:
                 if self.session.reply == text:
                     now = await self.session.follow()
                     self.log.info(
-                        f'从众计数 ({self.chat_follow_user - now}/{self.chat_follow_user}): "{message.from_user.name}"'
+                        f'从众计数 ({self.chat_follow_user - now}/{self.chat_follow_user}): "{message.from_user.full_name}"'
                     )
 
     async def on_trigger(self, message: Message, key: Optional[Union[List[str], str]], reply: str):

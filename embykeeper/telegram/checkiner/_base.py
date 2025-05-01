@@ -103,7 +103,7 @@ class BaseBotCheckin(ABC):
 
         self.config = config
         self.finished = asyncio.Event()  # 签到完成事件
-        self.log = self.ctx.bind_logger(logger.bind(name=self.name, username=client.me.name))  # 日志组件
+        self.log = self.ctx.bind_logger(logger.bind(name=self.name, username=client.me.full_name))  # 日志组件
 
         self._task = None  # 主任务
 
@@ -295,7 +295,7 @@ class BotCheckin(BaseBotCheckin):
                 except IndexError:
                     self.log.warning(f"初始化错误: 用户名 {self.bot_username} 不存在或不是有效用户.")
                     return self.ctx.finish(RunStatus.FAIL, "初始化错误")
-                specs.append(f"[green]{bot.name}[/] [gray50](@{bot.username})[/]")
+                specs.append(f"[green]{bot.full_name}[/] [gray50](@{bot.username})[/]")
             if chat.title:
                 specs.append(f"[green]{chat.title}[/] [gray50](@{chat.username})[/]")
             self.log.info(f"开始执行签到: {' @ '.join(specs)}.")

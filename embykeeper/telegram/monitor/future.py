@@ -59,10 +59,14 @@ class FutureMonitor(Monitor):
         for i in range(3):
             if i:
                 self.log.info(f"正在重试注册 ({i}/3).")
-            msg = await self.client.wait_reply(self.bot_username, f"/start")
+            try:
+                msg = await self.client.wait_reply(self.bot_username, f"/start")
+            except asyncio.TimeoutError:
+                self.log.warning("发送消息无响应, 无法注册.")
+                return
             text = msg.text or msg.caption
             if "你还未加入" in text:
-                self.log.error("账户错误, 无法注册.")
+                self.log.warning("账户错误, 无法注册.")
                 return
             async with self.client.catch_reply(self.bot_username) as f1:
                 async with self.client.catch_edit(msg, ~filters.regex("请先完成验证")) as f2:
@@ -71,14 +75,14 @@ class FutureMonitor(Monitor):
                     except (TimeoutError, MessageIdInvalid):
                         pass
                     except ValueError:
-                        self.log.error("未能找到注册按钮, 无法注册.")
+                        self.log.warning("未能找到注册按钮, 无法注册.")
                         return
                     try:
                         done, pending = await asyncio.wait(
                             [f1, f2], return_when=asyncio.FIRST_COMPLETED, timeout=10
                         )
                     except asyncio.TimeoutError:
-                        self.log.error("点击注册按钮无响应, 无法注册.")
+                        self.log.warning("点击注册按钮无响应, 无法注册.")
                         return
                     else:
                         for f in pending:
@@ -86,7 +90,7 @@ class FutureMonitor(Monitor):
                         msg = list(done)[0].result()
             text = msg.text or msg.caption
             if "验证您的身份" in text:
-                self.log.info("需要验证身份, 正在解析.")
+                self.log.info("需要验证, 正在解析.")
                 url = None
                 if msg.reply_markup:
                     buttons = [button for line in msg.reply_markup.inline_keyboard for button in line]
@@ -95,7 +99,7 @@ class FutureMonitor(Monitor):
                             url = b.web_app.url
                             break
                 if not url:
-                    self.log.error("需要验证身份但没有找到 URL, 无法注册.")
+                    self.log.warning("需要验证身份但没有找到 URL, 无法注册.")
                     return
                 bot_peer = await self.client.resolve_peer(self.bot_username)
                 url_auth = (
@@ -104,7 +108,7 @@ class FutureMonitor(Monitor):
                     )
                 ).url
                 if not await self.solve_captcha(url_auth):
-                    self.log.error("验证码解析失败, 无法注册.")
+                    self.log.warning("验证码解析失败, 无法注册.")
                     return
                 else:
                     await asyncio.sleep(random.uniform(3, 5))
@@ -115,7 +119,7 @@ class FutureMonitor(Monitor):
                     msg = await self.client.wait_reply(self.bot_username, key)
                     text = msg.text or msg.caption
                     if "无效" in text:
-                        self.log.error("邀请码无效, 无法注册.")
+                        self.log.warning("邀请码无效, 无法注册.")
                         return
                 if "用户名" in text:
                     msg = await self.client.wait_reply(self.bot_username, self.unique_name)

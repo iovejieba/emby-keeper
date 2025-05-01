@@ -102,7 +102,6 @@ docker run -v $(pwd)/embykeeper:/app --rm -it --net=host embykeeper/embykeeper -
   - Lyrebird (`lyrebird`): [频道](https://t.me/lyrebirdchannel) [群组](https://t.me/lyrebirdchat) [机器人](https://t.me/Lyrebird_bot)
   - 非越助手 (`sfcju`): [频道](https://t.me/sfcj_org) [群组](https://t.me/sfcj_chat) [机器人](https://t.me/sfcju_Bot)
   - Yomo (`yomo`): [频道](https://t.me/yomoemby_notice) [群组](https://t.me/yomoemby) [机器人](https://t.me/yomoemby_bot)
-  - Raismusic (`raismusic`): [频道](https://t.me/raisemby_channel) [群组1](https://t.me/raismusic_group) [群组2](https://t.me/Raisembyg) [机器人](https://t.me/raismusicbot)
   - AIVBI (`aivbi`): [频道](https://t.me/plus_emby) [群组](https://t.me/plusemby) [机器人](https://t.me/AIVBIbot)
   - Alpha 海外服 (`alpha`): [频道](https://t.me/AlphaTVOverseaChannel) [群组](https://t.me/AlphaTVOverseaGroup) [机器人](https://t.me/AlphaTVOverseaBoss_bot)
   - 月饼 (`mooncake`): [频道](https://t.me/Mooncake_notify) [群组](https://t.me/Mooncake_Emby) [机器人](https://t.me/Moonkkbot)
@@ -115,9 +114,7 @@ docker run -v $(pwd)/embykeeper:/app --rm -it --net=host embykeeper/embykeeper -
   - 探花 (`tanhua`): [频道](https://t.me/tanhua_tv2024) [群组](https://t.me/tanhuatv2025) [机器人](https://t.me/TanhuaTvBot)
   - iKun 音乐服 (`ikunmusic`): [频道](https://t.me/Asukacute) [群组](https://t.me/ikunvv) [机器人](https://t.me/iikun_bot)
   - HKA (`hka`): [群组](https://t.me/hkaemby) [机器人](https://t.me/hkaemby_bot)
-  - AuroraMedia (`aurora`): [频道](https://t.me/AuroraMedia2) [机器人](https://t.me/AuroraMedia1_bot)
   - SaturDay.Lite (`saturday`): [频道](https://t.me/saturday_lite_channel) [群组](https://t.me/SaturDay_Lite) [机器人](https://t.me/saturday_lite_bot)
-  - 鹅 (`zm`): [机器人](https://t.me/ZXCHSJSHbot)
   - 起点站: [群组](https://t.me/tdckemby)
     - 新机器人 (`tdck_new`): [机器人](https://t.me/StartTdckBot)
     - 旧机器人 (`tdck`) [机器人](https://t.me/tdck_emby_create_bot)
@@ -135,6 +132,7 @@ docker run -v $(pwd)/embykeeper:/app --rm -it --net=host embykeeper/embykeeper -
   - Youno (`youno`): [频道](http://t.me/+jRxdcDjxgpViNDll) [群组](https://t.me/YounosEmby) [机器人](https://t.me/YounoEmby_bot)
   - Lemby (`lemby`): [频道](https://t.me/Lemby_Channel) [群组](https://t.me/Lemby_Group) [机器人](https://t.me/LembyPremium_BOT)
   - 南瓜音乐 (`nangua`): [频道](https://t.me/nanguadd) [群组](https://t.me/nanguade) [机器人](https://t.me/nanguadebot)
+  - 西瓜 (`xigua`): [频道](https://t.me/ChilledWatermelon) [群组](https://t.me/ChilledMelonGroup) [机器人](https://t.me/XiguaEmbyBot)
 
   <!-- #endregion checkiner-sites -->
 
@@ -157,6 +155,9 @@ docker run -v $(pwd)/embykeeper:/app --rm -it --net=host embykeeper/embykeeper -
   - 关服, 无响应, 或已停用签到功能 (默认禁用, 请参考[教程文档](https://emby-keeper.github.io/guide/配置文件#service-子项)启用):
     <!-- #region checkiner-ignored-sites -->
 
+    - 鹅服 (`zm`): ~~[机器人](https://t.me/ZXCHSJSHbot)~~
+    - AuroraMedia (`aurora`): ~~[频道](https://t.me/AuroraMedia2) [机器人](https://t.me/AuroraMedia1_bot)~~
+    - Raismusic (`raismusic`): ~~[频道](https://t.me/raisemby_channel) [群组1](https://t.me/raismusic_group) [群组2](https://t.me/Raisembyg) [机器人](https://t.me/raismusicbot)~~
     - 天南小筑 (`tiannan`): ~~[频道](http://t.me/Nanflix) [群组](http://t.me/+kDBdjwtZwudhYWE1) [机器人](https://t.me/Nanflix_bot)~~
     - 魔法Emby (`magic`): ~~[频道](https://t.me/Magic_EmbyChannel) [群组](https://t.me/Magicemby) [机器人](https://t.me/Magic_EmbyBot)~~
     - 卷毛鼠 (`jms`): ~~[频道](https://t.me/CurlyMouse) [群组](https://t.me/Curly_Mouse) [机器人](https://t.me/jmsembybot)~~

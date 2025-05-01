@@ -1,5 +1,6 @@
 import random
 from typing import Iterable, List, Optional, Union
+
 from loguru import logger
 from pydantic import BaseModel, ValidationError
 
@@ -73,7 +74,7 @@ class TemplateBCheckin(BotCheckin):
         self.max_retries = self.t_config.max_retries
         self.checked_retries = self.t_config.checked_retries
 
-        self.log = logger.bind(scheme="telechecker", name=self.name, username=self.client.me.name)
+        self.log = logger.bind(scheme="telechecker", name=self.name, username=self.client.me.full_name)
         return True
 
     async def send_checkin(self, **kw):

@@ -33,6 +33,9 @@ class TemplateACheckin(BotCheckin):
                         pass
                     else:
                         if self.use_button_answer:
+                            if not isinstance(answer, BotCallbackAnswer):
+                                self.log.warning(f"签到失败: 签到按钮指向 URL, 不受支持.")
+                                return await self.fail()
                             if answer.message and not any(
                                 ignore in answer.message for ignore in self.bot_text_ignore_answer
                             ):

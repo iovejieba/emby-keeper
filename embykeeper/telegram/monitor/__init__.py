@@ -3,9 +3,13 @@ import typing as _t
 
 if _t.TYPE_CHECKING:
     from ._base import Session, Monitor, UniqueUsername
+    from ._templ_a import TemplateAMonitor, TemplateAMonitorConfig
+    from ._templ_b import TemplateBMonitor, TemplateBMonitorConfig
 
 MENU = {
     "._base": ["Session", "Monitor", "UniqueUsername"],
+    "._templ_a": ["TemplateAMonitor", "TemplateAMonitorConfig"],
+    "._templ_b": ["TemplateBMonitor", "TemplateBMonitorConfig"],
 }
 
 
