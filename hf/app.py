@@ -14,7 +14,7 @@ import socketio
 import eventlet
 import requests
 
-EK_VERSION = "7.2.0"
+EK_VERSION = "7.3.0"
 APP_DATA_DIR = Path(user_data_dir("embykeeper"))
 VERSION_CACHE_DIR = APP_DATA_DIR / "hf" / "version"
 
