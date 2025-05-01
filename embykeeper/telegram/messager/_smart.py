@@ -42,11 +42,11 @@ class SmartMessager:
     max_interval: int = None  # 预设两条消息间的最大间隔时间
     at: Iterable[Union[str, time]] = None  # 可发送的时间范围
     msg_per_day: int = 10  # 每天发送的消息数量
-    min_msg_gap = 5  # 最小消息间隔
-    force_day = False  # 强制每条时间线在每个自然日运行
-    max_length = 50  # 最大消息长度
-    filter_recent_similarity = 0.6  # 过滤相似消息的相似度阈值
-    extra_prompt = ""  # 附加提示词
+    min_msg_gap: int = 5  # 最小消息间隔
+    force_day: bool = False  # 强制每条时间线在每个自然日运行
+    max_length: int = 50  # 最大消息长度
+    filter_recent_similarity: float = 0.6  # 过滤相似消息的相似度阈值
+    extra_prompt: str = ""  # 附加提示词
     max_count_recent_5: int = 1
     max_count_recent_10: int = 1
 
@@ -228,13 +228,43 @@ class SmartMessager:
 
     async def get_infer_prompt(self, tg: Client, log: Logger, time: datetime = None):
         chat = await tg.get_chat(self.chat_name)
+
+        if self.max_count_recent_5 or self.max_count_recent_10:
+            try:
+                recent_messages = []
+                async for msg in tg.get_chat_history(chat.id, limit=10):
+                    recent_messages.append(msg)
+
+                my_recent_5 = sum(
+                    1 for msg in recent_messages[:5] if msg.from_user and msg.from_user.id == tg.me.id
+                )
+                my_recent_10 = sum(
+                    1 for msg in recent_messages[:10] if msg.from_user and msg.from_user.id == tg.me.id
+                )
+
+                if my_recent_5 >= self.max_count_recent_5:
+                    log.info(
+                        f"跳过发送: 已在最近 5 条消息中发送了 {my_recent_5} 条 (上限 {self.max_count_recent_5})"
+                    )
+                    return None
+
+                if my_recent_10 >= self.max_count_recent_10:
+                    log.info(
+                        f"跳过发送: 已在最近 10 条消息中发送了 {my_recent_10} 条 (上限 {self.max_count_recent_10})"
+                    )
+                    return None
+            except Exception as e:
+                log.warning(f"检查近期消息数量失败: {e}")
+                show_exception(e, regular=False)
+                return None
+
         context = []
         i = 0
         async for msg in tg.get_chat_history(chat.id, limit=50):
             i += 1
             if self.min_msg_gap and msg.outgoing and i < self.min_msg_gap:
                 log.info(f"低于发送消息间隔要求 ({i} < {self.min_msg_gap}), 将不发送消息.")
-                return
+                return None
             spec = []
             text = str(msg.caption or msg.text or "")
             spec.append(f"消息发送时间为 {msg.date}")
@@ -314,42 +344,10 @@ class SmartMessager:
                         need_sec = random.randint(5, 10)
                         while self.site_last_message_time + timedelta(seconds=need_sec) > datetime.now():
                             await asyncio.sleep(1)
-                    if self.max_count_recent_5 or self.max_count_recent_10:
-                        try:
-                            recent_messages = []
-                            async for msg in tg.get_chat_history(self.chat_name, limit=10):
-                                recent_messages.append(msg)
-
-                            my_recent_5 = sum(
-                                1
-                                for msg in recent_messages[:5]
-                                if msg.from_user and msg.from_user.id == tg.me.id
-                            )
-                            my_recent_10 = sum(
-                                1
-                                for msg in recent_messages[:10]
-                                if msg.from_user and msg.from_user.id == tg.me.id
-                            )
-
-                            if my_recent_5 >= self.max_count_recent_5:
-                                self.log.info(
-                                    f"跳过发送: 已在最近 5 条消息中发送了 {my_recent_5} 条 (上限 {self.max_count_recent_5} )"
-                                )
-                                return None
-
-                            if my_recent_10 >= self.max_count_recent_10:
-                                self.log.info(
-                                    f"跳过发送: 已在最近 10 条消息中发送了 {my_recent_10} 条 (上限 {self.max_count_recent_10} )"
-                                )
-                                return None
-                        except Exception as e:
-                            self.log.warning(f"检查近期消息数量失败: {e}")
-                            show_exception(e, regular=False)
-                            return None
                     if self.filter_recent_similarity:
                         try:
                             async for msg in tg.get_chat_history(
-                                self.chat_name, limit=50, min_id=self.last_latest_message_id or 0
+                                chat.id, limit=50, min_id=self.last_latest_message_id or 0
                             ):
                                 if msg.text:
                                     self.latest_message_cache[msg.id] = msg.text

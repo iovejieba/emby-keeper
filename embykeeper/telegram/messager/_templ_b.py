@@ -22,8 +22,8 @@ class TemplateBMessagerConfig(BaseModel):
     force_day: bool = False  # 强制每条时间线在每个自然日运行
     prompt: Optional[str] = None  # 使用的提示词
     extra_prompt: Optional[str] = None  # 追加的提示词
-    max_length = 50  # 最大消息长度
-    filter_recent_similarity = 0.6  # 过滤相似消息的相似度阈值
+    max_length: Optional[int] = 50  # 最大消息长度
+    filter_recent_similarity: float = 0.6  # 过滤相似消息的相似度阈值
     max_count_recent_5: int = 1
     max_count_recent_10: int = 1
 
