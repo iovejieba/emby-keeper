@@ -203,6 +203,7 @@ class TelegramAccount(ConfigModel):
         visible_part = max(1, phone_len // 3)
         return phone[:visible_part] + "*" * (phone_len - visible_part * 2) + phone[-visible_part:]
 
+
 class TelegramConfig(ConfigModel):
     account: Optional[List[TelegramAccount]] = []
 

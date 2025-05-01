@@ -57,7 +57,9 @@ class XiguaCheckin(TemplateACheckin):
                     }
                     for i in range(10):
                         try:
-                            async with httpx.AsyncClient(http2=True, proxy=get_proxy_str(config.proxy)) as client:
+                            async with httpx.AsyncClient(
+                                http2=True, proxy=get_proxy_str(config.proxy)
+                            ) as client:
                                 resp = await client.post(url_submit, headers=headers, json=data)
                                 result = resp.text
                                 if resp.status_code == 200:

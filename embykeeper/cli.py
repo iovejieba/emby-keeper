@@ -356,7 +356,9 @@ async def main(
         monitor = True
         messager = True
 
-    config.on_change("proxy", lambda x, y: logger.bind(scheme="config").warning('修改代理设置后, 可能需要重启程序以生效.'))
+    config.on_change(
+        "proxy", lambda x, y: logger.bind(scheme="config").warning("修改代理设置后, 可能需要重启程序以生效.")
+    )
 
     if config.mongodb and not var.use_mongodb_config:
         if config.proxy:
@@ -468,7 +470,7 @@ async def main(
             logger.debug("启动时立刻执行签到和保活: 已完成.")
         if (not once) or config.noexit:
             from .telegram.notify import start_notifier
-            
+
             streams = await start_notifier()
         if not once:
             if checkin_man:

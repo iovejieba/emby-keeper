@@ -13,6 +13,7 @@ from . import BotCheckin
 
 __ignore__ = True
 
+
 class AuroraCheckin(BotCheckin):
     name = "Aurora Media"
     bot_username = "AuroraMedia1_bot"

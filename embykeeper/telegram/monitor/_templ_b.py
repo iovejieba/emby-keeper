@@ -29,14 +29,15 @@ class TemplateBMonitorConfig(BaseModel):
     chat_except_keyword: Union[str, List[str]] = []  # 消息含有列表中的关键词时不触发, 支持 regex
     chat_probability: float = 1.0  # 发信概率 (0最低, 1最高)
     chat_delay: int = 0  # 发信延迟 (秒)
-    chat_max_length: int = 120 # 发送最大长度 (字符)
+    chat_max_length: int = 120  # 发送最大长度 (字符)
     trigger_interval: float = 120  # 每次触发的最低时间间隔 (秒)
     allow_same_user: bool = False  # 是否允许同一个人的消息
+
 
 class TemplateBMonitor(Monitor):
     init_first = True
     additional_auth = ["prime"]
-    
+
     async def init(self):
         try:
             self.t_config = TemplateBMonitorConfig.model_validate(self.config)
@@ -53,7 +54,7 @@ class TemplateBMonitor(Monitor):
         self.chat_follow_user = self.t_config.chat_follow_user
         self.trigger_interval = self.t_config.trigger_interval
         self.allow_same_user = self.t_config.allow_same_user
-        
+
         self.lock = asyncio.Lock()
         self.chat_history = TTLCache(maxsize=2048, ttl=300)
         self.last_send = None

@@ -27,7 +27,7 @@ class WokeMonitor(Monitor):
     notify_create_name = True
     additional_auth = ["prime"]
     allow_edit = False
-    
+
     async def solve_captcha(self, url: str):
         token = await Link(self.client).captcha("woke")
         if not token:
@@ -114,7 +114,9 @@ class WokeMonitor(Monitor):
                 else:
                     await asyncio.sleep(random.uniform(3, 5))
                     self.log.info("已成功验证, 继续进行注册流程.")
-                async with self.client.catch_reply(self.bot_username, filter=~filters.regex("请耐心等待")) as f:
+                async with self.client.catch_reply(
+                    self.bot_username, filter=~filters.regex("请耐心等待")
+                ) as f:
                     try:
                         msg = await msg_start.click("创建账户", timeout=1)
                     except (TimeoutError, MessageIdInvalid):
@@ -127,7 +129,7 @@ class WokeMonitor(Monitor):
                     except asyncio.TimeoutError:
                         self.log.warning("点击注册按钮无响应, 无法注册.")
                         return
-                    if '可注册名额不足' in msg:
+                    if "可注册名额不足" in msg:
                         self.log.warning("名额不足, 无法注册.")
                         return
                     else:

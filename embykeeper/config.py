@@ -123,7 +123,6 @@ class ConfigManager(ProxyBase):
                             logger.warning("根据新配置更新程序状态时出错, 您可能需要重新启动程序.")
                             show_exception(e, regular=False)
 
-
     def set(self, value: Union[dict, Config]):
         if isinstance(value, dict):
             value = self.validate_config(value)

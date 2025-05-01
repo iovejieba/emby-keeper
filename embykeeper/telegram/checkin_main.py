@@ -40,13 +40,13 @@ class CheckinerManager:
         # Stop all existing schedulers
         for phone in list(self._schedulers.keys()):
             self.stop_account(phone)
-        
+
         # Reschedule all accounts with the new configuration
         for account in config.telegram.account:
             if account.enabled and account.checkiner:
                 scheduler = self.schedule_account(account)
                 self._pool.add(scheduler.schedule())
-        
+
         logger.info("已根据新的配置重新安排所有签到任务.")
 
     def _handle_account_change(self, added: List[TelegramAccount], removed: List[TelegramAccount]):

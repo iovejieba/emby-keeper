@@ -52,7 +52,7 @@ class SmartMessager:
 
     site_last_message_time = None
     site_lock = asyncio.Lock()
-    
+
     latest_message_cache = LRUCache(maxsize=100)
     last_latest_message_id = None
 
@@ -312,23 +312,35 @@ class SmartMessager:
                 else:
                     if self.site_last_message_time:
                         need_sec = random.randint(5, 10)
-                        while self.site_last_message_time + timedelta(seconds=need_sec) > datetime.now() :
+                        while self.site_last_message_time + timedelta(seconds=need_sec) > datetime.now():
                             await asyncio.sleep(1)
                     if self.max_count_recent_5 or self.max_count_recent_10:
                         try:
                             recent_messages = []
                             async for msg in tg.get_chat_history(self.chat_name, limit=10):
                                 recent_messages.append(msg)
-                            
-                            my_recent_5 = sum(1 for msg in recent_messages[:5] if msg.from_user and msg.from_user.id == tg.me.id)
-                            my_recent_10 = sum(1 for msg in recent_messages[:10] if msg.from_user and msg.from_user.id == tg.me.id)
-                            
+
+                            my_recent_5 = sum(
+                                1
+                                for msg in recent_messages[:5]
+                                if msg.from_user and msg.from_user.id == tg.me.id
+                            )
+                            my_recent_10 = sum(
+                                1
+                                for msg in recent_messages[:10]
+                                if msg.from_user and msg.from_user.id == tg.me.id
+                            )
+
                             if my_recent_5 >= self.max_count_recent_5:
-                                self.log.info(f"跳过发送: 已在最近 5 条消息中发送了 {my_recent_5} 条 (上限 {self.max_count_recent_5} )")
+                                self.log.info(
+                                    f"跳过发送: 已在最近 5 条消息中发送了 {my_recent_5} 条 (上限 {self.max_count_recent_5} )"
+                                )
                                 return None
-                            
+
                             if my_recent_10 >= self.max_count_recent_10:
-                                self.log.info(f"跳过发送: 已在最近 10 条消息中发送了 {my_recent_10} 条 (上限 {self.max_count_recent_10} )")
+                                self.log.info(
+                                    f"跳过发送: 已在最近 10 条消息中发送了 {my_recent_10} 条 (上限 {self.max_count_recent_10} )"
+                                )
                                 return None
                         except Exception as e:
                             self.log.warning(f"检查近期消息数量失败: {e}")
@@ -336,10 +348,15 @@ class SmartMessager:
                             return None
                     if self.filter_recent_similarity:
                         try:
-                            async for msg in tg.get_chat_history(self.chat_name, limit=50, min_id=self.last_latest_message_id or 0):
+                            async for msg in tg.get_chat_history(
+                                self.chat_name, limit=50, min_id=self.last_latest_message_id or 0
+                            ):
                                 if msg.text:
                                     self.latest_message_cache[msg.id] = msg.text
-                                    if not self.last_latest_message_id or msg.id > self.last_latest_message_id:
+                                    if (
+                                        not self.last_latest_message_id
+                                        or msg.id > self.last_latest_message_id
+                                    ):
                                         self.last_latest_message_id = msg.id
                             for recent_msg in self.latest_message_cache.values():
                                 similarity = fuzz.ratio(answer.lower(), recent_msg.lower()) / 100.0
@@ -350,7 +367,9 @@ class SmartMessager:
                             self.log.warning(f"检查消息相似度失败: {e}")
                             show_exception(e, regular=False)
                             return None
-                    log.info(f'即将在5秒后向聊天 "{chat.full_name}" 发送: [gray50]{truncate_str(answer, 20)}[/]')
+                    log.info(
+                        f'即将在5秒后向聊天 "{chat.full_name}" 发送: [gray50]{truncate_str(answer, 20)}[/]'
+                    )
                     await asyncio.sleep(5)
                     try:
                         msg = await tg.send_message(chat.id, answer)

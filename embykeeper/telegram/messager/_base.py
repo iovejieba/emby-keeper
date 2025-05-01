@@ -98,7 +98,7 @@ class Messager:
 
     site_last_message_time = None
     site_lock = asyncio.Lock()
-    
+
     latest_message_cache = LRUCache(maxsize=100)
     last_latest_message_id = None
 
@@ -346,41 +346,53 @@ class Messager:
         """自动水群器的发信器的入口函数."""
         if self.site_last_message_time:
             need_sec = random.randint(5, 10)
-            while self.site_last_message_time + timedelta(seconds=need_sec) > datetime.now() :
+            while self.site_last_message_time + timedelta(seconds=need_sec) > datetime.now():
                 await asyncio.sleep(1)
         async with ClientsSession([self.account]) as clients:
             async for _, tg in clients:
                 chat = await tg.get_chat(self.chat_name)
-                
+
                 if self.max_count_recent_5 or self.max_count_recent_10:
                     try:
                         recent_messages = []
                         async for msg in tg.get_chat_history(self.chat_name, limit=10):
                             recent_messages.append(msg)
-                        
-                        my_recent_5 = sum(1 for msg in recent_messages[:5] if msg.from_user and msg.from_user.id == tg.me.id)
-                        my_recent_10 = sum(1 for msg in recent_messages[:10] if msg.from_user and msg.from_user.id == tg.me.id)
-                        
+
+                        my_recent_5 = sum(
+                            1 for msg in recent_messages[:5] if msg.from_user and msg.from_user.id == tg.me.id
+                        )
+                        my_recent_10 = sum(
+                            1
+                            for msg in recent_messages[:10]
+                            if msg.from_user and msg.from_user.id == tg.me.id
+                        )
+
                         if my_recent_5 >= self.max_count_recent_5:
-                            self.log.info(f"跳过发送: 已在最近 5 条消息中发送了 {my_recent_5} 条 (上限 {self.max_count_recent_5})")
+                            self.log.info(
+                                f"跳过发送: 已在最近 5 条消息中发送了 {my_recent_5} 条 (上限 {self.max_count_recent_5})"
+                            )
                             return None
-                        
+
                         if my_recent_10 >= self.max_count_recent_10:
-                            self.log.info(f"跳过发送: 已在最近 10 条消息中发送了 {my_recent_10} 条 (上限{self.max_count_recent_10})")
+                            self.log.info(
+                                f"跳过发送: 已在最近 10 条消息中发送了 {my_recent_10} 条 (上限{self.max_count_recent_10})"
+                            )
                             return None
                     except Exception as e:
                         self.log.warning(f"检查近期消息数量失败: {e}")
                         show_exception(e, regular=False)
                         return None
-                
+
                 # Check for similar messages in cache
                 try:
-                    async for msg in tg.get_chat_history(self.chat_name, limit=50, min_id=self.last_latest_message_id or 0):
+                    async for msg in tg.get_chat_history(
+                        self.chat_name, limit=50, min_id=self.last_latest_message_id or 0
+                    ):
                         if msg.text:
                             self.latest_message_cache[msg.id] = msg.text
                             if not self.last_latest_message_id or msg.id > self.last_latest_message_id:
                                 self.last_latest_message_id = msg.id
-                    
+
                     # Check similarity against cached messages
                     for recent_msg in self.latest_message_cache.values():
                         similarity = fuzz.ratio(message.lower(), recent_msg.lower()) / 100.0
@@ -391,8 +403,10 @@ class Messager:
                     self.log.warning(f"检查消息相似度失败: {e}")
                     show_exception(e, regular=False)
                     return None
-                
-                self.log.bind(username=tg.me.full_name).info(f'向聊天 "{chat.full_name}" 发送: [gray50]{message}[/]')
+
+                self.log.bind(username=tg.me.full_name).info(
+                    f'向聊天 "{chat.full_name}" 发送: [gray50]{message}[/]'
+                )
                 try:
                     msg = await tg.send_message(self.chat_name, message)
                 except ChatWriteForbidden as e:

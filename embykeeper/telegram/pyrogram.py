@@ -54,6 +54,7 @@ logger = logger.bind(scheme="telegram", nonotify=True)
 MAX_RETRIES = 5
 WAIT_TIMEOUT = 60
 
+
 class LogRedirector(logging.StreamHandler):
     def emit(self, record):
         try:
@@ -69,6 +70,7 @@ pyrogram_session_logger = logging.getLogger("pyrogram")
 for h in pyrogram_session_logger.handlers[:]:
     pyrogram_session_logger.removeHandler(h)
 pyrogram_session_logger.addHandler(LogRedirector())
+
 
 class Dispatcher(dispatcher.Dispatcher):
     updates_count = 0
@@ -479,7 +481,7 @@ class Client(pyrogram.Client):
                 ),
             )
         )
-        
+
     async def invoke(
         self,
         *args,
@@ -488,8 +490,7 @@ class Client(pyrogram.Client):
         **kw,
     ):
         return await super().invoke(*args, retries=retries, timeout=timeout, **kw)
-    
-    
+
     async def handle_updates(self, updates):
         try:
             return await super().handle_updates(updates)

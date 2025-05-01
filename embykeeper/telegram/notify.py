@@ -15,16 +15,17 @@ handler_msg_id = None
 change_handle_telegram = None
 change_handle_notifier = None
 
+
 async def _stop_notifier():
     global stream_log, stream_msg, handler_log_id, handler_msg_id
-    
+
     if handler_log_id is not None:
         logger.remove(handler_log_id)
         handler_log_id = None
     if handler_msg_id is not None:
         logger.remove(handler_msg_id)
         handler_msg_id = None
-    
+
     if stream_log:
         stream_log.close()
         await stream_log.join()
@@ -34,18 +35,20 @@ async def _stop_notifier():
         await stream_msg.join()
         stream_msg = None
 
+
 def _handle_config_change(*args):
     async def _async():
         global stream_log, stream_msg
-        
+
         await _stop_notifier()
         if config.notifier and config.notifier.enabled:
             streams = await start_notifier()
             if streams:
                 stream_log, stream_msg = streams
-    
+
     logger.debug("正在刷新 Telegram 消息通知.")
-    asyncio.create_task(_async())        
+    asyncio.create_task(_async())
+
 
 async def start_notifier():
     """消息通知初始化函数."""
@@ -89,7 +92,7 @@ async def start_notifier():
     if account:
         from .session import ClientsSession
         from .log import TelegramStream
-        
+
         async with ClientsSession([account]) as clients:
             async for a, tg in clients:
                 logger.info(f'计划任务的关键消息将通过 Embykeeper Bot 发送至 "{account.phone}" 账号.')
