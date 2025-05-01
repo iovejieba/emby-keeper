@@ -31,7 +31,7 @@ class Link:
 
     def __init__(self, client: Client):
         self.client = client
-        self.log = logger.bind(scheme="telelink", username=client.me.name)
+        self.log = logger.bind(scheme="telelink", username=client.me.full_name)
 
     @property
     def instance(self):
@@ -219,7 +219,7 @@ class Link:
                 finally:
                     future.set_exception(e)
                     raise
-            finally:
+            else:
                 message.continue_propagation()
 
     async def auth(self, service: str, log_func=None):

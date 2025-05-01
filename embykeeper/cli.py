@@ -356,7 +356,13 @@ async def main(
         monitor = True
         messager = True
 
+    config.on_change("proxy", lambda x, y: logger.bind(scheme="config").warning('修改代理设置后, 可能需要重启程序以生效.'))
+
     if config.mongodb and not var.use_mongodb_config:
+        if config.proxy:
+            logger.warning("由于不支持, 不使用设定的代理连接 MongoDB 服务器.")
+        if not public:
+            logger.warning("在本地部署模式下, 不推荐设定使用 MongoDB 缓存.")
         logger.info(f"正在连接到 MongoDB 缓存, 请稍候.")
         try:
             from .cache import cache
@@ -460,10 +466,9 @@ async def main(
                 pool.add(subsonic_man.run_all(instant=True), "Subsonic 保活")
             await pool.wait()
             logger.debug("启动时立刻执行签到和保活: 已完成.")
-        streams = None
-        if config.notifier.enabled:
+        if (not once) or config.noexit:
             from .telegram.notify import start_notifier
-
+            
             streams = await start_notifier()
         if not once:
             if checkin_man:

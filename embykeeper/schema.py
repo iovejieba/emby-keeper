@@ -197,6 +197,11 @@ class TelegramAccount(ConfigModel):
         hash_value = hashlib.sha256(unique_str.encode()).hexdigest()[:8]
         return f"{self.phone}/{hash_value}"
 
+    @staticmethod
+    def get_phone_masked(phone: str):
+        phone_len = len(phone)
+        visible_part = max(1, phone_len // 3)
+        return phone[:visible_part] + "*" * (phone_len - visible_part * 2) + phone[-visible_part:]
 
 class TelegramConfig(ConfigModel):
     account: Optional[List[TelegramAccount]] = []

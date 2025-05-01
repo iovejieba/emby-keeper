@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from datetime import datetime
 import random
-from typing import List, Dict, Set, Tuple, Type
+from typing import List, Dict, Tuple, Type
 
 from loguru import logger
 
@@ -32,6 +32,22 @@ class CheckinerManager:
         self._pool = AsyncTaskPool()
 
         config.on_list_change("telegram.account", self._handle_account_change)
+        config.on_change("checkiner", self._handle_config_change)
+        config.on_change("site.checkiner", self._handle_config_change)
+
+    def _handle_config_change(self, *args):
+        """Handle changes to the checkiner configuration"""
+        # Stop all existing schedulers
+        for phone in list(self._schedulers.keys()):
+            self.stop_account(phone)
+        
+        # Reschedule all accounts with the new configuration
+        for account in config.telegram.account:
+            if account.enabled and account.checkiner:
+                scheduler = self.schedule_account(account)
+                self._pool.add(scheduler.schedule())
+        
+        logger.info("已根据新的配置重新安排所有签到任务.")
 
     def _handle_account_change(self, added: List[TelegramAccount], removed: List[TelegramAccount]):
         """Handle account additions and removals"""
@@ -69,7 +85,8 @@ class CheckinerManager:
         config_to_use = account.checkiner_config or config.checkiner
 
         def on_next_time(t: datetime):
-            logger.info(f"下一次 {account.phone} 账号的签到将在 {t.strftime('%m-%d %H:%M %p')} 进行.")
+            phone_masked = TelegramAccount.get_phone_masked(account.phone)
+            logger.info(f"下一次 \"{phone_masked}\" 账号的签到将在 {t.strftime('%m-%d %H:%M %p')} 进行.")
             date_ctx = RunContext.get_or_create(f"checkiner.date.{t.strftime('%Y%m%d')}")
             account_ctx = RunContext.get_or_create(f"checkiner.account.{account.phone}")
             return RunContext.prepare(
@@ -159,7 +176,7 @@ class CheckinerManager:
                     config=config_to_use.get_site_config(site_name),
                 )
 
-                log = logger.bind(username=client.me.name, name=c.name)
+                log = logger.bind(username=client.me.full_name, name=c.name)
 
                 result = await c._start()
                 if result.status == RunStatus.SUCCESS:
@@ -177,7 +194,7 @@ class CheckinerManager:
         self, ctx: RunContext, account: TelegramAccount, client: Client, instant: bool = False
     ):
         """Run checkins for a single user"""
-        log = logger.bind(username=client.me.name)
+        log = logger.bind(username=client.me.full_name)
 
         # Get checkin classes based on account config or global config
         site = None

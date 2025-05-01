@@ -77,7 +77,7 @@ class MonitorManager:
 
     async def _run_account(self, ctx: RunContext, account: TelegramAccount, client: Client):
         """Run monitors for a single user"""
-        log = logger.bind(username=client.me.name)
+        log = logger.bind(username=client.me.full_name)
 
         # Get monitor classes based on account config or global config
         site = None

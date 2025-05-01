@@ -12,7 +12,7 @@ from watchfiles import awatch
 from pydantic import ValidationError
 from appdirs import user_data_dir
 
-from .utils import ProxyBase, deep_update
+from .utils import ProxyBase, deep_update, show_exception
 from .schema import (
     Config,
     EmbyAccount,
@@ -99,7 +99,11 @@ class ConfigManager(ProxyBase):
 
             if old_val != new_val:
                 for callback in self._callbacks["change"][key]:
-                    callback(old_val, new_val)
+                    try:
+                        callback(old_val, new_val)
+                    except Exception as e:
+                        logger.warning("根据新配置更新程序状态时出错, 您可能需要重新启动程序.")
+                        show_exception(e, regular=False)
 
         # Process list changes
         for key in self._callbacks["list_change"]:
@@ -113,7 +117,12 @@ class ConfigManager(ProxyBase):
 
                 if added or deleted:
                     for callback in self._callbacks["list_change"][key]:
-                        callback(added, deleted)
+                        try:
+                            callback(added, deleted)
+                        except Exception as e:
+                            logger.warning("根据新配置更新程序状态时出错, 您可能需要重新启动程序.")
+                            show_exception(e, regular=False)
+
 
     def set(self, value: Union[dict, Config]):
         if isinstance(value, dict):

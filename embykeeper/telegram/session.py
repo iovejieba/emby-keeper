@@ -37,7 +37,6 @@ _decode = lambda x: "".join(map(chr, to_iterable(pickle.loads(x))))
 API_ID = _decode(_id)
 API_HASH = _decode(_hash)
 
-
 class ClientsSession:
     pool = {}
     lock = asyncio.Lock()
@@ -76,7 +75,8 @@ class ClientsSession:
             except TypeError:
                 return
             if force or (not ref):
-                logger.debug(f'正在停止账号 "{client.phone_number}" 上的监听和任务.')
+                phone_masked = TelegramAccount.get_phone_masked(client.phone_number)
+                logger.debug(f'正在停止账号 "{phone_masked}" 上的监听和任务.')
                 cls.pool.pop(phone, None)
                 if client.stop_handlers:
                     logger.debug(
@@ -94,7 +94,7 @@ class ClientsSession:
                 else:
                     logger.debug("未注册退出处理程序, 开始清理监听.")
                 await client.stop()
-                logger.debug(f'已停止账号 "{client.phone_number}" 的监听和任务.')
+                logger.debug(f'已停止账号 "{phone_masked}" 的监听和任务.')
 
     @classmethod
     async def clean_all(cls, force: bool = False):
@@ -247,10 +247,14 @@ class ClientsSession:
             .rstrip("=")
         )
 
+    async def _disconnect_handler(self, client: Client):
+        logger.bind(username=client.me.full_name).info('客户端与 Telegram 服务器断开连接.')
+
     async def login(self, account: TelegramAccount, use_telethon=True):
         try:
             self.basedir.mkdir(parents=True, exist_ok=True)
-            logger.info(f'登录至账号 "{account.phone}", 请耐心等待.')
+            phone_masked = TelegramAccount.get_phone_masked(account.phone)
+            logger.info(f'登录至账号 "{phone_masked}", 请耐心等待.')
 
             # Clean up old suffixed session files that are not locked when not in memory mode
             if not self.in_memory:
@@ -285,18 +289,18 @@ class ClientsSession:
                         cache.set(session_str_key, session_str)
                         old_login_file.unlink()  # Delete old file after migration
                         session_str_src = "cache"
-                        logger.info(f'从旧登录文件迁移账号 "{account.phone}" 的登录凭据至缓存.')
+                        logger.info(f'从旧登录文件迁移账号 "{phone_masked}" 的登录凭据至缓存.')
                     except Exception as e:
                         logger.warning(f"读取旧版本登录文件时发生错误, 请重新登陆.")
                 if session_str:
                     session_str_src = "cache"
                 if session_str:
                     logger.debug(
-                        f'账号 "{account.phone}" 登录凭据存在, 仅内存模式{"启用" if self.in_memory else "禁用"}.'
+                        f'账号 "{phone_masked}" 登录凭据存在, 仅内存模式{"启用" if self.in_memory else "禁用"}.'
                     )
                 else:
                     logger.debug(
-                        f'账号 "{account.phone}" 登录凭据不存在, 即将进入登录流程, 仅内存模式{"启用" if self.in_memory else "禁用"}.'
+                        f'账号 "{phone_masked}" 登录凭据不存在, 即将进入登录流程, 仅内存模式{"启用" if self.in_memory else "禁用"}.'
                     )
                     if use_telethon:
                         logger.debug("选择使用 Telethon 进行首次登陆, 并导出会话数据至 Pyrogram.")
@@ -306,13 +310,13 @@ class ClientsSession:
                             logger.warning(
                                 "非可交互终端, 无法输入验证码, 如果您使用 docker 请使用 docker -it 运行, 否则请使用可交互终端."
                             )
-                            logger.error(f'登录账号 "{account.phone}" 时发生异常, 将被跳过.')
+                            logger.error(f'登录账号 "{phone_masked}" 时发生异常, 将被跳过.')
                             return None
                         if session_str:
                             logger.info("请耐心等待, 正在登陆.")
                             await asyncio.sleep(5)
                         else:
-                            logger.warning(f'登录账号 "{account.phone}" 尝试次数超限, 将被跳过.')
+                            logger.warning(f'登录账号 "{phone_masked}" 尝试次数超限, 将被跳过.')
                             return None
 
                 client_params = {
@@ -355,52 +359,53 @@ class ClientsSession:
                         session_str = await client.export_session_string()
                         session_str_key = f"telegram.session_str.{account.get_config_key()}"
                         cache.set(session_str_key, session_str)
-                        logger.debug(f'登录账号 "{client.phone_number}" 成功.')
+                        client.disconnect_handler = self._disconnect_handler
+                        logger.debug(f'登录账号 "{phone_masked}": "{client.me.full_name}" 成功.')
                         return client
                 except ApiIdPublishedFlood:
-                    logger.warning(f'登录账号 "{account.phone}" 时发生 API key 限制, 将被跳过.')
+                    logger.warning(f'登录账号 "{phone_masked}" 时发生 API key 限制, 将被跳过.')
                     break
                 except (Unauthorized, AuthKeyDuplicated) as e:
                     await client.storage.delete()
                     if session_str_src == "session":
-                        logger.error(f'账号 "{account.phone}" 由于配置中提供的 session 已被注销, 将被跳过.')
+                        logger.error(f'账号 "{phone_masked}" 由于配置中提供的 session 已被注销, 将被跳过.')
                         show_exception(e)
                         return None
                     elif session_str_src == "cache":
-                        logger.error(f'账号 "{account.phone}" 已被注销, 将在 3 秒后重新登录.')
+                        logger.error(f'账号 "{phone_masked}" 已被注销, 将在 3 秒后重新登录.')
                         show_exception(e)
                         cache.delete(session_str_key)
                         continue
                     else:
-                        logger.error(f'账号 "{account.phone}" 已被注销, 将在 3 秒后重新登录.')
+                        logger.error(f'账号 "{phone_masked}" 已被注销, 将在 3 秒后重新登录.')
                         show_exception(e)
                     await asyncio.sleep(3)
                 except KeyError as e:
                     logger.warning(
-                        f'登录账号 "{account.phone}" 时发生异常, 可能是由于网络错误, 将在 3 秒后重试.'
+                        f'登录账号 "{phone_masked}" 时发生异常, 可能是由于网络错误, 将在 3 秒后重试.'
                     )
                     show_exception(e)
                     await asyncio.sleep(3)
             else:
-                logger.error(f'登录账号 "{account.phone}" 失败次数超限, 将被跳过.')
+                logger.error(f'登录账号 "{phone_masked}" 失败次数超限, 将被跳过.')
                 return None
         except binascii.Error:
-            logger.error(f'登录账号 "{account.phone}" 失败, 由于您在配置文件中提供的 session 无效, 将被跳过.')
+            logger.error(f'登录账号 "{phone_masked}" 失败, 由于您在配置文件中提供的 session 无效, 将被跳过.')
         except RPCError as e:
-            logger.error(f'登录账号 "{account.phone}" 失败 ({e.MESSAGE.format(value=e.value)}), 将被跳过.')
+            logger.error(f'登录账号 "{phone_masked}" 失败 ({e.MESSAGE.format(value=e.value)}), 将被跳过.')
             return None
         except BadMsgNotification as e:
             if "synchronized" in str(e):
                 logger.error(
-                    f'登录账号 "{account.phone}" 时发生异常, 可能是因为您的系统时间与世界时间差距过大, 将被跳过.'
+                    f'登录账号 "{phone_masked}" 时发生异常, 可能是因为您的系统时间与世界时间差距过大, 将被跳过.'
                 )
                 return None
             else:
-                logger.error(f'登录账号 "{account.phone}" 时发生异常, 将被跳过.')
+                logger.error(f'登录账号 "{phone_masked}" 时发生异常, 将被跳过.')
                 show_exception(e, regular=False)
                 return None
         except Exception as e:
-            logger.error(f'登录账号 "{account.phone}" 时发生异常, 将被跳过.')
+            logger.error(f'登录账号 "{phone_masked}" 时发生异常, 将被跳过.')
             show_exception(e, regular=False)
             return None
 
@@ -411,7 +416,8 @@ class ClientsSession:
                 self.pool[account.phone] = (client, 1)
                 self.phones.append(account.phone)
                 await self.done.put((account, client))
-                logger.debug(f"Telegram 账号池计数增加: {account.phone} => 1")
+                phone_masked = TelegramAccount.get_phone_masked(account.phone)
+                logger.debug(f'Telegram 账号池计数增加: "{phone_masked}" => 1')
             else:
                 self.pool[account.phone] = None
                 await self.done.put((account, None))
@@ -440,7 +446,8 @@ class ClientsSession:
                     self.pool[a.phone] = (client, ref)
                     self.phones.append(a.phone)
                     await self.done.put((a, client))
-                    logger.debug(f"Telegram 账号池计数增加: {a.phone} => {ref}")
+                    phone_masked = TelegramAccount.get_phone_masked(a.phone)
+                    logger.debug(f'Telegram 账号池计数增加: "{phone_masked}" => {ref}')
             finally:
                 try:
                     self.lock.release()
@@ -464,4 +471,5 @@ class ClientsSession:
                     client, ref = entry
                     ref -= 1
                     self.pool[phone] = (client, ref)
-                    logger.debug(f"Telegram 账号池计数降低: {phone} => {ref}")
+                    phone_masked = TelegramAccount.get_phone_masked(phone)
+                    logger.debug(f'Telegram 账号池计数降低: "{phone_masked}" => {ref}')

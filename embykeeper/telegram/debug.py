@@ -45,7 +45,7 @@ async def _dump_message(client: Client, message: Message, table: Table):
             sender = Text("Me", style="bold red")
             text = Text(text, style="red")
         else:
-            sender = user.name
+            sender = user.full_name
             if user.is_bot:
                 sender_icon = "🤖"
                 sender = Text(sender, style="bold yellow")
@@ -75,7 +75,7 @@ async def _dump_message(client: Client, message: Message, table: Table):
             key_info = "|".join([k.text for r in message.reply_markup.keyboard for k in r])
             others.append(f"按钮: {key_info}")
     return table.add_row(
-        f"{client.me.name}",
+        f"{client.me.full_name}",
         "│",
         chat_icon,
         chat,
@@ -244,7 +244,7 @@ async def analyzer(chats, keywords, timerange, limit=10000, outputs=1000):
     async with ClientsSession(config.telegram.account) as clients:
         async for a, tg in clients:
             target = f"{a.phone}.msgs.yaml"
-            log.info(f'开始分析账号: "{tg.me.name}", 结果将写入"{target}".')
+            log.info(f'开始分析账号: "{tg.me.full_name}", 结果将写入"{target}".')
             pcs = list(Progress.get_default_columns())
             pcs.insert(0, SpinnerColumn())
             pcs.insert(3, MofNCompleteColumn(table_column=Column(justify="center")))

@@ -9,7 +9,7 @@ from typing import List, Type
 
 from loguru import logger
 
-from embykeeper.utils import to_iterable
+from embykeeper.utils import show_exception, to_iterable
 
 from . import __name__ as __telechecker__
 
@@ -114,8 +114,9 @@ def get_cls(type: str, names: List[str] = None) -> List[Type]:
                 logger.warning(f'您配置的 "{type}" 不支持站点 "{name}", 请从以下站点中选择:')
                 logger.warning(", ".join(all_names))
         else:
+            module_path = f"{__telechecker__}.{sub}.{name.lower()}"
             try:
-                module = import_module(f"{__telechecker__}.{sub}.{name.lower()}")
+                module = import_module(module_path)
                 found_valid_class = False
                 expected_name = name.replace("_old", "").replace("_", "")
                 for cn, cls in inspect.getmembers(module, inspect.isclass):
@@ -131,6 +132,10 @@ def get_cls(type: str, names: List[str] = None) -> List[Type]:
                 all_names = get_names(type, allow_ignore=True)
                 logger.warning(f'您配置的 "{type}" 不支持站点 "{name}", 请从以下站点中选择:')
                 logger.warning(", ".join(all_names))
+            except Exception as e:
+                logger.warning(f'加载 "{type}" 的站点 "{name}" 出错, 已跳过该站点.')
+                show_exception(e, regular=False)
+                continue
     return results
 
 

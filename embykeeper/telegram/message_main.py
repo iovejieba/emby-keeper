@@ -77,7 +77,7 @@ class MessageManager:
 
     async def _run_account(self, ctx: RunContext, account: TelegramAccount, client: Client):
         """Run messagers for a single user"""
-        log = logger.bind(username=client.me.name)
+        log = logger.bind(username=client.me.full_name)
 
         # Get messager classes based on account config or global config
         site = None
