@@ -26,11 +26,11 @@ concurrency = 1
 [[emby.account]] # 第 1 个账号
 
 # 站点域名和端口:
-url = "https://www.gilbert-sanders.com:443"
+url = "https://www.barnett.com:443"
 
 # 用户名和密码:
-username = "chendennis"
-password = "((H2FLqq!_"
+username = "rebeccamartin"
+password = "2ZJ3FhbB%y"
 
 # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 time = [300, 600]
@@ -54,9 +54,9 @@ time = [300, 600]
 
 # 第 2 个账号, 如需使用请将该段取消注释并修改, 也可以添加更多账号.
 # [[emby.account]]
-# url = "https://www.wood.com:443"
-# username = "bennettcynthia"
-# password = "2C5K3Hlm(%"
+# url = "https://www.cruz-montes.com:443"
+# username = "kevinhenderson"
+# password = "5w^KxuOe$x"
 # time = [300, 600]
 
 # ================================================================================
@@ -92,7 +92,7 @@ interval_days = 1
 [[telegram.account]] # 第 1 个账号
 
 # 带国家区号的账户手机号, 一般为 "+86..."
-phone = "+8618633835827"
+phone = "+8611472788432"
 
 # 启用机器人签到系列功能, 默认启用, 设置为 false 以禁用:
 checkiner = true
@@ -112,7 +112,7 @@ messager = false
 
 # 第 2 个账号, 如需使用请将该段取消注释并修改, 也可以添加更多账号.
 # [[telegram.account]]
-# phone = "+8617013450047"
+# phone = "+8615810391771"
 # checkiner = true
 # monitor = false
 # messager = false
@@ -120,7 +120,7 @@ messager = false
 # ================================================================================
 # 站点相关设置
 # 当您需要禁用某些站点时, 请将该段取消注释并修改.
-# 该部分内容是根据 Embykeeper 7.3.0 生成的.
+# 该部分内容是根据 Embykeeper 7.3.1 生成的.
 # 详见: https://emby-keeper.github.io/guide/配置文件#site-子项
 # ================================================================================
 
@@ -203,18 +203,18 @@ concurrency = 1
 # [[subsonic.account]] # 第 1 个账号
 # 
 # # 站点域名和端口:
-# url = "https://www.fernandez.com:443"
+# url = "https://anthony.biz:443"
 # 
 # # 用户名和密码:
-# username = "amandaheath"
-# password = "Lrc8b0Ko^3"
+# username = "tony63"
+# password = "Vl3RJjjee+"
 # 
 # # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 # time = [300, 600]
 # 
 # [[subsonic.account]] # 第 2 个账号
-# url = "https://benton.com:443"
-# username = "vanderson"
-# password = "G5Bub0PI*a"
+# url = "https://townsend.org:443"
+# username = "alicia24"
+# password = "%1fVSigY@c"
 # time = [300, 600]
 
