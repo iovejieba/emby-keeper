@@ -17,8 +17,8 @@ __ignore__ = True
 
 
 class SmartPornembyCheckinMessager(SmartMessager):
-    name = "Pornemby 主群发言"
-    chat_name = "pornemby"
+    name = "Pornemby 签到群发言"
+    chat_name = "PornFans_Chat"
     default_messages = "pornemby-checkin-wl@latest.yaml"
     additional_auth = ["pornemby_pack"]
     msg_per_day = 1
