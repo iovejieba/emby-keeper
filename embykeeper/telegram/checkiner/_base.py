@@ -269,6 +269,9 @@ class BotCheckin(BaseBotCheckin):
                     return self.ctx.finish(RunStatus.FAIL, "操作过于频繁")
             else:
                 break
+            
+        if self.chat_name:
+            self.chat_name = chat.username or chat.id
 
         is_archived = chat.folder_id == 1
 

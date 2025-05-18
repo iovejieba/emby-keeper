@@ -232,6 +232,9 @@ class Monitor:
                             f"初始化信息: Telegram 要求等待 {e.value} 秒, 您可能操作过于频繁, 监控器将停止."
                         )
                         return self.ctx.finish(RunStatus.FAIL, "操作过于频繁")
+                if chat.id is None:
+                    self.log.info(f'跳过监控: 尚未加入群组 "{chat.title}".')
+                    return self.ctx.finish(RunStatus.IGNORE, "未加入群组")
                 try:
                     if chat.type in (ChatType.GROUP, ChatType.SUPERGROUP):
                         await chat.get_member("me")
@@ -240,6 +243,9 @@ class Monitor:
                     return self.ctx.finish(RunStatus.IGNORE, "未加入群组")
                 else:
                     chats.append(chat)
+        
+        self.chat_name = [chat.id for chat in chats]
+        
         if self.additional_auth:
             for a in self.additional_auth:
                 if not await Link(self.client).auth(a, log_func=self.log.info):
@@ -411,7 +417,7 @@ class Monitor:
         unique_name = self.config.get("unique_name", None)
         if unique_name:
             self.log.info(f'根据您的设置, 当监控到开注时, 该站点将以用户名 "{unique_name}" 注册.')
-            if not re.search("^\w+$", unique_name):
+            if not re.search(r"^\w+$", unique_name):
                 self.log.warning(f"用户名含有除 a-z, A-Z, 0-9, 以及下划线之外的字符, 可能导致注册失败.")
             return unique_name
         else:
