@@ -68,8 +68,6 @@ class XiguaCheckin(TemplateACheckin):
                                     self.log.info(f"今日已经签到过了.")
                                     return await self.finish(RunStatus.NONEED, "今日已签到")
                                 else:
-                                    print(data)
-                                    print(result)
                                     self.log.warning(
                                         f"签到失败: 验证码识别后接口返回异常信息:\n{truncate_str(result, 100)}, 可能是您的请求 IP 风控等级较高导致的."
                                     )
