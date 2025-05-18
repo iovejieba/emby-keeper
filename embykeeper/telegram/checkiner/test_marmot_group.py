@@ -4,5 +4,5 @@ __ignore__ = True
 
 
 class TestMarmotGroupCheckin(MarmotGroupCheckin):
-    name = "PandaTV 群组签到测试"
+    name = "Marmot 群组发言测试"
     chat_name = "api_group"
