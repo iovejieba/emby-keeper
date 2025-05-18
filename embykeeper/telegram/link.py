@@ -207,7 +207,8 @@ class Link:
                     elif callable(condition):
                         cond = condition(toml)
                     if cond:
-                        future.set_result(toml)
+                        if not future.done():
+                            future.set_result(toml)
                         await asyncio.sleep(0.5)
                         await self.delete_messages([message])
                         return
@@ -217,7 +218,8 @@ class Link:
                 except asyncio.TimeoutError:
                     pass
                 finally:
-                    future.set_exception(e)
+                    if not future.done():
+                        future.set_exception(e)
                     raise
             else:
                 message.continue_propagation()
