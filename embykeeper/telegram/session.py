@@ -126,7 +126,7 @@ class ClientsSession:
 
     @property
     def proxy(self):
-        return self._proxy or config.proxy
+        return self._proxy or (config.proxy if config.telegram.use_proxy else None)
 
     async def test_network(self):
         url = "https://telegram.org"
@@ -275,7 +275,7 @@ class ClientsSession:
                         # Database is locked by another process
                         pass
 
-            for _ in range(3):
+            for i in range(3):
                 session_str_src = None
                 session_str = account.session
                 if session_str:
@@ -351,10 +351,10 @@ class ClientsSession:
                             raise
                     except asyncio.TimeoutError:
                         if self.proxy:
-                            logger.error(f"无法连接到 Telegram 服务器, 请检查您代理的可用性.")
+                            logger.error(f"无法连接到 Telegram 服务器, 请检查您代理的可用性, 正在重试 ({i+1} / 3).")
                             continue
                         else:
-                            logger.error(f"无法连接到 Telegram 服务器, 请检查您的网络.")
+                            logger.error(f"无法连接到 Telegram 服务器, 请检查您的网络, 正在重试 ({i+1} / 3).")
                             continue
                     else:
                         session_str = await client.export_session_string()
