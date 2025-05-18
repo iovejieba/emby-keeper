@@ -254,18 +254,33 @@ class EmbyManager:
                     emby.log.info(f"播放视频前随机等待 {wait:.0f} 秒.")
                     await asyncio.sleep(wait)
                 try:
-                    emby.log.info(f"正在登陆并获取首页视频项目.")
-                    if not emby.user_id:
-                        if not await emby.login():
-                            emby.log.warning(f"保活失败: 无法登陆.")
+                    if not account.play_id:
+                        emby.log.info(f"正在登陆并获取首页视频项目.")
+                        if not emby.user_id:
+                            if not await emby.login():
+                                emby.log.warning(f"保活失败: 无法登陆.")
+                                return account, False
+                        await emby.load_main_page()
+                        if not emby.items:
+                            emby.log.warning("保活失败: 无法获取首页中的视频项目")
                             return account, False
-                    await emby.load_main_page()
-                    if not emby.items:
-                        emby.log.warning("保活失败: 无法获取首页中的视频项目")
-                        return account, False
+                        else:
+                            emby.log.info(f"成功登陆, 获取了 {len(emby.items)} 个首页视频项目.")
+                        await asyncio.sleep(random.uniform(2, 5))
                     else:
-                        emby.log.info(f"成功登陆, 获取了 {len(emby.items)} 个首页视频项目.")
-                    await asyncio.sleep(random.uniform(2, 5))
+                        emby.log.info(f"正在登陆并播放您指定的视频, ID 为 {account.play_id}.")
+                        if not emby.user_id:
+                            if not await emby.login():
+                                emby.log.warning(f"保活失败: 无法登陆.")
+                                return account, False
+                        item = await emby.get_item(account.play_id)
+                        if not "Id" in item:
+                            emby.log.warning("保活失败: 无法获取视频项目")
+                            return account, False
+                        else:
+                            emby.items[item["Id"]] = item
+                            emby.log.info(f"成功登陆, 获取了视频项目.")
+                        await asyncio.sleep(random.uniform(2, 5))
                     return account, await emby.watch()
                 except EmbyError as e:
                     emby.log.warning(f"保活失败: {e}.")
