@@ -7,7 +7,7 @@
 ::: warning 注意
 您需要先进行过 [通过 Docker 部署](/guide/Linux-Docker-部署) 才能通过 Docker Compose 部署.
 
-这是由于首次登录会命令行请求两步验证码, 登录成功后会生成 `.login` 后缀的文件, 随后才能部署为 `docker-compose` 服务.
+这是由于首次登录会命令行请求两步验证码, 登录成功后会将凭据存入 `cache.json` 文件, 随后才能部署为 `docker-compose` 服务.
 :::
 
 ::: info 提示
@@ -32,8 +32,7 @@ docker run -v $(pwd)/embykeeper:/app --rm -it --net=host embykeeper/embykeeper -
 .
 ├── embykeeper
 │   ├── config.toml
-│   ├── +xxxxx.session
-│   └── +xxxxx.login
+│   ├── cache.json
 └── docker-compose.yml
 ```
 
