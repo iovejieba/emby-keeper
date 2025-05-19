@@ -351,7 +351,9 @@ class ClientsSession:
                             raise
                     except asyncio.TimeoutError:
                         if self.proxy:
-                            logger.error(f"无法连接到 Telegram 服务器, 请检查您代理的可用性, 正在重试 ({i+1} / 3).")
+                            logger.error(
+                                f"无法连接到 Telegram 服务器, 请检查您代理的可用性, 正在重试 ({i+1} / 3)."
+                            )
                             continue
                         else:
                             logger.error(f"无法连接到 Telegram 服务器, 请检查您的网络, 正在重试 ({i+1} / 3).")

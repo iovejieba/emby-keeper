@@ -9,7 +9,7 @@ class DPeakCheckin(TemplateACheckin):
     name = "DPeak"
     bot_username = "emby_dpeak_bot"
     additional_auth = ["prime"]
-    
+
     async def message_handler(self, client, message: Message):
         if message.text and "人机验证" in message.text:
             if not await self.gpt_handle_message(message, unexpected=False):
@@ -18,4 +18,3 @@ class DPeakCheckin(TemplateACheckin):
             else:
                 return
         await super().message_handler(client, message)
-        

@@ -906,7 +906,7 @@ class Emby:
                     play_time = max(req_time - played_time, 10)
                 name = truncate_str(item.get("Name", "(未命名视频)"), 10)
                 self.log.info(f'开始播放 "{name}" ({play_time:.0f} 秒).')
-                self.log.debug(f'视频 ID: {iid}.')
+                self.log.debug(f"视频 ID: {iid}.")
                 while True:
                     try:
                         await self.play(item, time=play_time)

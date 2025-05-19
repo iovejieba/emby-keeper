@@ -208,6 +208,7 @@ class TelegramConfig(ConfigModel):
     account: Optional[List[TelegramAccount]] = []
     use_proxy: Optional[bool] = True
 
+
 class BotConfig(ConfigModel):
     token: str
 

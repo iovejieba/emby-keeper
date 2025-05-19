@@ -85,9 +85,7 @@ class TemplateAMonitor(Monitor):
             if await EmbybossRegister(self.client, self.log, self.unique_name, random_code).run(
                 self.t_config.try_register_bot
             ):
-                self.log.bind(log=True).info(
-                    f"监控器成功注册机器人 {self.t_config.try_register_bot}."
-                )
+                self.log.bind(log=True).info(f"监控器成功注册机器人 {self.t_config.try_register_bot}.")
         else:
             if reply:
                 await self.client.send_message(message.chat.id, reply)

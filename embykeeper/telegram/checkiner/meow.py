@@ -7,7 +7,7 @@ from ._templ_a import TemplateACheckin
 class MeowCheckin(TemplateACheckin):
     name = "飞了个喵"
     bot_username = "gymeowfly_bot"
-    
+
     async def message_handler(self, client, message: Message):
         if message.caption and "请先验证你不是机器人" in message.caption and message.reply_markup:
             keys = [k.text for r in message.reply_markup.inline_keyboard for k in r]

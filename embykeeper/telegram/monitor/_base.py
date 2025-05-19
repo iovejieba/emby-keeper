@@ -243,9 +243,9 @@ class Monitor:
                     return self.ctx.finish(RunStatus.IGNORE, "未加入群组")
                 else:
                     chats.append(chat)
-        
+
         self.chat_name = [chat.id for chat in chats]
-        
+
         if self.additional_auth:
             for a in self.additional_auth:
                 if not await Link(self.client).auth(a, log_func=self.log.info):
