@@ -598,10 +598,16 @@ class BotCheckin(BaseBotCheckin):
             await self.on_unexpected_text(message)
 
     async def on_unexpected_text(self, message: Message):
+        return await self.gpt_handle_message(message, unexpected=True)
+
+    async def gpt_handle_message(self, message: Message, unexpected: bool = True):
         content = message.text or message.caption
         if content:
             spec = content.replace("\n", " ")
-            self.log.warning(f"接收到异常返回信息: {spec}, 正在尝试智能回答.")
+            if unexpected:
+                self.log.warning(f"接收到异常返回信息: {spec}, 正在尝试智能回答.")
+            else:
+                self.log.info(f"正在使用智能接口回答问题.")
             if message.reply_markup and message.reply_markup.inline_keyboard:
                 buttons = [b.text for r in message.reply_markup.inline_keyboard for b in r]
             else:
@@ -628,22 +634,34 @@ class BotCheckin(BaseBotCheckin):
                 if answer:
                     self.log.debug(f"智能回答 ({by}): {answer}")
                     if "[NO_RESP]" in answer:
-                        self.log.info(f"智能回答认为无需进行操作, 为了避免风险签到器将停止.")
-                        await self.fail()
-                        return
+                        if unexpected:
+                            self.log.info(f"智能回答认为无需进行操作, 为了避免风险签到器将停止.")
+                            await self.fail()
+                            return False
+                        else:
+                            self.log.info(f"智能回答认为无需进行操作.")
+                            return True
                     elif "[IS_STATUS]" in answer:
-                        self.log.info(
-                            f"智能回答认为这是一条状态信息, 无需进行操作, 为了避免风险签到器将停止."
-                        )
-                        await self.fail()
-                        return
+                        if unexpected:
+                            self.log.info(
+                                f"智能回答认为这是一条状态信息, 无需进行操作, 为了避免风险签到器将停止."
+                            )
+                            await self.fail()
+                            return False
+                        else:
+                            self.log.info(f"智能回答认为这是一条状态信息, 无需进行操作.")
+                            return True
                     elif buttons and "[CLICK]" in answer:
                         self.log.debug(f"当前按钮: {', '.join(button_specs)}")
                         answer_content = re.search(r"\[CLICK\]\^(.+?)\^", answer)
                         if not answer_content:
-                            self.log.warning(f"智能回答失败, 为了避免风险签到器将停止.")
-                            await self.fail()
-                            return
+                            if unexpected:
+                                self.log.info(f"智能回答失败, 为了避免风险签到器将停止.")
+                                await self.fail()
+                                return False
+                            else:
+                                self.log.warning(f"智能回答失败.")
+                                return False
                         answer_content = answer_content.group(1)
                         b, s = process.extractOne(answer_content, buttons, scorer=fuzz.partial_ratio)
                         if s < 70:
@@ -655,24 +673,40 @@ class BotCheckin(BaseBotCheckin):
                                 await message.click(b)
                             except (TimeoutError, MessageIdInvalid):
                                 pass
-                            self.log.warning(f'智能回答点击了按钮 "{b}", 为了避免风险签到器将停止.')
-                            await self.fail()
-                            return
+                            if unexpected:
+                                self.log.warning(f'智能回答点击了按钮 "{b}", 为了避免风险签到器将停止.')
+                                await self.fail()
+                                return False
+                            else:
+                                self.log.info(f'智能回答点击了按钮 "{b}".')
+                                return True
                     elif "[SEND]" in answer:
                         answer_content = re.search(r"\[SEND\]\^(.+?)\^", answer)
                         if not answer_content:
-                            self.log.warning(f"智能回答失败, 为了避免风险签到器将停止.")
-                            await self.fail()
-                            return
+                            if unexpected:
+                                self.log.warning(f"智能回答失败, 为了避免风险签到器将停止.")
+                                await self.fail()
+                                return False
+                            else:
+                                self.log.warning(f"智能回答失败.")
+                                return False
                         answer_content = answer_content.group(1)
                         await message.reply(answer_content)
-                        self.log.warning(f'智能回答回复了 "{answer_content}", 为了避免风险签到器将停止.')
-                        await self.fail()
-                        return
+                        if unexpected:
+                            self.log.warning(f'智能回答回复了 "{answer_content}", 为了避免风险签到器将停止.')
+                            await self.fail()
+                            return False
+                        else:
+                            self.log.info(f'智能回答回复了 "{answer_content}".')
+                            return True
             else:
-                self.log.warning(f"智能回答失败, 为了避免风险签到器将停止.")
-                await self.fail()
-                return
+                if unexpected:
+                    self.log.warning(f"智能回答失败, 为了避免风险签到器将停止.")
+                    await self.fail()
+                    return False
+                else:
+                    self.log.warning(f"智能回答失败.")
+                    return False
 
     async def retry(self):
         """执行重试, 重新发送签到指令."""
