@@ -7,8 +7,8 @@ from ..lock import pornemby_messager_enabled, pornemby_alert
 from . import Monitor
 
 
-class PornembyDoubleMonitor(Monitor):
-    name = "Pornemby 怪兽自动翻倍"
+class PornfansDoubleMonitor(Monitor):
+    name = "PornFans 怪兽自动翻倍"
     chat_user = ["PronembyTGBot2_bot", "PronembyTGBot3_bot", "PornembyBot", "Porn_Emby_Bot"]
     chat_name = ["embytestflight", "Pornemby"]
     chat_keyword = r"击杀者\s+(.*)\s+是否要奖励翻倍"
@@ -28,7 +28,7 @@ class PornembyDoubleMonitor(Monitor):
                         except RPCError:
                             pass
                         else:
-                            self.log.info("检测到 Pornemby 怪兽击败, 已点击翻倍.")
+                            self.log.info("检测到 PornFans 怪兽击败, 已点击翻倍.")
                             return
 
     async def init(self):
