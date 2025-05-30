@@ -144,8 +144,8 @@ docker run -v $(pwd)/embykeeper:/app --rm -it --net=host embykeeper/embykeeper -
     <!-- #region checkiner-beta-sites -->
 
     - PornFans: [频道](https://t.me/PornFansChannel) [群组](https://t.me/PornFans_Chat) [机器人](https://t.me/Porn_Emby_Bot)
-      - 签到群自动发言打卡 (`pornemby_group`): [签到群](https://t.me/PornFans_Chat)
-      - 游戏群自动发言打卡 (`pornemby_game_group`): [游戏群](https://t.me/embytestflight)
+      - 签到群自动发言打卡 (`pornfans_group`): [签到群](https://t.me/PornFans_Chat)
+      - 游戏群自动发言打卡 (`pornfans_game_group`): [游戏群](https://t.me/embytestflight)
     - Temby (`temby`): [频道](https://t.me/tembychannel) [群组](https://t.me/tembygroup) [机器人](https://t.me/HiEmbyBot)
     - Temby 测试服 (`temby_beta`): [群组](https://t.me/tembybeta) [机器人](https://t.me/Temby_Bot)
     - Ciji (`ciji`): [机器人](https://t.me/MM_nastool_bot)

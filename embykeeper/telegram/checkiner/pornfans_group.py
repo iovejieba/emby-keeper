@@ -16,8 +16,8 @@ from . import BotCheckin
 __ignore__ = True
 
 
-class SmartPornembyCheckinMessager(SmartMessager):
-    name = "Pornemby 签到群发言"
+class SmartPornfansCheckinMessager(SmartMessager):
+    name = "PornFans 签到群发言"
     chat_name = "PornFans_Chat"
     default_messages = "pornemby-checkin-wl@latest.yaml"
     additional_auth = ["pornemby_pack"]
@@ -42,10 +42,10 @@ class SmartPornembyCheckinMessager(SmartMessager):
         return message
 
 
-class PornembyGroupCheckin(BotCheckin):
-    name = "Pornemby 主群发言"
+class PornfansGroupCheckin(BotCheckin):
+    name = "PornFans 主群发言"
     bot_username = "Porn_Emby_Bot"
-    chat_name = "Pornemby"
+    chat_name = "PornFans_Chat"
     additional_auth = ["pornemby_pack"]
     bot_use_captcha = False
 
@@ -72,7 +72,7 @@ class PornembyGroupCheckin(BotCheckin):
                 self.log.info(f"今日已经签到过了.")
                 return await self.finish(RunStatus.NONEED, "今日已签到")
 
-        messager = SmartPornembyCheckinMessager(
+        messager = SmartPornfansCheckinMessager(
             self.client, config={"extra_prompt": "请注意: 回复中必须含有签到两个字, 且长度大于8个字!"}
         )
 

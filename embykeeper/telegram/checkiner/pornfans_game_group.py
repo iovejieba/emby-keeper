@@ -7,8 +7,8 @@ from . import BotCheckin
 __ignore__ = True
 
 
-class PornembyGameGroupCheckin(BotCheckin):
-    name = "Pornemby 游戏群发言"
+class PornfansGameGroupCheckin(BotCheckin):
+    name = "PornFans 游戏群发言"
     chat_name = "embytestflight"
     additional_auth = ["pornemby_pack"]
     bot_use_captcha = False
