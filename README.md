@@ -230,7 +230,7 @@ docker run -v $(pwd)/embykeeper:/app --rm -it --net=host embykeeper/embykeeper -
   <!-- #region monitor-sites -->
 
   - PornFans:
-    - 问题回答 (`pornemby_answer`): [群组](https://t.me/embytestflight)
+    - 问题回答 (`pornfans_answer`): [群组](https://t.me/embytestflight)
     - 科举考试 (`pornemby_exam`): [群组](https://t.me/embytestflight)
     - 自动抢注 (`pornemby_register`): [群组](https://t.me/embytestflight)
     - 自动抢红包雨 (`pornemby_dragon_rain`): [群组](https://t.me/embytestflight)
