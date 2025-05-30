@@ -7,8 +7,8 @@ from . import Monitor
 __ignore__ = True
 
 
-class PornembyRegisterMonitor(Monitor):
-    name = "Pornemby 抢注"
+class PornfansRegisterMonitor(Monitor):
+    name = "PornFans 抢注"
     chat_name = ["embytestflight", "Pornemby"]
     chat_user = "PornembyTGBot_bot"
     chat_keyword = "开 放 注 册"
@@ -21,6 +21,6 @@ class PornembyRegisterMonitor(Monitor):
         try:
             await message.click(0)
         except (TimeoutError, RPCError):
-            self.log.info("检测到 Pornemby 抢注, 已点击, 请自行查看结果.")
+            self.log.info("检测到 PornFans 抢注, 已点击, 请自行查看结果.")
         else:
-            self.log.info("检测到 Pornemby 抢注, 已点击, 请自行查看结果.")
+            self.log.info("检测到 PornFans 抢注, 已点击, 请自行查看结果.")
