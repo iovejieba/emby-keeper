@@ -8,7 +8,7 @@ ocrs_lock = asyncio.Lock()
 misty_monitors = {}  # uid: MistyMonitor
 misty_locks = {}  # uid: lock
 
-pornemby_nohp = {}  # uid: date
+pornfans_nohp = {}  # uid: date
 pornemby_messager_enabled = {}  # uid: bool
 pornemby_alert = {}  # uid: bool
 pornemby_messager_mids = {}  # uid: list(mid)

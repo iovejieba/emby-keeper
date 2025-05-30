@@ -4,13 +4,13 @@ from datetime import datetime
 from pyrogram.types import Message
 from pyrogram.enums import MessageEntityType
 
-from ..lock import pornemby_nohp, pornemby_messager_enabled
+from ..lock import pornfans_nohp, pornemby_messager_enabled
 
 from . import Monitor
 
 
-class PornembyNoHPMonitor(Monitor):
-    name = "Pornemby 血量耗尽停止发言"
+class PornfansNoHPMonitor(Monitor):
+    name = "PornFans 血量耗尽停止发言"
     chat_user = ["PronembyTGBot2_bot", "PronembyTGBot3_bot", "PornembyBot", "Porn_Emby_Bot"]
     chat_name = ["embytestflight", "Pornemby"]
     chat_keyword = "(.*)血量已耗尽。"
@@ -21,8 +21,8 @@ class PornembyNoHPMonitor(Monitor):
         for me in message.entities:
             if me.type == MessageEntityType.TEXT_MENTION:
                 if me.user.id == self.client.me.id:
-                    pornemby_nohp[self.client.me.id] = datetime.today().date()
-                    self.log.info("检测到 Pornemby 血量耗尽, 已停止今日水群.")
+                    pornfans_nohp[self.client.me.id] = datetime.today().date()
+                    self.log.info("检测到 PornFans 血量耗尽, 已停止今日水群.")
 
     async def init(self):
         interval = 1

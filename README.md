@@ -235,7 +235,7 @@ docker run -v $(pwd)/embykeeper:/app --rm -it --net=host embykeeper/embykeeper -
     - 自动抢注 (`pornemby_register`): [群组](https://t.me/embytestflight)
     - 自动抢红包雨 (`pornfans_dragon_rain`): [群组](https://t.me/embytestflight)
     - 自动翻倍 (`pornfans_double`): [群组](https://t.me/embytestflight)
-    - 无 HP 自动停止自动水群 (`pornemby_nohp`): [群组](https://t.me/embytestflight)
+    - 无 HP 自动停止自动水群 (`pornfans_nohp`): [群组](https://t.me/embytestflight)
     - 风险时期自动停止 (`pornemby_alert`): [群组](https://t.me/embytestflight)
   - 不给看 抢邀请码 (`bgk`): [群组](https://t.me/Ephemeralemby) [机器人](https://t.me/UnknownEmbyBot)
   - 叔服 抢邀请码 (`shufu`): [群组](http://t.me/+4eq37Ip8ayRhNDI9) [机器人](https://t.me/dashu660_bot)
