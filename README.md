@@ -233,7 +233,7 @@ docker run -v $(pwd)/embykeeper:/app --rm -it --net=host embykeeper/embykeeper -
     - 问题回答 (`pornfans_answer`): [群组](https://t.me/embytestflight)
     - 科举考试 (`pornemby_exam`): [群组](https://t.me/embytestflight)
     - 自动抢注 (`pornemby_register`): [群组](https://t.me/embytestflight)
-    - 自动抢红包雨 (`pornemby_dragon_rain`): [群组](https://t.me/embytestflight)
+    - 自动抢红包雨 (`pornfans_dragon_rain`): [群组](https://t.me/embytestflight)
     - 自动翻倍 (`pornfans_double`): [群组](https://t.me/embytestflight)
     - 无 HP 自动停止自动水群 (`pornemby_nohp`): [群组](https://t.me/embytestflight)
     - 风险时期自动停止 (`pornemby_alert`): [群组](https://t.me/embytestflight)

@@ -9,9 +9,9 @@ from ..lock import pornemby_alert
 from . import Monitor
 
 
-class PornembyDragonRainMonitor:
-    class PornembyDragonRainClickMonitor(Monitor):
-        name = "Pornemby 红包雨"
+class PornfansDragonRainMonitor:
+    class PornfansDragonRainClickMonitor(Monitor):
+        name = "PornFans 红包雨"
         chat_user = ["PronembyTGBot2_bot", "PronembyTGBot3_bot", "PornembyBot", "Porn_Emby_Bot"]
         chat_name = ["embytestflight", "Pornemby"]
         chat_keyword = [None]
@@ -34,13 +34,13 @@ class PornembyDragonRainMonitor:
                             try:
                                 await message.click(b.text)
                             except (TimeoutError, RPCError):
-                                self.log.info("检测到 Pornemby 抢红包雨, 已点击抢红包, 等待结果.")
+                                self.log.info("检测到 PornFans 抢红包雨, 已点击抢红包, 等待结果.")
                             else:
-                                self.log.info("检测到 Pornemby 抢红包雨, 已点击抢红包, 等待结果.")
+                                self.log.info("检测到 PornFans 抢红包雨, 已点击抢红包, 等待结果.")
                             return
 
-    class PornembyDragonRainStatusMonitor(Monitor):
-        name = "Pornemby 红包雨结果"
+    class PornfansDragonRainStatusMonitor(Monitor):
+        name = "PornFans 红包雨结果"
         chat_user = ["PronembyTGBot2_bot", "PronembyTGBot3_bot", "PornembyBot", "Porn_Emby_Bot"]
         chat_name = ["embytestflight", "Pornemby"]
         chat_keyword = r"恭喜\s+(.*):本次获得(\d+)豆"
