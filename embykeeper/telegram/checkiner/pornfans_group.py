@@ -20,7 +20,7 @@ class SmartPornfansCheckinMessager(SmartMessager):
     name = "PornFans 签到群发言"
     chat_name = "PornFans_Chat"
     default_messages = "pornemby-checkin-wl@latest.yaml"
-    additional_auth = ["pornemby_pack"]
+    additional_auth = ["pornfans_pack"]
     msg_per_day = 1
     force_day = True
     at = [time(6, 0), time(23, 59)]
@@ -46,7 +46,7 @@ class PornfansGroupCheckin(BotCheckin):
     name = "PornFans 主群发言"
     bot_username = "Porn_Emby_Bot"
     chat_name = "PornFans_Chat"
-    additional_auth = ["pornemby_pack"]
+    additional_auth = ["pornfans_pack"]
     bot_use_captcha = False
 
     @asynccontextmanager

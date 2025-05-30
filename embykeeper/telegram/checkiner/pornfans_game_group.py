@@ -10,7 +10,7 @@ __ignore__ = True
 class PornfansGameGroupCheckin(BotCheckin):
     name = "PornFans 游戏群发言"
     chat_name = "embytestflight"
-    additional_auth = ["pornemby_pack"]
+    additional_auth = ["pornfans_pack"]
     bot_use_captcha = False
 
     async def send_checkin(self, retry=False):

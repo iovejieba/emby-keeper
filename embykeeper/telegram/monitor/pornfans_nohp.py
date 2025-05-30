@@ -14,7 +14,7 @@ class PornfansNoHPMonitor(Monitor):
     chat_user = ["PronembyTGBot2_bot", "PronembyTGBot3_bot", "PornembyBot", "Porn_Emby_Bot"]
     chat_name = ["embytestflight", "Pornemby"]
     chat_keyword = "(.*)血量已耗尽。"
-    additional_auth = ["pornemby_pack"]
+    additional_auth = ["pornfans_pack"]
     allow_edit = True
 
     async def on_trigger(self, message: Message, key, reply):

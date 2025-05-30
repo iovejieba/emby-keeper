@@ -12,7 +12,7 @@ class PornfansRegisterMonitor(Monitor):
     chat_name = ["embytestflight", "Pornemby"]
     chat_user = "PornembyTGBot_bot"
     chat_keyword = "开 放 注 册"
-    additional_auth = ["pornemby_pack"]
+    additional_auth = ["pornfans_pack"]
 
     async def on_trigger(self, message: Message, key, reply):
         if pornfans_alert.get(self.client.me.id, False):
