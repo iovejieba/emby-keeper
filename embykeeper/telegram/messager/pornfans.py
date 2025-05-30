@@ -3,9 +3,9 @@ from datetime import datetime, time
 
 from ..lock import (
     pornfans_nohp,
-    pornemby_messager_enabled,
-    pornemby_messager_mids,
-    pornemby_messager_mids_lock,
+    pornfans_messager_enabled,
+    pornfans_messager_mids,
+    pornfans_messager_mids_lock,
     pornfans_alert,
 )
 from . import Messager
@@ -13,17 +13,17 @@ from . import Messager
 __ignore__ = True
 
 
-class PornembyMessager(Messager):
-    name = "Pornemby"
+class PornfansMessager(Messager):
+    name = "PornFans"
     chat_name = "embytestflight"
     default_messages = ["pornemby-common-wl@latest.yaml * 100"]
 
     async def init(self):
         self.lock = asyncio.Lock()
-        pornemby_messager_enabled[self.me.id] = True
-        async with pornemby_messager_mids_lock:
-            if self.me.id not in pornemby_messager_mids:
-                pornemby_messager_mids[self.me.id] = []
+        pornfans_messager_enabled[self.me.id] = True
+        async with pornfans_messager_mids_lock:
+            if self.me.id not in pornfans_messager_mids:
+                pornfans_messager_mids[self.me.id] = []
         return True
 
     async def send(self, message):
@@ -36,5 +36,5 @@ class PornembyMessager(Messager):
             return
         msg = await super().send(message)
         if msg:
-            pornemby_messager_mids[self.me.id].append(msg.id)
+            pornfans_messager_mids[self.me.id].append(msg.id)
         return msg

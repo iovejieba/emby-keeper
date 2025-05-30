@@ -3,7 +3,7 @@ from pyrogram.types import Message, InlineKeyboardMarkup
 from pyrogram.enums import MessageEntityType
 from pyrogram.errors import RPCError
 
-from ..lock import pornemby_messager_enabled, pornfans_alert
+from ..lock import pornfans_messager_enabled, pornfans_alert
 from . import Monitor
 
 
@@ -34,7 +34,7 @@ class PornfansDoubleMonitor(Monitor):
     async def init(self):
         interval = 1
         while True:
-            if pornemby_messager_enabled.get(self.client.me.id, False):
+            if pornfans_messager_enabled.get(self.client.me.id, False):
                 return True
             await asyncio.sleep(interval)
             interval += 1

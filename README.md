@@ -271,9 +271,9 @@ docker run -v $(pwd)/embykeeper:/app --rm -it --net=host embykeeper/embykeeper -
 
     - Marmot (`marmot`) (周末早晚签到): [频道](https://t.me/Marmot_Emby_Channel) 群组 (非公开) [机器人](https://t.me/Marmot_Emby_Account_BOT)
 
-    - PornFans (`pornemby`) (打怪兽水群): [频道](https://t.me/PornFansChannel) [群组](https://t.me/embytestflight) [机器人](https://t.me/Porn_Emby_Bot)
+    - PornFans (`pornfans`) (打怪兽水群): [频道](https://t.me/PornFansChannel) [群组](https://t.me/embytestflight) [机器人](https://t.me/Porn_Emby_Bot)
 
-    - PornFans 智能化回答 (`smart_pornemby`) (打怪兽水群, AI 会考虑上下文和群组语言风格进行回答): [频道](https://t.me/PornFansChannel) [群组](https://t.me/embytestflight) [机器人](https://t.me/Porn_Emby_Bot)
+    - PornFans 智能化回答 (`smart_pornfans`) (打怪兽水群, AI 会考虑上下文和群组语言风格进行回答): [频道](https://t.me/PornFansChannel) [群组](https://t.me/embytestflight) [机器人](https://t.me/Porn_Emby_Bot)
 
     <!-- #endregion messager-beta-sites -->
   - 关服或无响应 (默认禁用, 请参考[教程文档](https://emby-keeper.github.io/guide/配置文件#service-子项)启用):

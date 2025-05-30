@@ -9,7 +9,7 @@ from pyrogram.types import Message, User, Chat
 from pyrogram.enums import ChatMemberStatus, MessageServiceType, MessageEntityType
 from pyrogram.errors import BadRequest
 
-from ..lock import pornfans_alert, pornemby_messager_mids
+from ..lock import pornfans_alert, pornfans_messager_mids
 from . import Monitor
 
 __ignore__ = True
@@ -104,7 +104,7 @@ class PornfansAlertMonitor(Monitor):
     async def on_trigger(self, message: Message, key, reply):
         # 管理员回复水群消息, 永久停止, 若存在关键词即回复
         # 用户回复水群消息, 停止 3600 秒, 若存在关键词即回复
-        if message.reply_to_message_id and message.reply_to_message_id in pornemby_messager_mids.get(
+        if message.reply_to_message_id and message.reply_to_message_id in pornfans_messager_mids.get(
             self.client.me.id, []
         ):
             if await self.check_admin(message.chat, message.from_user):

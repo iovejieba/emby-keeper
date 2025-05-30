@@ -10,7 +10,7 @@ from pyrogram.enums import MessageEntityType
 from embykeeper.runinfo import RunStatus
 
 from ..messager._smart import SmartMessager
-from ..lock import pornfans_alert, pornemby_messager_mids_lock, pornemby_messager_mids
+from ..lock import pornfans_alert, pornfans_messager_mids_lock, pornfans_messager_mids
 from . import BotCheckin
 
 __ignore__ = True
@@ -27,9 +27,9 @@ class SmartPornfansCheckinMessager(SmartMessager):
     extra_prompt = "输出内容必须大于 8 个字符, 包括符号"
 
     async def init(self):
-        async with pornemby_messager_mids_lock:
-            if self.me.id not in pornemby_messager_mids:
-                pornemby_messager_mids[self.me.id] = []
+        async with pornfans_messager_mids_lock:
+            if self.me.id not in pornfans_messager_mids:
+                pornfans_messager_mids[self.me.id] = []
         return True
 
     async def send(self, dummy=False):
@@ -38,7 +38,7 @@ class SmartPornfansCheckinMessager(SmartMessager):
             return
         message = await super().send(dummy=dummy)
         if message:
-            pornemby_messager_mids[self.me.id].append(message)
+            pornfans_messager_mids[self.me.id].append(message)
         return message
 
 

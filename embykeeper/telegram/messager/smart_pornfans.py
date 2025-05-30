@@ -4,17 +4,17 @@ from datetime import datetime, time
 from ._smart import SmartMessager
 from ..lock import (
     pornfans_nohp,
-    pornemby_messager_enabled,
-    pornemby_messager_mids,
-    pornemby_messager_mids_lock,
+    pornfans_messager_enabled,
+    pornfans_messager_mids,
+    pornfans_messager_mids_lock,
     pornfans_alert,
 )
 
 __ignore__ = True
 
 
-class SmartPornembyMessager(SmartMessager):
-    name = "Pornemby"
+class SmartPornfansMessager(SmartMessager):
+    name = "PornFans"
     chat_name = "embytestflight"
     style_message_list = "pornemby-common-wl@latest.yaml"
     additional_auth = ["pornemby_pack"]
@@ -23,10 +23,10 @@ class SmartPornembyMessager(SmartMessager):
 
     async def init(self):
         self.lock = asyncio.Lock()
-        pornemby_messager_enabled[self.me.id] = True
-        async with pornemby_messager_mids_lock:
-            if self.me.id not in pornemby_messager_mids:
-                pornemby_messager_mids[self.me.id] = []
+        pornfans_messager_enabled[self.me.id] = True
+        async with pornfans_messager_mids_lock:
+            if self.me.id not in pornfans_messager_mids:
+                pornfans_messager_mids[self.me.id] = []
         return True
 
     async def send(self, dummy=False):
@@ -39,5 +39,5 @@ class SmartPornembyMessager(SmartMessager):
             return
         msg = await super().send(dummy=dummy)
         if msg:
-            pornemby_messager_mids[self.me.id].append(msg.id)
+            pornfans_messager_mids[self.me.id].append(msg.id)
         return msg

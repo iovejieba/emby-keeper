@@ -4,7 +4,7 @@ from datetime import datetime
 from pyrogram.types import Message
 from pyrogram.enums import MessageEntityType
 
-from ..lock import pornfans_nohp, pornemby_messager_enabled
+from ..lock import pornfans_nohp, pornfans_messager_enabled
 
 from . import Monitor
 
@@ -27,7 +27,7 @@ class PornfansNoHPMonitor(Monitor):
     async def init(self):
         interval = 1
         while True:
-            if pornemby_messager_enabled.get(self.client.me.id, False):
+            if pornfans_messager_enabled.get(self.client.me.id, False):
                 return True
             await asyncio.sleep(interval)
             interval += 1

@@ -1,7 +1,7 @@
 import asyncio
 
 from ..link import Link
-from ..lock import pornfans_alert, pornemby_messager_mids_lock, pornemby_messager_mids
+from ..lock import pornfans_alert, pornfans_messager_mids_lock, pornfans_messager_mids
 from . import BotCheckin
 
 __ignore__ = True
@@ -52,10 +52,10 @@ class PornfansGameGroupCheckin(BotCheckin):
             if not message:
                 await self.fail(message="发送失败")
             else:
-                async with pornemby_messager_mids_lock:
-                    if self.client.me.id not in pornemby_messager_mids:
-                        pornemby_messager_mids[self.me.id] = []
-                pornemby_messager_mids[self.me.id].append(message.id)
+                async with pornfans_messager_mids_lock:
+                    if self.client.me.id not in pornfans_messager_mids:
+                        pornfans_messager_mids[self.me.id] = []
+                pornfans_messager_mids[self.me.id].append(message.id)
                 await self.finish(message="已发送发言")
             return
         else:
