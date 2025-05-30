@@ -10,7 +10,7 @@ from pyrogram.enums import MessageEntityType
 from embykeeper.runinfo import RunStatus
 
 from ..messager._smart import SmartMessager
-from ..lock import pornemby_alert, pornemby_messager_mids_lock, pornemby_messager_mids
+from ..lock import pornfans_alert, pornemby_messager_mids_lock, pornemby_messager_mids
 from . import BotCheckin
 
 __ignore__ = True
@@ -33,7 +33,7 @@ class SmartPornembyCheckinMessager(SmartMessager):
         return True
 
     async def send(self, dummy=False):
-        if pornemby_alert.get(self.me.id, False):
+        if pornfans_alert.get(self.me.id, False):
             self.log.info(f"由于风险急停取消发送.")
             return
         message = await super().send(dummy=dummy)

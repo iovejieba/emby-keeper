@@ -6,7 +6,7 @@ from ..lock import (
     pornemby_messager_enabled,
     pornemby_messager_mids,
     pornemby_messager_mids_lock,
-    pornemby_alert,
+    pornfans_alert,
 )
 from . import Messager
 
@@ -27,7 +27,7 @@ class PornembyMessager(Messager):
         return True
 
     async def send(self, message):
-        if pornemby_alert.get(self.me.id, False):
+        if pornfans_alert.get(self.me.id, False):
             self.log.info(f"由于风险急停取消发送.")
             return
         nohp_date = pornfans_nohp.get(self.me.id, None)

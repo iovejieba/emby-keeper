@@ -12,7 +12,7 @@ import numpy as np
 from embykeeper.config import config
 from embykeeper.utils import show_exception, get_proxy_str
 
-from ..lock import pornemby_alert
+from ..lock import pornfans_alert
 from . import Monitor
 
 JAVDATABASE_URL = "https://www.javdatabase.com"
@@ -260,7 +260,7 @@ class _PornfansExamAnswerMonitor(Monitor):
     async def on_trigger(self, message: Message, key, reply):
         if not message.photo or not message.reply_markup:
             return
-        if pornemby_alert.get(self.client.me.id, False):
+        if pornfans_alert.get(self.client.me.id, False):
             self.log.info(f"由于风险急停不作答.")
             return
         if random.random() > self.config.get("possibility", 1.0):

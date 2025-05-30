@@ -10,7 +10,7 @@ misty_locks = {}  # uid: lock
 
 pornfans_nohp = {}  # uid: date
 pornemby_messager_enabled = {}  # uid: bool
-pornemby_alert = {}  # uid: bool
+pornfans_alert = {}  # uid: bool
 pornemby_messager_mids = {}  # uid: list(mid)
 pornemby_messager_mids_lock = asyncio.Lock()
 

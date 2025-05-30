@@ -1,7 +1,7 @@
 import asyncio
 
 from ..link import Link
-from ..lock import pornemby_alert, pornemby_messager_mids_lock, pornemby_messager_mids
+from ..lock import pornfans_alert, pornemby_messager_mids_lock, pornemby_messager_mids
 from . import BotCheckin
 
 __ignore__ = True
@@ -14,7 +14,7 @@ class PornembyGameGroupCheckin(BotCheckin):
     bot_use_captcha = False
 
     async def send_checkin(self, retry=False):
-        if pornemby_alert.get(self.client.me.id, False):
+        if pornfans_alert.get(self.client.me.id, False):
             self.log.warning("签到失败: 由于风险急停不进行发言")
             return await self.fail(message="由于风险急停不进行发言")
 

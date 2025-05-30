@@ -5,7 +5,7 @@ from pyrogram.enums import MessageEntityType
 
 from embykeeper.utils import flatten
 
-from ..lock import pornemby_alert
+from ..lock import pornfans_alert
 from . import Monitor
 
 
@@ -20,7 +20,7 @@ class PornfansDragonRainMonitor:
         debug_no_log = True
 
         async def on_trigger(self, message: Message, key, reply):
-            if pornemby_alert.get(self.client.me.id, False):
+            if pornfans_alert.get(self.client.me.id, False):
                 self.log.info(f"由于风险急停不抢红包.")
                 return
             if message.reply_markup:

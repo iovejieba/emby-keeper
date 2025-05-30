@@ -10,7 +10,7 @@ from embykeeper.utils import to_iterable, truncate_str
 from embykeeper.cache import cache
 
 from ..link import Link
-from ..lock import pornemby_alert
+from ..lock import pornfans_alert
 from . import Monitor
 
 
@@ -119,7 +119,7 @@ class _PornfansAnswerAnswerMonitor(Monitor):
 
     async def on_trigger(self, message: Message, key, reply):
         spec = f"[gray50]({truncate_str(key[0], 10)})[/]"
-        if pornemby_alert.get(self.client.me.id, False):
+        if pornfans_alert.get(self.client.me.id, False):
             self.log.info(f"由于风险急停不作答: {spec}.")
             return
         if random.random() > self.config.get("possibility", 1.0):

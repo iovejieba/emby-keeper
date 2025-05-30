@@ -3,7 +3,7 @@ from pyrogram.types import Message, InlineKeyboardMarkup
 from pyrogram.enums import MessageEntityType
 from pyrogram.errors import RPCError
 
-from ..lock import pornemby_messager_enabled, pornemby_alert
+from ..lock import pornemby_messager_enabled, pornfans_alert
 from . import Monitor
 
 
@@ -16,7 +16,7 @@ class PornfansDoubleMonitor(Monitor):
     allow_edit = True
 
     async def on_trigger(self, message: Message, key, reply):
-        if pornemby_alert.get(self.client.me.id, False):
+        if pornfans_alert.get(self.client.me.id, False):
             self.log.info(f"由于风险急停不翻倍.")
             return
         for me in message.entities:
