@@ -18,8 +18,8 @@ from . import Monitor
 JAVDATABASE_URL = "https://www.javdatabase.com"
 
 
-class _PornembyExamResultMonitor(Monitor):
-    name = "Pornemby 科举答案"
+class _PornfansExamResultMonitor(Monitor):
+    name = "PornFans 科举答案"
     chat_keyword = r"问题\d*：(.*?)\n+答案为：([ABCD])\n+([A-Z-\d]+)"
     additional_auth = ["pornemby_pack"]
     allow_edit = True
@@ -28,8 +28,8 @@ class _PornembyExamResultMonitor(Monitor):
         self.log.info(f"本题正确答案为 {key[1]} ({key[2]}).")
 
 
-class _PornembyExamAnswerMonitor(Monitor):
-    name = "Pornemby 科举"
+class _PornfansExamAnswerMonitor(Monitor):
+    name = "PornFans 科举"
     chat_user = [
         "pornemby_question_bot",
         "PronembyTGBot2_bot",
@@ -310,9 +310,9 @@ class _PornembyExamAnswerMonitor(Monitor):
             self.log.warning("未找到匹配的封面图片")
 
 
-class PornembyExamMonitor:
-    class PornembyExamResultMonitor(_PornembyExamResultMonitor):
+class PornfansExamMonitor:
+    class PornfansExamResultMonitor(_PornfansExamResultMonitor):
         chat_name = ["embytestflight", "Pornemby"]
 
-    class PornembyExamAnswerMonitor(_PornembyExamAnswerMonitor):
+    class PornfansExamAnswerMonitor(_PornfansExamAnswerMonitor):
         chat_name = ["embytestflight", "Pornemby"]
