@@ -9,8 +9,8 @@ from . import Monitor
 
 class PornfansDoubleMonitor(Monitor):
     name = "PornFans 怪兽自动翻倍"
-    chat_user = ["PronembyTGBot2_bot", "PronembyTGBot3_bot", "PornembyBot", "Porn_Emby_Bot"]
-    chat_name = ["embytestflight", "Pornemby"]
+    chat_user = ["Porn_Emby_Bot", "Porn_emby_ScriptsBot"]
+    chat_name = ["embytestflight", "PornFans_Chat"]
     chat_keyword = r"击杀者\s+(.*)\s+是否要奖励翻倍"
     additional_auth = ["pornfans_pack"]
     allow_edit = True

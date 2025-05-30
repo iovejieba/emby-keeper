@@ -34,15 +34,8 @@ class _PornfansAnswerResultMonitor(Monitor):
 
 class _PornfansAnswerAnswerMonitor(Monitor):
     name = "PornFans 问题回答"
-    history_chat_name = ["embytestflight", "Pornemby"]
-    chat_user = [
-        "pornemby_question_bot",
-        "PronembyTGBot2_bot",
-        "PronembyTGBot3_bot",
-        "PornembyBot",
-        "Porn_Emby_Bot",
-        "Porn_Emby_Scriptbot",
-    ]
+    history_chat_name = ["embytestflight", "PornFans_Chat"]
+    chat_user = ["Porn_Emby_Bot", "Porn_emby_ScriptsBot"]
     chat_except_keyword = "猜猜是什么番号"
     chat_keyword = r"问题\d*：(.*?)(\(.*第\d+题.*\))\n+(A:.*\n+B:.*\n+C:.*\n+D:.*)\n(?!\n*答案)"
     additional_auth = ["pornfans_pack"]
@@ -167,7 +160,7 @@ class _PornfansAnswerAnswerMonitor(Monitor):
 
 class PornfansAnswerMonitor:
     class PornfansAnswerResultMonitor(_PornfansAnswerResultMonitor):
-        chat_name = ["embytestflight", "Pornemby"]
+        chat_name = ["embytestflight", "PornFans_Chat"]
 
     class PornfansAnswerAnswerMonitor(_PornfansAnswerAnswerMonitor):
-        chat_name = ["embytestflight", "Pornemby"]
+        chat_name = ["embytestflight", "PornFans_Chat"]

@@ -7,7 +7,7 @@ __ignore__ = True
 
 class TestPornfansMonitor(Monitor):
     name = "PornFans 消息接收 测试"
-    chat_name = "Pornemby"
+    chat_name = "Porn_Emby_Bot"
     chat_keyword = r".*"
 
     async def on_trigger(self, message: Message, key, reply):

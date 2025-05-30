@@ -9,8 +9,8 @@ __ignore__ = True
 
 class PornfansRegisterMonitor(Monitor):
     name = "PornFans 抢注"
-    chat_name = ["embytestflight", "Pornemby"]
-    chat_user = "PornembyTGBot_bot"
+    chat_name = ["embytestflight", "PornFans_Chat"]
+    chat_user = "Porn_Emby_Bot"
     chat_keyword = "开 放 注 册"
     additional_auth = ["pornfans_pack"]
 

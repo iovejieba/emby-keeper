@@ -12,8 +12,8 @@ from . import Monitor
 class PornfansDragonRainMonitor:
     class PornfansDragonRainClickMonitor(Monitor):
         name = "PornFans 红包雨"
-        chat_user = ["PronembyTGBot2_bot", "PronembyTGBot3_bot", "PornembyBot", "Porn_Emby_Bot"]
-        chat_name = ["embytestflight", "Pornemby"]
+        chat_user = ["Porn_Emby_Bot", "Porn_emby_ScriptsBot"]
+        chat_name = ["embytestflight", "PornFans_Chat"]
         chat_keyword = [None]
         additional_auth = ["pornfans_pack"]
         allow_edit = True
@@ -41,8 +41,8 @@ class PornfansDragonRainMonitor:
 
     class PornfansDragonRainStatusMonitor(Monitor):
         name = "PornFans 红包雨结果"
-        chat_user = ["PronembyTGBot2_bot", "PronembyTGBot3_bot", "PornembyBot", "Porn_Emby_Bot"]
-        chat_name = ["embytestflight", "Pornemby"]
+        chat_user = ["Porn_Emby_Bot", "Porn_emby_ScriptsBot"]
+        chat_name = ["embytestflight", "PornFans_Chat"]
         chat_keyword = r"恭喜\s+(.*):本次获得(\d+)豆"
         allow_edit = True
 

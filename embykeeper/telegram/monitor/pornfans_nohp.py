@@ -11,8 +11,8 @@ from . import Monitor
 
 class PornfansNoHPMonitor(Monitor):
     name = "PornFans 血量耗尽停止发言"
-    chat_user = ["PronembyTGBot2_bot", "PronembyTGBot3_bot", "PornembyBot", "Porn_Emby_Bot"]
-    chat_name = ["embytestflight", "Pornemby"]
+    chat_user = ["Porn_Emby_Bot", "Porn_emby_ScriptsBot"]
+    chat_name = ["embytestflight", "PornFans_Chat"]
     chat_keyword = "(.*)血量已耗尽。"
     additional_auth = ["pornfans_pack"]
     allow_edit = True

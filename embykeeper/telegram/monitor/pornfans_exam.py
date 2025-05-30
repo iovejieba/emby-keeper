@@ -30,14 +30,7 @@ class _PornfansExamResultMonitor(Monitor):
 
 class _PornfansExamAnswerMonitor(Monitor):
     name = "PornFans 科举"
-    chat_user = [
-        "pornemby_question_bot",
-        "PronembyTGBot2_bot",
-        "PronembyTGBot3_bot",
-        "PornembyBot",
-        "Porn_Emby_Bot",
-        "Porn_Emby_Scriptbot",
-    ]
+    chat_user = ["Porn_Emby_Bot", "Porn_emby_ScriptsBot"]
     chat_keyword = (
         r"问题\d*：根据以上封面图，猜猜是什么番号？\n+A:(.*)\n+B:(.*)\n+C:(.*)\n+D:(.*)\n(?!\n*答案)"
     )
@@ -312,7 +305,7 @@ class _PornfansExamAnswerMonitor(Monitor):
 
 class PornfansExamMonitor:
     class PornfansExamResultMonitor(_PornfansExamResultMonitor):
-        chat_name = ["embytestflight", "Pornemby"]
+        chat_name = ["embytestflight", "PornFans_Chat"]
 
     class PornfansExamAnswerMonitor(_PornfansExamAnswerMonitor):
-        chat_name = ["embytestflight", "Pornemby"]
+        chat_name = ["embytestflight", "PornFans_Chat"]
