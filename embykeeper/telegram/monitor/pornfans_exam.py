@@ -21,7 +21,7 @@ JAVDATABASE_URL = "https://www.javdatabase.com"
 class _PornfansExamResultMonitor(Monitor):
     name = "PornFans 科举答案"
     chat_keyword = r"问题\d*：(.*?)\n+答案为：([ABCD])\n+([A-Z-\d]+)"
-    additional_auth = ["pornfans_pack"]
+    additional_auth = ["pornemby_pack"]
     allow_edit = True
 
     async def on_trigger(self, message: Message, key, reply):
@@ -34,7 +34,7 @@ class _PornfansExamAnswerMonitor(Monitor):
     chat_keyword = (
         r"问题\d*：根据以上封面图，猜猜是什么番号？\n+A:(.*)\n+B:(.*)\n+C:(.*)\n+D:(.*)\n(?!\n*答案)"
     )
-    additional_auth = ["pornfans_pack"]
+    additional_auth = ["pornemby_pack"]
     allow_edit = True
 
     key_map = {

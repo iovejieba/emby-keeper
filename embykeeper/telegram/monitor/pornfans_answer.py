@@ -21,7 +21,7 @@ class _PornfansAnswerResultMonitor(Monitor):
     name = "PornFans 问题答案"
     chat_except_keyword = "猜猜是什么番号"
     chat_keyword = r"问题\d*：(.*?)\n+A:(.*)\n+B:(.*)\n+C:(.*)\n+D:(.*)\n+答案为：([ABCD])"
-    additional_auth = ["pornfans_pack"]
+    additional_auth = ["pornemby_pack"]
     allow_edit = True
     allow_caption = False
 
@@ -38,7 +38,7 @@ class _PornfansAnswerAnswerMonitor(Monitor):
     chat_user = ["Porn_Emby_Bot", "Porn_emby_ScriptsBot"]
     chat_except_keyword = "猜猜是什么番号"
     chat_keyword = r"问题\d*：(.*?)(\(.*第\d+题.*\))\n+(A:.*\n+B:.*\n+C:.*\n+D:.*)\n(?!\n*答案)"
-    additional_auth = ["pornfans_pack"]
+    additional_auth = ["pornemby_pack"]
 
     lock = asyncio.Lock()
 
@@ -130,7 +130,7 @@ class _PornfansAnswerAnswerMonitor(Monitor):
             question = re.sub(r"\([^\)]*From资料库:第\d+题\)", "", question)
             for _ in range(3):
                 self.log.debug(f"未从历史缓存找到问题, 开始请求云端问题回答: {spec}.")
-                result, by = await Link(self.client).pornfans_answer(question + "\n" + choices)
+                result, by = await Link(self.client).pornemby_answer(question + "\n" + choices)
                 if result:
                     self.log.info(f"请求 {by or '云端'} 问题回答为 {result}: {spec}.")
                     break

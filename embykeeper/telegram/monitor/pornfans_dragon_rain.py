@@ -15,7 +15,7 @@ class PornfansDragonRainMonitor:
         chat_user = ["Porn_Emby_Bot", "Porn_emby_ScriptsBot"]
         chat_name = ["embytestflight", "PornFans_Chat"]
         chat_keyword = [None]
-        additional_auth = ["pornfans_pack"]
+        additional_auth = ["pornemby_pack"]
         allow_edit = True
         debug_no_log = True
 

@@ -16,8 +16,8 @@ __ignore__ = True
 class SmartPornfansMessager(SmartMessager):
     name = "PornFans"
     chat_name = "embytestflight"
-    style_message_list = "pornfans-common-wl@latest.yaml"
-    additional_auth = ["pornfans_pack"]
+    style_message_list = "pornemby-common-wl@latest.yaml"
+    additional_auth = ["pornemby_pack"]
     msg_per_day = 100
     extra_prompt = "输出内容必须大于 8 个字符, 包括符号"
 

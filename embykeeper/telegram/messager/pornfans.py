@@ -16,7 +16,7 @@ __ignore__ = True
 class PornfansMessager(Messager):
     name = "PornFans"
     chat_name = "embytestflight"
-    default_messages = ["pornfans-common-wl@latest.yaml * 100"]
+    default_messages = ["pornemby-common-wl@latest.yaml * 100"]
 
     async def init(self):
         self.lock = asyncio.Lock()

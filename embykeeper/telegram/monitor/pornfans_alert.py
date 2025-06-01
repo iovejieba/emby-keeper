@@ -18,7 +18,7 @@ __ignore__ = True
 class PornfansAlertMonitor(Monitor):
     name = "PornFans 风险急停监控"
     chat_name = ["embytestflight", "PornFans_Chat"]
-    additional_auth = ["pornfans_pack"]
+    additional_auth = ["pornemby_pack"]
     allow_edit = True
     debug_no_log = True
     trigger_interval = 0
