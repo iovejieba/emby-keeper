@@ -249,7 +249,7 @@ class ClientsSession:
         )
 
     async def _disconnect_handler(self, client: Client):
-        logger.bind(username=client.me.full_name).info("客户端与 Telegram 服务器断开连接.")
+        logger.bind(username=client.me.full_name).debug("客户端与 Telegram 服务器断开连接.")
 
     async def login(self, account: TelegramAccount, use_telethon=True):
         try:
