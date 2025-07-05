@@ -19,6 +19,7 @@ class XiguaCheckin(TemplateACheckin):
     bot_use_captcha = False
     bot_checkin_cmd = "/start"
     additional_auth = ["captcha"]
+    templ_panel_keywords = ["冰镇西瓜"]
 
     async def message_handler(self, client, message: Message):
         text = message.caption or message.text
