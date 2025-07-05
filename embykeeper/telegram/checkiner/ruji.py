@@ -1,4 +1,9 @@
-from urllib.parse import urlparse
+from datetime import datetime
+from urllib.parse import parse_qs, urlparse
+import hmac
+import hashlib
+import random
+import string
 
 from pyrogram.types import Message
 from pyrogram.raw.functions.messages import RequestWebView
@@ -13,13 +18,28 @@ from ..link import Link
 from ._templ_a import TemplateACheckin
 
 
-class XiguaCheckin(TemplateACheckin):
-    name = "西瓜"
-    bot_username = "XiguaEmbyBot"
+class RujiCheckin(TemplateACheckin):
+    name = "入机"
+    bot_username = "ljembyfukh_bot"
     bot_use_captcha = False
     bot_checkin_cmd = "/start"
     additional_auth = ["captcha"]
-    templ_panel_keywords = ["冰镇西瓜"]
+    
+    signing_secret = "yNPEhmtaRwxYxk0LABf-pCeU6LlmE3CikoPej-g6xpQ"
+    
+    def generate_nonce(self, length=21):
+        """Generate a random nonce string of specified length."""
+        return ''.join(random.choices(string.ascii_lowercase + string.digits, k=length))
+        
+    def generate_signature(self, user_id: int, timestamp: int, nonce: str) -> str:
+        """Generate HMAC signature using SHA256."""
+        message = f"{user_id}:{timestamp}:{nonce}"
+        hmac_obj = hmac.new(
+            self.signing_secret.encode(),
+            message.encode(),
+            hashlib.sha256
+        )
+        return hmac_obj.hexdigest()
 
     async def message_handler(self, client, message: Message):
         text = message.caption or message.text
@@ -38,7 +58,10 @@ class XiguaCheckin(TemplateACheckin):
                             RequestWebView(peer=bot_peer, bot=bot_peer, platform="ios", url=url)
                         )
                     ).url
-                    token = await Link(self.client).captcha("xigua")
+                    scheme = urlparse(url_auth)
+                    params = parse_qs(scheme.fragment)
+                    webapp_data = params.get("tgWebAppData", [""])[0]
+                    token = await Link(self.client).captcha("ruji")
                     if not token:
                         self.log.warning("签到失败: 验证码解析失败, 正在重试.")
                         return await self.retry()
@@ -46,15 +69,26 @@ class XiguaCheckin(TemplateACheckin):
                     url_submit = scheme._replace(path="/api/checkin/verify", query="", fragment="").geturl()
                     origin = scheme._replace(path="/", query="", fragment="").geturl()
                     useragent = Faker().safari()
+                    
                     headers = {
                         "Content-Type": "application/json",
                         "Referer": url,
                         "Origin": origin,
                         "User-Agent": useragent,
+                        "X-Requested-With": "XMLHttpRequest",
                     }
+                    
+                    timestamp = int(datetime.now().timestamp())
+                    nonce = self.generate_nonce()
+                    signature = self.generate_signature(self.client.me.id, timestamp, nonce)
+                    
                     data = {
                         "user_id": str(self.client.me.id),
                         "token": token,
+                        "signature": signature,
+                        "timestamp": timestamp,
+                        "webapp_data": webapp_data,
+                        "nonce": nonce,
                     }
                     for i in range(10):
                         try:
@@ -63,16 +97,28 @@ class XiguaCheckin(TemplateACheckin):
                             ) as client:
                                 resp = await client.post(url_submit, headers=headers, json=data)
                                 result = resp.text
-                                if resp.status_code == 200:
-                                    return
-                                elif resp.status_code == 409:
-                                    self.log.info(f"今日已经签到过了.")
-                                    return await self.finish(RunStatus.NONEED, "今日已签到")
-                                else:
+                                
+                                try:
+                                    json_result = resp.json()
+                                    if resp.status_code == 200:
+                                        message = json_result.get("message", "签到成功")
+                                        reward = json_result.get("reward", "")
+                                        self.log.info(f"{message} {reward}")
+                                        return
+                                    elif resp.status_code == 409:
+                                        detail = json_result.get("detail", "今日已经签到过了")
+                                        self.log.info(detail)
+                                        return await self.finish(RunStatus.NONEED, "今日已签到")
+                                    else:
+                                        detail = json_result.get("detail", "未知错误")
+                                        self.log.info(detail)
+                                        return await self.finish(RunStatus.ERROR, "签到失败")
+                                except:
                                     self.log.warning(
                                         f"签到失败: 验证码识别后接口返回异常信息:\n{truncate_str(result, 100)}, 可能是您的请求 IP 风控等级较高导致的."
                                     )
                                     return await self.fail()
+                                
                         except (httpx.ProxyError, httpx.TimeoutException, OSError):
                             self.log.warning(
                                 f"无法连接到站点的页面, 可能是您的网络或代理不稳定, 正在重试 ({i+1}/10)."
