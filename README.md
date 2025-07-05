@@ -128,13 +128,17 @@ docker run -v $(pwd)/embykeeper:/app --rm -it --net=host embykeeper/embykeeper -
   - 叶子 (`yezi`): [频道](https://t.me/yezi_emby) [群组](https://t.me/yeziemby) [机器人](https://t.me/yeziemby_bot)
   - 叶子高码 (`yezigm`): [频道](https://t.me/yezi_emby) [群组](https://t.me/yeziemby) [机器人](https://t.me/yezigm_bot)
   - Ask (`ask`): [频道](https://t.me/ask_uni) [群组](https://t.me/Ask_Universal) [机器人](https://t.me/askUniversal_bot)
-  - DPeak (`dpeak`): [群组](https://t.me/EMBY_DPeak) [机器人](https://t.me/emby_dpeak_bot)
   - Youno (`youno`): [频道](http://t.me/+jRxdcDjxgpViNDll) [群组](https://t.me/YounosEmby) [机器人](https://t.me/YounoEmby_bot)
   - Lemby (`lemby`): [频道](https://t.me/Lemby_Channel) [群组](https://t.me/Lemby_Group) [机器人](https://t.me/LembyPremium_BOT)
-  - 南瓜音乐 (`nangua`): [频道](https://t.me/nanguadd) [群组](https://t.me/nanguade) [机器人](https://t.me/nanguadebot)
+  - 南瓜音乐 (`nangua`): [频道](https://t.me/nanguadd) [群组](https://t.me/nanguade) [机器人](https://t.me/nanguaemby_bot)
   - 西瓜 (`xigua`): [频道](https://t.me/ChilledWatermelon) [群组](https://t.me/ChilledMelonGroup) [机器人](https://t.me/XiguaEmbyBot)
   - 飞了个喵 (`meow`): [频道](https://t.me/+UhFqaQIVs8A2ZDRl) [群组](https://t.me/gymeowfly) [机器人](https://t.me/gymeowfly_bot)
   - 青梅映画 (`qingmei`): [频道](http://t.me/qingmeiyinghuaemby01) [群组](http://t.me/qingmeiyinghuaemby) [机器人](https://t.me/qingmeiemby_bot)
+  - Star : [频道](https://t.me/star_emby) [群组](https://t.me/star_emby_chat)
+    - 可爱的机器人签到 (`star1`): [机器人](https://t.me/star_emby_bot)
+    - 不可爱的机器人签到 (`star2`): [机器人](https://t.me/star_emby2_bot)
+  - 入机 (`ruji`): [频道](https://t.me/rjMediatz) [群组](https://t.me/rjMedai) [机器人](https://t.me/ljembyfukh_bot)
+  - 入境 (`rujing`): [群组](https://t.me/rjfemby) [机器人](https://t.me/rujingModie_bot)
 
   <!-- #endregion checkiner-sites -->
 
@@ -157,6 +161,7 @@ docker run -v $(pwd)/embykeeper:/app --rm -it --net=host embykeeper/embykeeper -
   - 关服, 无响应, 或已停用签到功能 (默认禁用, 请参考[教程文档](https://emby-keeper.github.io/guide/配置文件#service-子项)启用):
     <!-- #region checkiner-ignored-sites -->
 
+    - DPeak (`dpeak`): ~~[群组](https://t.me/EMBY_DPeak) [机器人](https://t.me/emby_dpeak_bot)~~
     - 鹅服 (`zm`): ~~[机器人](https://t.me/ZXCHSJSHbot)~~
     - AuroraMedia (`aurora`): ~~[频道](https://t.me/AuroraMedia2) [机器人](https://t.me/AuroraMedia1_bot)~~
     - Raismusic (`raismusic`): ~~[频道](https://t.me/raisemby_channel) [群组1](https://t.me/raismusic_group) [群组2](https://t.me/Raisembyg) [机器人](https://t.me/raismusicbot)~~
