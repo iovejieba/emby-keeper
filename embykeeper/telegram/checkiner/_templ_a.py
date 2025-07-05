@@ -34,6 +34,7 @@ class TemplateACheckin(BotCheckin):
     templ_panel_keywords = ["请选择功能", "用户面板"]
     bot_text_ignore_answer = ["Done"]
     use_button_answer = True
+    bot_checkin_cmd = "/checkin"
 
     async def init(self):
         try:
