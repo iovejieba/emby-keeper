@@ -26,11 +26,11 @@ concurrency = 1
 [[emby.account]] # 第 1 个账号
 
 # 站点域名和端口:
-url = "https://www.ford.org:443"
+url = "https://powers.biz:443"
 
 # 用户名和密码:
-username = "gcaldwell"
-password = "&zGRQOd9R8"
+username = "tylercolin"
+password = "7VpNPjhG+K"
 
 # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 time = [300, 600]
@@ -54,9 +54,9 @@ time = [300, 600]
 
 # 第 2 个账号, 如需使用请将该段取消注释并修改, 也可以添加更多账号.
 # [[emby.account]]
-# url = "https://www.gray.biz:443"
-# username = "jaredfoley"
-# password = "+)91Jtq85L"
+# url = "https://griffin-scott.com:443"
+# username = "vincent29"
+# password = "CA5Ux%Cdq@"
 # time = [300, 600]
 
 # ================================================================================
@@ -92,7 +92,7 @@ interval_days = 1
 [[telegram.account]] # 第 1 个账号
 
 # 带国家区号的账户手机号, 一般为 "+86..."
-phone = "+8610362895596"
+phone = "+8611313739310"
 
 # 启用机器人签到系列功能, 默认启用, 设置为 false 以禁用:
 checkiner = true
@@ -112,7 +112,7 @@ messager = false
 
 # 第 2 个账号, 如需使用请将该段取消注释并修改, 也可以添加更多账号.
 # [[telegram.account]]
-# phone = "+8610367719358"
+# phone = "+8619450019274"
 # checkiner = true
 # monitor = false
 # messager = false
@@ -120,7 +120,7 @@ messager = false
 # ================================================================================
 # 站点相关设置
 # 当您需要禁用某些站点时, 请将该段取消注释并修改.
-# 该部分内容是根据 Embykeeper 7.4.1 生成的.
+# 该部分内容是根据 Embykeeper 7.4.2 生成的.
 # 详见: https://emby-keeper.github.io/guide/配置文件#site-子项
 # ================================================================================
 
@@ -148,7 +148,7 @@ messager = false
 
 # 全部可用站点:
 # [site]
-# checkiner = ["agentsgk", "aisgk", "aivbi", "akile", "akile_group", "akuai", "alpha", "apop", "apoppro", "ask", "aurora", "awamusic", "awatv", "baidusgk", "bearsgk", "bingdaosgk", "bitsgk", "bluesea", "bostsgk", "bytevirt_group", "carll1sgk", "carll2sgk", "cc", "charon", "charon_old", "chunjiangsgk", "ciji", "datasgk", "dingdangsgk", "dogsgk", "dpeak", "dpeak_old", "dvfilm", "embyhub", "epub", "epub_group", "epub_group_chat", "fanhuasgk", "feiji", "feiyue", "feiyuedpx", "feiyuemusic", "feiyuemusic_group_old", "future", "happy", "hdhive", "heisi", "hka", "huasgk", "ikunmusic", "infsgk", "ingeeksgk", "jinding", "jingzhe", "jms", "jms_iptv", "jms_old", "johnsgk", "jsq", "judog", "july", "kiku", "koisgk", "lemby", "levilde", "lily", "ljyy", "ljyy_old", "lyrebird", "m78", "magic", "marmot_group_old", "mastersgk", "meow", "micu", "minisgk", "misty", "mjj", "mooncake", "moonkk", "moshensgk", "moyunge", "nangua", "navidrome", "nebula", "nebula_old", "niaoge", "oixel", "pandatv", "pandatv_group", "peach", "pilipili", "pingansgk", "plumber", "pornemby_old", "pornfans_game_group", "pornfans_group", "qingfengsgk", "qingmei", "raismusic", "rednosesgk", "ruji", "rujing", "saturday", "seedsgk", "sfcju", "shufu", "singularity", "skysink", "sssq", "star1", "star2", "starcat", "starsgk", "tanhua", "tdck", "tdck_new", "temby", "temby_beta", "temby_old", "terminus", "terminus_old", "theend", "tianmaosgk", "tiannan", "tiannanus", "unionsgk", "watermelon", "worldline", "xigua", "xraysgk", "yezi", "yezigm", "yomo", "youno", "zhihusgk", "zhipian", "zhushousgk", "zm"]
+# checkiner = ["agentsgk", "aisgk", "aivbi", "akile", "akile_group", "akuai", "alpha", "apop", "apoppro", "ask", "aurora", "awamusic", "awatv", "baidusgk", "bearsgk", "bibi", "bingdaosgk", "bitsgk", "bluesea", "bostsgk", "bytevirt_group", "carll1sgk", "carll2sgk", "cc", "charon", "charon_old", "chunjiangsgk", "ciji", "datasgk", "dingdangsgk", "dogsgk", "dpeak", "dpeak_old", "dvfilm", "embyhub", "epub", "epub_group", "epub_group_chat", "fanhuasgk", "feiji", "feiyue", "feiyuedpx", "feiyuemusic", "feiyuemusic_group_old", "future", "happy", "hdhive", "heisi", "hka", "huasgk", "ikunmusic", "infsgk", "ingeeksgk", "jinding", "jingzhe", "jms", "jms_iptv", "jms_old", "johnsgk", "jsq", "judog", "july", "kiku", "koisgk", "lemby", "levilde", "lily", "ljyy", "ljyy_old", "lyrebird", "m78", "magic", "marmot_group_old", "mastersgk", "meow", "micu", "minisgk", "misty", "mjj", "mooncake", "moonkk", "moshensgk", "moyunge", "nangua", "navidrome", "nebula", "nebula_old", "niaoge", "oixel", "pandatv", "pandatv_group", "peach", "pilipili", "pingansgk", "plumber", "pornemby_old", "pornfans_game_group", "pornfans_group", "qingfengsgk", "qingmei", "raismusic", "rednosesgk", "ruji", "rujing", "saturday", "seedsgk", "sfcju", "shufu", "singularity", "skysink", "sssq", "star1", "star2", "starcat", "starsgk", "tanhua", "tdck", "tdck_new", "temby", "temby_beta", "temby_old", "terminus", "terminus_old", "theend", "tianmaosgk", "tiannan", "tiannanus", "unionsgk", "watermelon", "worldline", "xigua", "xraysgk", "yezi", "yezigm", "yomo", "youno", "zhihusgk", "zhipian", "zhushousgk", "zm"]
 # monitor = ["bgk", "embyhub", "future", "infinity_fly", "judog", "misty", "polo", "pornfans_alert", "pornfans_answer", "pornfans_double", "pornfans_dragon_rain", "pornfans_exam", "pornfans_nohp", "pornfans_register", "shufu", "terminus_exam", "viper", "woke"]
 # messager = ["marmot", "nakonako", "pornfans", "smart_pornfans"]
 
@@ -203,18 +203,18 @@ concurrency = 1
 # [[subsonic.account]] # 第 1 个账号
 # 
 # # 站点域名和端口:
-# url = "https://www.sutton.biz:443"
+# url = "https://www.moore.com:443"
 # 
 # # 用户名和密码:
-# username = "annmorris"
-# password = "B*rRXcfb&5"
+# username = "grosschristine"
+# password = "@7BDPt^ovJ"
 # 
 # # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 # time = [300, 600]
 # 
 # [[subsonic.account]] # 第 2 个账号
-# url = "https://www.lopez-baker.org:443"
-# username = "tarasmith"
-# password = "HX2EJQ&uC%"
+# url = "https://lindsey.com:443"
+# username = "stephen01"
+# password = "_cdS4Ppu7c"
 # time = [300, 600]
 
