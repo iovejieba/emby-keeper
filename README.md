@@ -139,6 +139,8 @@ docker run -v $(pwd)/embykeeper:/app --rm -it --net=host embykeeper/embykeeper -
     - 不可爱的机器人签到 (`star2`): [机器人](https://t.me/star_emby2_bot)
   - 入机 (`ruji`): [频道](https://t.me/rjMediatz) [群组](https://t.me/rjMedai) [机器人](https://t.me/ljembyfukh_bot)
   - 入境 (`rujing`): [群组](https://t.me/rjfemby) [机器人](https://t.me/rujingModie_bot)
+  - 比比助手 (`bibi`): [频道](http://t.me/bbembychannel) [群组](http://t.me/+1ahL4frEF_5lZmNl) [机器人](https://t.me/BBFreeFilm_bot)
+
 
   <!-- #endregion checkiner-sites -->
 
