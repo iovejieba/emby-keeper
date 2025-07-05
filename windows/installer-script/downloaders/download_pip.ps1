@@ -7,7 +7,7 @@ param(
     [string]$TargetDirectory=(Get-Location).Path
 )
 
-$PipUrl = "https://bootstrap.pypa.io/get-pip.py"
+$PipUrl = "https://bootstrap.pypa.io/pip/3.8/get-pip.py"
 $PipFile = "$TargetDirectory\get-pip.py"
 $PipExe = "$TargetDirectory\Scripts\pip.exe"
 
