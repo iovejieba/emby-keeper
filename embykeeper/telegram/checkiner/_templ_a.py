@@ -34,17 +34,21 @@ class TemplateACheckin(BotCheckin):
     templ_panel_keywords = ["请选择功能", "用户面板"]
     bot_text_ignore_answer = ["Done"]
     use_button_answer = True
-    
+
     async def init(self):
         try:
             self.t_config = TemplateACheckinConfig.model_validate(self.config)
         except ValidationError as e:
             self.log.warning(f"初始化失败: 签到自定义模板 A 的配置错误:\n{e}")
             return False
-        
+
         self.name = self.t_config.name or self.name
         self.templ_panel_keywords = self.t_config.templ_panel_keywords or self.templ_panel_keywords
-        self.use_button_answer = self.t_config.use_button_answer if self.t_config.use_button_answer is not None else self.use_button_answer
+        self.use_button_answer = (
+            self.t_config.use_button_answer
+            if self.t_config.use_button_answer is not None
+            else self.use_button_answer
+        )
         self.bot_text_ignore_answer = self.t_config.bot_text_ignore_answer or self.bot_text_ignore_answer
         self.bot_fail_keywords = self.t_config.bot_fail_keywords or self.bot_fail_keywords
         self.bot_success_keywords = self.t_config.bot_success_keywords or self.bot_success_keywords
@@ -53,7 +57,11 @@ class TemplateACheckin(BotCheckin):
         self.bot_text_ignore = self.t_config.bot_text_ignore or self.bot_text_ignore
         self.bot_checkin_caption_pat = self.t_config.bot_checkin_caption_pat or self.bot_checkin_caption_pat
         self.bot_checkin_cmd = self.t_config.bot_checkin_cmd or self.bot_checkin_cmd
-        self.bot_use_captcha = self.t_config.bot_use_captcha if self.t_config.bot_use_captcha is not None else self.bot_use_captcha
+        self.bot_use_captcha = (
+            self.t_config.bot_use_captcha
+            if self.t_config.bot_use_captcha is not None
+            else self.bot_use_captcha
+        )
 
         self.log = logger.bind(scheme="telechecker", name=self.name)
         return True

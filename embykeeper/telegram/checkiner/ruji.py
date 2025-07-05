@@ -24,21 +24,17 @@ class RujiCheckin(TemplateACheckin):
     bot_use_captcha = False
     bot_checkin_cmd = "/start"
     additional_auth = ["captcha"]
-    
+
     signing_secret = "yNPEhmtaRwxYxk0LABf-pCeU6LlmE3CikoPej-g6xpQ"
-    
+
     def generate_nonce(self, length=21):
         """Generate a random nonce string of specified length."""
-        return ''.join(random.choices(string.ascii_lowercase + string.digits, k=length))
-        
+        return "".join(random.choices(string.ascii_lowercase + string.digits, k=length))
+
     def generate_signature(self, user_id: int, timestamp: int, nonce: str) -> str:
         """Generate HMAC signature using SHA256."""
         message = f"{user_id}:{timestamp}:{nonce}"
-        hmac_obj = hmac.new(
-            self.signing_secret.encode(),
-            message.encode(),
-            hashlib.sha256
-        )
+        hmac_obj = hmac.new(self.signing_secret.encode(), message.encode(), hashlib.sha256)
         return hmac_obj.hexdigest()
 
     async def message_handler(self, client, message: Message):
@@ -69,7 +65,7 @@ class RujiCheckin(TemplateACheckin):
                     url_submit = scheme._replace(path="/api/checkin/verify", query="", fragment="").geturl()
                     origin = scheme._replace(path="/", query="", fragment="").geturl()
                     useragent = Faker().safari()
-                    
+
                     headers = {
                         "Content-Type": "application/json",
                         "Referer": url,
@@ -77,11 +73,11 @@ class RujiCheckin(TemplateACheckin):
                         "User-Agent": useragent,
                         "X-Requested-With": "XMLHttpRequest",
                     }
-                    
+
                     timestamp = int(datetime.now().timestamp())
                     nonce = self.generate_nonce()
                     signature = self.generate_signature(self.client.me.id, timestamp, nonce)
-                    
+
                     data = {
                         "user_id": str(self.client.me.id),
                         "token": token,
@@ -97,7 +93,7 @@ class RujiCheckin(TemplateACheckin):
                             ) as client:
                                 resp = await client.post(url_submit, headers=headers, json=data)
                                 result = resp.text
-                                
+
                                 try:
                                     json_result = resp.json()
                                     if resp.status_code == 200:
@@ -118,7 +114,7 @@ class RujiCheckin(TemplateACheckin):
                                         f"签到失败: 验证码识别后接口返回异常信息:\n{truncate_str(result, 100)}, 可能是您的请求 IP 风控等级较高导致的."
                                     )
                                     return await self.fail()
-                                
+
                         except (httpx.ProxyError, httpx.TimeoutException, OSError):
                             self.log.warning(
                                 f"无法连接到站点的页面, 可能是您的网络或代理不稳定, 正在重试 ({i+1}/10)."
