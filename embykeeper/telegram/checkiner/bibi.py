@@ -4,6 +4,7 @@ from pyrogram.types import Message
 
 __ignore__ = True
 
+
 class BibiCheckin(TemplateACheckin):
     name = "比比"
     bot_username = "BBFreeFilm_bot"
