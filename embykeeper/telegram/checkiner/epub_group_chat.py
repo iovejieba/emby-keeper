@@ -30,7 +30,7 @@ class EPubGroupChatCheckin(BotCheckin):
                 for l in answer.splitlines()
                 if l.startswith("@@@") and len(l.strip()) >= min_letters + 3
             ]
-            if len(lines) > 10 or len(lines) < 8:
+            if len(lines) > times + 2 or len(lines) < times:
                 continue
             else:
                 for l in lines:
