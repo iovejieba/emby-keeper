@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  HF_SPACE_REPO: ekuser/prompt-generator
+  HF_SPACE_REPO: ekuser/prompt-gen
 
 jobs:
   sync-to-hf:
