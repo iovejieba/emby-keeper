@@ -57,6 +57,7 @@ default_keywords = {
         "先注册",
         "不存在",
         "不在群组中",
+        "你有号吗",
     ),
     "too_many_tries_fail": ("已尝试", "过多"),
     "checked": ("只能", "已经", "下次", "过了", "签过", "明日再来", "上次签到", "重复签到"),
@@ -608,7 +609,7 @@ class BotCheckin(BaseBotCheckin):
                 self.log.warning(f"接收到异常返回信息: {spec}, 正在尝试智能回答.")
             else:
                 self.log.info(f"正在使用智能接口回答问题.")
-            if message.reply_markup and message.reply_markup.inline_keyboard:
+            if message.reply_markup and isinstance(message.reply_markup, InlineKeyboardMarkup) and message.reply_markup.inline_keyboard:
                 buttons = [b.text for r in message.reply_markup.inline_keyboard for b in r]
             else:
                 buttons = []

@@ -18,7 +18,7 @@ class DPeakCheckin(BotCheckin):
     async def send_checkin(self, **kw):
         try:
             async with AsyncSession(
-                proxy=get_proxy_str(config.proxy), impersonate="edge", allow_redirects=True
+                proxy=get_proxy_str(config.proxy, curl=True), impersonate="edge", allow_redirects=True
             ) as session:
                 tgid = self.client.me.id
                 current_time = datetime.now()

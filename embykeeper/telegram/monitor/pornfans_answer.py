@@ -34,7 +34,7 @@ class _PornfansAnswerResultMonitor(Monitor):
 
 class _PornfansAnswerAnswerMonitor(Monitor):
     name = "PornFans 问题回答"
-    history_chat_name = ["embytestflight", "PornFans_Chat"]
+    history_chat_name = ["embytestflight", "PornFans_Chat", "Pornemby"]
     chat_user = ["Porn_Emby_Bot", "Porn_emby_ScriptsBot"]
     chat_except_keyword = "猜猜是什么番号"
     chat_keyword = r"问题\d*：(.*?)(\(.*第\d+题.*\))\n+(A:.*\n+B:.*\n+C:.*\n+D:.*)\n(?!\n*答案)"

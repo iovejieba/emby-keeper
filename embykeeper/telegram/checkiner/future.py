@@ -102,6 +102,7 @@ class FutureCheckin(BotCheckin):
             keys = [k.text for r in message.reply_markup.inline_keyboard for k in r]
             for k in keys:
                 if any([i in k for i in self.click_button]):
+                    await asyncio.sleep(random.uniform(0.5, 1.5))
                     try:
                         await message.click(k)
                     except (MessageIdInvalid, TimeoutError):

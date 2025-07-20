@@ -1,3 +1,5 @@
+import asyncio
+import random
 from pyrogram.types import Message
 from pyrogram.errors import RPCError
 from thefuzz import fuzz
@@ -18,6 +20,7 @@ class LJYYCheckin(AnswerBotCheckin):
 
     async def retry(self):
         if self.message:
+            await asyncio.sleep(random.uniform(0.5, 1.5))
             try:
                 await self.message.click()
             except (RPCError, TimeoutError):

@@ -1,3 +1,5 @@
+import asyncio
+import random
 from . import BotCheckin
 
 from pyrogram.types import Message
@@ -17,6 +19,7 @@ class UnionSGKCheckin(BotCheckin):
             keys = [k.text for r in message.reply_markup.inline_keyboard for k in r]
             for k in keys:
                 if "签到" in k:
+                    await asyncio.sleep(random.uniform(0.5, 1.5))
                     try:
                         await message.click(k)
                     except (TimeoutError, MessageIdInvalid):

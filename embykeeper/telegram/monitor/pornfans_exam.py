@@ -85,7 +85,7 @@ class _PornfansExamAnswerMonitor(Monitor):
                 else:
                     cookies = None
                 async with AsyncSession(
-                    proxy=get_proxy_str(self.proxy),
+                    proxy=get_proxy_str(self.proxy, curl=True),
                     impersonate="chrome",
                     timeout=10.0,
                     allow_redirects=True,
@@ -107,7 +107,7 @@ class _PornfansExamAnswerMonitor(Monitor):
                         return False
                     return True
             except Exception as e:
-                self.log.warning(f"初始化失败: 无法连接 Javdatabase: {e.__class__.__name__}: {str(e)}")
+                self.log.warning(f"初始化失败: 无法连接 Javdatabase (代理: {self.proxy}): {e.__class__.__name__}: {str(e)}")
                 return False
 
     async def get_cover_image_javdatabase(self, code: str):
@@ -118,7 +118,7 @@ class _PornfansExamAnswerMonitor(Monitor):
         while retry_count < max_retries:
             try:
                 async with AsyncSession(
-                    proxy=get_proxy_str(self.proxy),
+                    proxy=get_proxy_str(self.proxy, curl=True),
                     impersonate="chrome",
                     timeout=10.0,
                     allow_redirects=True,
@@ -135,7 +135,7 @@ class _PornfansExamAnswerMonitor(Monitor):
                             continue
                         return None
                     html = resp.text
-                    pattern = f'<div id="thumbnailContainer".*({JAVDATABASE_URL}//covers/thumb/.*/.*.webp)'
+                    pattern = f'<div id="thumbnailContainer".*({JAVDATABASE_URL}/covers/thumb/.*/.*.webp)'
                     match = re.search(pattern, html)
                     if not match:
                         self.log.warning(f"获取封面图片失败: 未找到图片: {detail_url} ({resp.status_code}).")
@@ -174,7 +174,7 @@ class _PornfansExamAnswerMonitor(Monitor):
         while retry_count < max_retries:
             try:
                 async with AsyncSession(
-                    proxy=get_proxy_str(self.proxy),
+                    proxy=get_proxy_str(self.proxy, curl=True),
                     timeout=10.0,
                     allow_redirects=True,
                     impersonate="chrome110",

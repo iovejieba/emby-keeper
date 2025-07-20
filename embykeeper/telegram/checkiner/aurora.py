@@ -39,7 +39,7 @@ class AuroraCheckin(BotCheckin):
 
         try:
             async with AsyncSession(
-                proxy=get_proxy_str(config.proxy), impersonate="edge", allow_redirects=True
+                proxy=get_proxy_str(config.proxy, curl=True), impersonate="edge", allow_redirects=True
             ) as session:
                 # 登录获取token
                 headers = {"Authorization": f"tma {webapp_data}"}

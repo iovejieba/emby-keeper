@@ -1,3 +1,5 @@
+import asyncio
+import random
 import emoji
 from pyrogram.types import Message
 from pyrogram.errors import RPCError
@@ -36,6 +38,7 @@ class TerminusCheckin(AnswerBotCheckin):
                 self.log.warning(f"签到失败: 验证码识别错误.")
                 return await self.fail()
             result = options[options_cleaned.index(result)]
+            await asyncio.sleep(random.uniform(0.5, 1.5))
             try:
                 await message.click(result)
             except RPCError:

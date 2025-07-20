@@ -1,4 +1,5 @@
 import asyncio
+import random
 
 from pyrogram.types import Message
 from pyrogram.errors import MessageIdInvalid
@@ -25,6 +26,7 @@ class LJYYCheckin(AnswerBotCheckin):
             keys = [k.text for r in message.reply_markup.inline_keyboard for k in r]
             for k in keys:
                 if "签到" in k:
+                    await asyncio.sleep(random.uniform(0.5, 1.5))
                     async with self.client.catch_reply(self.bot_username) as f:
                         try:
                             await message.click(k)
@@ -47,4 +49,5 @@ class LJYYCheckin(AnswerBotCheckin):
             match = [(k, fuzz.ratio(k, captcha)) for k in self.get_keys(self.message)]
             max_k, max_r = max(match, key=lambda x: x[1])
             self.log.info(f"识别字符: {captcha}, 选择字符: {max_k}")
+            await asyncio.sleep(random.uniform(0.5, 1.5))
             await self.message.click(max_k)

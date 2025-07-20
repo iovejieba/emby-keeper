@@ -1,3 +1,5 @@
+import asyncio
+import random
 from pyrogram.types import Message
 from pyrogram.errors import MessageIdInvalid
 
@@ -26,12 +28,14 @@ class TdckCheckin(AnswerBotCheckin):
             keys = [k.text for r in message.reply_markup.inline_keyboard for k in r]
             for k in keys:
                 if "个人信息" in k:
+                    await asyncio.sleep(random.uniform(0.5, 1.5))
                     try:
                         await message.click(k)
                     except (TimeoutError, MessageIdInvalid):
                         pass
                     return
                 if "签到" in k or "簽到" in k:
+                    await asyncio.sleep(random.uniform(0.5, 1.5))
                     try:
                         await message.click(k)
                     except TimeoutError:

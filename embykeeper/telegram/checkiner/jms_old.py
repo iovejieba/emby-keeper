@@ -47,6 +47,7 @@ class JMSCheckin(AnswerBotCheckin):
                 await self.operable.wait()
             await asyncio.sleep(random.uniform(3, 5))
             for l in captcha:
+                await asyncio.sleep(random.uniform(0.5, 1.5))
                 try:
                     await self.message.click(l)
                     await asyncio.sleep(random.uniform(3, 5))

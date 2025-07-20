@@ -88,10 +88,12 @@ async def cleaner():
             for child_key, child in option["children"].items():
                 keys = list(cache.find_by_prefix(child["prefix"]))
                 count = len(keys)
-                # 显示子选项
+                # 显示子选项，对于特定前缀只显示数量
                 console.print(f"  {child_key}. {child['name']} (共 {count} 条)")
-                for i, key_name in enumerate(keys, 1):
-                    console.print(f"    {child_key}.{i}. {key_name}")
+                # 只有在show_keys为True时才显示具体的键
+                if child.get("show_keys", False):
+                    for i, key_name in enumerate(keys, 1):
+                        console.print(f"    {child_key}.{i}. {key_name}")
         else:
             # 特殊选项
             console.print(f"{key}. {option['name']}")

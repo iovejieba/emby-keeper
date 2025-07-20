@@ -361,9 +361,13 @@ def distribute_numbers(min_value, max_value, num_elements=1, min_distance=0, max
                 allowed_range.append((min_allowed_value, max_allowed_value))
         if not allowed_range:
             break
+        
+        # Calculate estimated elements for each range
         estimated_num_elements = [
-            min(int((r[1] - r[0]) // min_distance), num_elements) for r in allowed_range
+            max(1, min(int((r[1] - r[0]) // min_distance), num_elements)) for r in allowed_range
         ]
+        
+        # Select a range using the estimated numbers as weights
         r = random.choices(allowed_range, k=1, weights=estimated_num_elements)[0]
         d = r[1] - r[0]
         min_v = r[0] + min_distance if r[0] == min_value else r[0]
@@ -377,10 +381,14 @@ def distribute_numbers(min_value, max_value, num_elements=1, min_distance=0, max
     return sorted(results)
 
 
-def get_proxy_str(proxy: Optional[ProxyConfig] = None):
+def get_proxy_str(proxy: Optional[ProxyConfig] = None, curl: bool = False):
     """将代理设置转为 URL 形式."""
     if proxy:
-        proxy_str = f"{proxy.scheme}://"
+        if curl and proxy.scheme == "socks5":
+            schema = "socks5h"
+        else:
+            schema = proxy.scheme
+        proxy_str = f"{schema}://"
         if proxy.username:
             proxy_str += f"{proxy.username or ''}:{proxy.password or ''}@"
         proxy_str += f"{proxy.hostname}:{proxy.port}"

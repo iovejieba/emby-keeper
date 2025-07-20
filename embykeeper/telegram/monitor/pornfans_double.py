@@ -1,4 +1,5 @@
 import asyncio
+import random
 from pyrogram.types import Message, InlineKeyboardMarkup
 from pyrogram.enums import MessageEntityType
 from pyrogram.errors import RPCError

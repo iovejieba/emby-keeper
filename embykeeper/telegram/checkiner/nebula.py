@@ -39,7 +39,7 @@ class NebulaCheckin(BotCheckin):
 
         try:
             async with AsyncSession(
-                proxy=get_proxy_str(config.proxy), headers=headers, impersonate="edge", allow_redirects=True
+                proxy=get_proxy_str(config.proxy, curl=True), headers=headers, impersonate="edge", allow_redirects=True
             ) as session:
                 # 先获取用户信息
                 resp_info = await session.get(url_info)

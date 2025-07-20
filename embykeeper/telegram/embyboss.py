@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import random
 import re
 from typing import TYPE_CHECKING
 
@@ -63,6 +64,8 @@ class EmbybossRegister:
         if not create_button:
             self.log.warning("找不到创建账户按钮, 无法注册.")
             return False
+
+        await asyncio.sleep(random.uniform(0.5, 1.5))
 
         async with self.client.catch_reply(panel.chat.id) as f:
             try:

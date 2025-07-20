@@ -94,7 +94,7 @@ class Subsonic:
                 self._session = AsyncSession(
                     verify=False,
                     timeout=10.0,
-                    proxy=get_proxy_str(self.proxy),
+                    proxy=get_proxy_str(self.proxy, curl=True),
                     headers=headers,
                     impersonate="chrome",
                     allow_redirects=True,

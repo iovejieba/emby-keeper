@@ -1,3 +1,5 @@
+import asyncio
+import random
 from pyrogram.types import Message
 
 from . import BotCheckin
@@ -17,6 +19,7 @@ class SingularityCheckin(BotCheckin):
             keys = [k.text for r in message.reply_markup.inline_keyboard for k in r]
             for k in keys:
                 if "签到" in k:
+                    await asyncio.sleep(random.uniform(0.5, 1.5))
                     await message.click(k)
                     return
             else:

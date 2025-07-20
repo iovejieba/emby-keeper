@@ -237,7 +237,7 @@ class Emby:
             verify=False,
             headers=self.build_headers(),
             cookies=cookies,
-            proxy=get_proxy_str(self.proxy),
+            proxy=get_proxy_str(self.proxy, curl=True),
             timeout=10.0,
             impersonate="chrome",
             allow_redirects=True,
