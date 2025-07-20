@@ -255,7 +255,7 @@ def run_proxy():
     def proxy_handler(environ, start_response):
         try:
             path = environ["PATH_INFO"]
-            
+
             if path.startswith("/ek"):
                 target = f"http://127.0.0.1:{ek_port}"
             else:
@@ -272,7 +272,7 @@ def run_proxy():
             # Handle SSL/HTTPS
             if environ.get("wsgi.url_scheme") == "https":
                 headers["X-Forwarded-Proto"] = "https"
-                
+
             content_length = environ.get("CONTENT_LENGTH")
             body = None
             if content_length:
@@ -294,17 +294,17 @@ def run_proxy():
                     data=body,
                     stream=True,
                     allow_redirects=False,
-                    verify=False  # Skip SSL verification for local connections
+                    verify=False,  # Skip SSL verification for local connections
                 )
-                
+
                 start_response(f"{resp.status_code} {resp.reason}", list(resp.headers.items()))
                 return resp.iter_content(chunk_size=4096)
-                
+
             except requests.exceptions.RequestException as e:
                 print(f"Error forwarding request: {e}", flush=True)
                 start_response("502 Bad Gateway", [("Content-Type", "text/plain")])
                 return [b"Error forwarding request"]
-                
+
         except Exception as e:
             print(f"Proxy error: {e}", flush=True)
             start_response("500 Internal Server Error", [("Content-Type", "text/plain")])
