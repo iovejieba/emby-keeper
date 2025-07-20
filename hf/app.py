@@ -253,39 +253,62 @@ def run_proxy():
             sio_server.emit(event, *args, namespace="/pty")
 
     def proxy_handler(environ, start_response):
-        path = environ["PATH_INFO"]
+        try:
+            path = environ["PATH_INFO"]
+            
+            if path.startswith("/ek"):
+                target = f"http://127.0.0.1:{ek_port}"
+            else:
+                target = f"http://127.0.0.1:{gradio_port}"
 
-        if path.startswith("/ek"):
-            target = f"http://127.0.0.1:{ek_port}"
-        else:
-            target = f"http://127.0.0.1:{gradio_port}"
+            url = f"{target}{path}"
+            headers = {}
+            for key, value in environ.items():
+                if key.startswith("HTTP_"):
+                    header_key = key[5:].replace("_", "-").title()
+                    if header_key.lower() not in ["connection", "upgrade", "proxy-connection"]:
+                        headers[header_key] = value
 
-        url = f"{target}{path}"
-        headers = {}
-        for key, value in environ.items():
-            if key.startswith("HTTP_"):
-                header_key = key[5:].replace("_", "-").title()
-                if header_key.lower() not in ["connection", "upgrade", "proxy-connection"]:
-                    headers[header_key] = value
-        content_length = environ.get("CONTENT_LENGTH")
-        body = None
-        if content_length:
-            content_length = int(content_length)
-            body = environ["wsgi.input"].read(content_length)
+            # Handle SSL/HTTPS
+            if environ.get("wsgi.url_scheme") == "https":
+                headers["X-Forwarded-Proto"] = "https"
+                
+            content_length = environ.get("CONTENT_LENGTH")
+            body = None
+            if content_length:
+                try:
+                    content_length = int(content_length)
+                    body = environ["wsgi.input"].read(content_length)
+                    if environ.get("CONTENT_TYPE"):
+                        headers["Content-Type"] = environ["CONTENT_TYPE"]
+                except (ValueError, IOError) as e:
+                    print(f"Error reading request body: {e}", flush=True)
+                    start_response("400 Bad Request", [("Content-Type", "text/plain")])
+                    return [b"Error reading request body"]
 
-            if environ.get("CONTENT_TYPE"):
-                headers["Content-Type"] = environ["CONTENT_TYPE"]
-        resp = requests.request(
-            method=environ["REQUEST_METHOD"],
-            url=url,
-            headers=headers,
-            data=body,
-            stream=True,
-            allow_redirects=False,
-        )
-
-        start_response(f"{resp.status_code} {resp.reason}", list(resp.headers.items()))
-        return resp.iter_content(chunk_size=4096)
+            try:
+                resp = requests.request(
+                    method=environ["REQUEST_METHOD"],
+                    url=url,
+                    headers=headers,
+                    data=body,
+                    stream=True,
+                    allow_redirects=False,
+                    verify=False  # Skip SSL verification for local connections
+                )
+                
+                start_response(f"{resp.status_code} {resp.reason}", list(resp.headers.items()))
+                return resp.iter_content(chunk_size=4096)
+                
+            except requests.exceptions.RequestException as e:
+                print(f"Error forwarding request: {e}", flush=True)
+                start_response("502 Bad Gateway", [("Content-Type", "text/plain")])
+                return [b"Error forwarding request"]
+                
+        except Exception as e:
+            print(f"Proxy error: {e}", flush=True)
+            start_response("500 Internal Server Error", [("Content-Type", "text/plain")])
+            return [b"Internal server error"]
 
     app.wsgi_app = proxy_handler
     eventlet.wsgi.server(eventlet.listen(("", 7860)), app)
