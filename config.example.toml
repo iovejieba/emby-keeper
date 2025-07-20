@@ -26,11 +26,11 @@ concurrency = 1
 [[emby.account]] # 第 1 个账号
 
 # 站点域名和端口:
-url = "https://chapman-davis.org:443"
+url = "https://fisher.com:443"
 
 # 用户名和密码:
-username = "kelly03"
-password = "5mQ6TvTi%5"
+username = "lisacastillo"
+password = "(tkTHmVl77"
 
 # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 time = [300, 600]
@@ -54,9 +54,9 @@ time = [300, 600]
 
 # 第 2 个账号, 如需使用请将该段取消注释并修改, 也可以添加更多账号.
 # [[emby.account]]
-# url = "https://gillespie-bowman.com:443"
-# username = "kennedyruben"
-# password = "_0C$r5$i#_"
+# url = "https://shaw.biz:443"
+# username = "matthewking"
+# password = "vm+1E!Cf8n"
 # time = [300, 600]
 
 # ================================================================================
@@ -92,7 +92,7 @@ interval_days = 1
 [[telegram.account]] # 第 1 个账号
 
 # 带国家区号的账户手机号, 一般为 "+86..."
-phone = "+8610035876493"
+phone = "+8615332586181"
 
 # 启用机器人签到系列功能, 默认启用, 设置为 false 以禁用:
 checkiner = true
@@ -112,7 +112,7 @@ messager = false
 
 # 第 2 个账号, 如需使用请将该段取消注释并修改, 也可以添加更多账号.
 # [[telegram.account]]
-# phone = "+8617103393186"
+# phone = "+8613846755268"
 # checkiner = true
 # monitor = false
 # messager = false
@@ -120,7 +120,7 @@ messager = false
 # ================================================================================
 # 站点相关设置
 # 当您需要禁用某些站点时, 请将该段取消注释并修改.
-# 该部分内容是根据 Embykeeper 7.4.3 生成的.
+# 该部分内容是根据 Embykeeper 7.4.4 生成的.
 # 详见: https://emby-keeper.github.io/guide/配置文件#site-子项
 # ================================================================================
 
@@ -203,18 +203,18 @@ concurrency = 1
 # [[subsonic.account]] # 第 1 个账号
 # 
 # # 站点域名和端口:
-# url = "https://www.walker-benitez.com:443"
+# url = "https://www.boyle.com:443"
 # 
 # # 用户名和密码:
-# username = "ericksonmichelle"
-# password = "@8zAsakd_Y"
+# username = "richard25"
+# password = "U(sEJKmk_8"
 # 
 # # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 # time = [300, 600]
 # 
 # [[subsonic.account]] # 第 2 个账号
-# url = "https://www.ortega.net:443"
-# username = "morrowmaureen"
-# password = "L55Hb2x4&X"
+# url = "https://www.davis-miller.biz:443"
+# username = "barbarasmall"
+# password = ")iY50BpdT^"
 # time = [300, 600]
 
