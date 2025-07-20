@@ -6,4 +6,4 @@ __ignore__ = True
 class Star1Checkin(TemplateACheckin):
     name = "Star 1"
     bot_username = "star_emby_bot"
-    templ_panel_keywords = ["欢迎访问"]
+    templ_panel_keywords = ["星灵控制中心"]
