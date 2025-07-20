@@ -14,7 +14,11 @@ class MiniSGKCheckin(BotCheckin):
     bot_checkin_cmd = "/sign"
 
     async def message_handler(self, client, message: Message):
-        if message.reply_markup and isinstance(message.reply_markup, InlineKeyboardMarkup) and message.reply_markup.inline_keyboard:
+        if (
+            message.reply_markup
+            and isinstance(message.reply_markup, InlineKeyboardMarkup)
+            and message.reply_markup.inline_keyboard
+        ):
             keys = [k.text for r in message.reply_markup.inline_keyboard for k in r]
             for k in keys:
                 if "签到" in k:

@@ -361,12 +361,12 @@ def distribute_numbers(min_value, max_value, num_elements=1, min_distance=0, max
                 allowed_range.append((min_allowed_value, max_allowed_value))
         if not allowed_range:
             break
-        
+
         # Calculate estimated elements for each range
         estimated_num_elements = [
             max(1, min(int((r[1] - r[0]) // min_distance), num_elements)) for r in allowed_range
         ]
-        
+
         # Select a range using the estimated numbers as weights
         r = random.choices(allowed_range, k=1, weights=estimated_num_elements)[0]
         d = r[1] - r[0]

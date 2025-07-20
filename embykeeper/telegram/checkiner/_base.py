@@ -609,7 +609,11 @@ class BotCheckin(BaseBotCheckin):
                 self.log.warning(f"接收到异常返回信息: {spec}, 正在尝试智能回答.")
             else:
                 self.log.info(f"正在使用智能接口回答问题.")
-            if message.reply_markup and isinstance(message.reply_markup, InlineKeyboardMarkup) and message.reply_markup.inline_keyboard:
+            if (
+                message.reply_markup
+                and isinstance(message.reply_markup, InlineKeyboardMarkup)
+                and message.reply_markup.inline_keyboard
+            ):
                 buttons = [b.text for r in message.reply_markup.inline_keyboard for b in r]
             else:
                 buttons = []

@@ -107,7 +107,9 @@ class _PornfansExamAnswerMonitor(Monitor):
                         return False
                     return True
             except Exception as e:
-                self.log.warning(f"初始化失败: 无法连接 Javdatabase (代理: {self.proxy}): {e.__class__.__name__}: {str(e)}")
+                self.log.warning(
+                    f"初始化失败: 无法连接 Javdatabase (代理: {self.proxy}): {e.__class__.__name__}: {str(e)}"
+                )
                 return False
 
     async def get_cover_image_javdatabase(self, code: str):

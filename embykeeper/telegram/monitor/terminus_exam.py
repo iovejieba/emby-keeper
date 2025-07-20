@@ -30,7 +30,11 @@ class TerminusExamMonitor(Monitor):
 
     async def on_trigger(self, message: Message, key, reply):
         self.log.info(f"新题: {key}, 解析中...")
-        if message.reply_markup and isinstance(message.reply_markup, InlineKeyboardMarkup) and message.reply_markup.inline_keyboard:
+        if (
+            message.reply_markup
+            and isinstance(message.reply_markup, InlineKeyboardMarkup)
+            and message.reply_markup.inline_keyboard
+        ):
             options = []
             for row in message.reply_markup.inline_keyboard:
                 for button in row:
