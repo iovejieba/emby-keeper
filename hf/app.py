@@ -55,7 +55,7 @@ except ImportError:
 
 # --- Configuration and Setup (Preserved and Adapted) ---
 
-EK_VERSION = "7.4.5"
+EK_VERSION = "7.4.6"
 APP_DATA_DIR = Path(os.path.expanduser("~/.local/share/embykeeper"))
 VERSION_CACHE_DIR = APP_DATA_DIR / "hf" / "version"
 
