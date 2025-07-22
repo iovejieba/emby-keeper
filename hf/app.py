@@ -218,34 +218,53 @@ client = httpx.AsyncClient()
 async def http_proxy(request: Request):
     """A general-purpose HTTP reverse proxy using Starlette and HTTPX."""
     path = request.url.path
-
+    
     # Determine the target backend based on the path
     target_port = ek_port if path.startswith("/ek") else gradio_port
-
+        
     target_url = httpx.URL(
         scheme="http", host="127.0.0.1", port=target_port, path=path, query=request.url.query.encode("utf-8")
     )
 
-    # Build a new request to the backend, streaming the body
-    req = client.build_request(
-        method=request.method,
-        url=target_url,
-        headers=request.headers,
-        content=request.stream(),
-    )
-
+    # To fix "Response content longer than Content-Length" errors from the backend,
+    # we buffer the entire response. This allows us to create a new, clean
+    # response with a guaranteed correct Content-Length header, avoiding streaming issues.
     try:
-        # Send the request and get a streaming response
-        resp = await client.send(req, stream=True)
+        # We read the entire request body before sending.
+        body = await request.body()
+        # Create a new, clean set of headers, excluding problematic ones.
+        headers = dict(request.headers)
+        headers.pop("host", None)
+
+        resp = await client.request(
+            method=request.method,
+            url=target_url,
+            headers=headers,
+            content=body,
+            timeout=60.0
+        )
+
+        # Create a new, clean set of response headers.
+        # This is crucial to avoid forwarding incorrect Content-Length or
+        # Transfer-Encoding headers from a misbehaving backend.
+        response_headers = dict(resp.headers)
+        response_headers.pop("content-length", None)
+        response_headers.pop("content-encoding", None)
+        response_headers.pop("transfer-encoding", None)
+        
+        # Return a standard Response. Starlette will automatically calculate
+        # the correct Content-Length for the buffered content.
+        return Response(
+            content=resp.content,
+            status_code=resp.status_code,
+            headers=response_headers,
+        )
+
     except httpx.ConnectError:
         return Response(f"Backend service at {target_url} is unavailable.", status_code=502)
-
-    # Relay the response from the backend to the client
-    return StreamingResponse(
-        resp.aiter_bytes(),
-        status_code=resp.status_code,
-        headers=resp.headers,
-    )
+    except Exception as e:
+        print(f"An unexpected error occurred in http_proxy: {e}", flush=True)
+        return Response("An internal proxy error occurred.", status_code=500)
 
 
 async def ws_proxy(websocket: WebSocket):
