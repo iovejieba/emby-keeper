@@ -23,6 +23,7 @@ from loguru import logger
 from flask import Flask, render_template, request, redirect, url_for, jsonify, abort, Blueprint
 from flask_socketio import SocketIO
 from flask_login import LoginManager, login_user, login_required, current_user
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 
 try:
@@ -38,6 +39,10 @@ from . import __version__
 
 cli = typer.Typer()
 app = Flask(__name__, static_folder="templates/assets", static_url_path=None)
+
+# Apply the ProxyFix middleware to make the app aware of the proxy
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
+
 app.config["SECRET_KEY"] = os.urandom(24)
 app.config["BASE_PREFIX"] = "/"
 

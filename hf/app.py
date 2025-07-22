@@ -9,6 +9,7 @@ import subprocess
 import shutil
 from pathlib import Path
 import threading
+import multiprocessing
 from appdirs import user_data_dir
 import socketio
 import eventlet
@@ -21,7 +22,7 @@ VERSION_CACHE_DIR = APP_DATA_DIR / "hf" / "version"
 
 def setup_embykeeper():
     try:
-        # 确保缓存目录存在
+        # Ensure cache directory exists
         VERSION_CACHE_DIR.mkdir(parents=True, exist_ok=True)
         cached_version = VERSION_CACHE_DIR / f"emby-keeper-{EK_VERSION}"
         cached_tarball = VERSION_CACHE_DIR / f"emby-keeper-{EK_VERSION}.tar.gz"
@@ -30,10 +31,10 @@ def setup_embykeeper():
             print(f"Using cached version from {cached_version}", flush=True)
             return True
 
-        # 创建临时目录
+        # Create temporary directory
         temp_dir = tempfile.mkdtemp()
 
-        # 下载并解压（使用系统代理）
+        # Download and extract (using system proxy)
         print("Downloading EK...", flush=True)
         tarball_path = os.path.join(temp_dir, "embykeeper.tar.gz")
 
@@ -41,24 +42,24 @@ def setup_embykeeper():
             print(f"Using cached tarball from {cached_tarball}", flush=True)
             shutil.copy2(cached_tarball, tarball_path)
         else:
-            # 使用固定的GitHub release下载地址
+            # Use fixed GitHub release download URL
             release_url = f"https://github.com/emby-keeper/emby-keeper/archive/refs/tags/v{EK_VERSION}.tar.gz"
             subprocess.run(["wget", "-q", release_url, "-O", tarball_path], check=True)
-            # 缓存下载的文件
+            # Cache the downloaded file
             shutil.copy2(tarball_path, cached_tarball)
 
         subprocess.run(["tar", "xf", tarball_path, "-C", temp_dir], check=True)
-        os.remove(tarball_path)  # 删除临时的 tar.gz 文件
+        os.remove(tarball_path)  # Remove temporary tar.gz file
 
-        # 获取解压后的目录名
+        # Get the extracted directory name
         extracted_dir = os.path.join(temp_dir, f"emby-keeper-{EK_VERSION}")
 
-        # 混淆代码
+        # Obfuscate code
         print("Obfuscating code...", flush=True)
         if not obfuscate_with_pyarmor(extracted_dir):
             raise Exception("Obfuscation failed")
 
-        # 安装依赖
+        # Install dependencies
         print("Installing dependencies...", flush=True)
         subprocess.run(
             [sys.executable, "-m", "pip", "install", "-r", os.path.join(extracted_dir, "requirements.txt")],
@@ -66,10 +67,10 @@ def setup_embykeeper():
         )
         subprocess.run([sys.executable, "-m", "pip", "install", extracted_dir], check=True)
 
-        # 将处理好的文件复制到缓存目录
+        # Copy processed files to cache directory
         shutil.copytree(extracted_dir, cached_version, dirs_exist_ok=True)
 
-        # 清理临时目录
+        # Clean up temporary directory
         shutil.rmtree(temp_dir)
 
         return True
@@ -217,101 +218,191 @@ def run_gradio():
     )
 
 
-def run_proxy():
-    sio_server = socketio.Server(async_mode="eventlet")
-    app = socketio.WSGIApp(sio_server)
+def create_proxy_app():
+    sio_server = socketio.Server(async_mode="eventlet", logger=False, engineio_logger=False)
+    sio_client = socketio.Client(logger=False, engineio_logger=False)
 
-    sio_client = socketio.Client()
-
-    # 存储 sid 映射关系
+    # Store sid mapping relationships
     client_sessions = {}
 
     @sio_server.on("connect", namespace="/pty")
     def connect(sid, environ):
-        print(f"Client connected: {sid}")
+        print(f"Client connected: {sid}", flush=True)
         if not sio_client.connected:
-            sio_client.connect(f"http://127.0.0.1:{ek_port}", namespaces=["/pty"])
-        client_sessions[sid] = True
+            try:
+                sio_client.connect(f"http://127.0.0.1:{ek_port}", namespaces=["/pty"])
+                client_sessions[sid] = True
+            except Exception as e:
+                print(f"Failed to connect to ek backend: {e}", flush=True)
 
     @sio_server.on("disconnect", namespace="/pty")
     def disconnect(sid):
-        print(f"Client disconnected: {sid}")
+        print(f"Client disconnected: {sid}", flush=True)
         client_sessions.pop(sid, None)
-        if not client_sessions:
+        if not client_sessions and sio_client.connected:
             sio_client.disconnect()
 
     @sio_server.on("*", namespace="/pty")
     def catch_all(event, sid, *args):
         if event not in ["connect", "disconnect"]:
-            print(f"Forward to ek: {event}")
-            sio_client.emit(event, *args, namespace="/pty")
+            # print(f"Forward to ek: {event}")
+            if sio_client.connected:
+                sio_client.emit(event, *args, namespace="/pty")
 
     @sio_client.on("*", namespace="/pty")
     def forward_from_ek(event, *args):
         if event not in ["connect", "disconnect"]:
-            print(f"Forward from ek: {event}")
+            # print(f"Forward from ek: {event}")
             sio_server.emit(event, *args, namespace="/pty")
 
     def proxy_handler(environ, start_response):
-        try:
-            path = environ["PATH_INFO"]
+        path = environ.get("PATH_INFO", "")
+        
+        if path.startswith("/ek/socket.io"):
+            # This path is handled by sio_server, so we let the wrapper handle it.
+            # Returning a 404 or another response here would prevent socket.io from working.
+            # The Socket.IO server will handle this request.
+            # We pass it to the default handler of the WSGIApp.
+            return sio_app.default_service(environ, start_response)
 
-            if path.startswith("/ek"):
-                target = f"http://127.0.0.1:{ek_port}"
-            else:
-                target = f"http://127.0.0.1:{gradio_port}"
+        target_port = ek_port if path.startswith("/ek") else gradio_port
 
-            url = f"{target}{path}"
-            headers = {}
-            for key, value in environ.items():
-                if key.startswith("HTTP_"):
-                    header_key = key[5:].replace("_", "-").title()
-                    if header_key.lower() not in ["connection", "upgrade", "proxy-connection"]:
-                        headers[header_key] = value
+        # Handle CORS preflight requests for Gradio, which is on a different effective origin
+        if environ.get("REQUEST_METHOD") == "OPTIONS" and target_port == gradio_port:
+            origin = environ.get("HTTP_ORIGIN")
+            if origin:
+                response_headers = [
+                    ('Access-Control-Allow-Origin', origin),
+                    ('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS'),
+                    ('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With'),
+                    ('Access-Control-Allow-Credentials', 'true'),
+                    ('Access-Control-Max-Age', '86400') # Cache preflight for 1 day
+                ]
+                start_response("204 No Content", response_headers)
+                return []
+        
+        target_url = f"http://127.0.0.1:{target_port}{path}"
+        
+        if environ.get("QUERY_STRING"):
+            target_url += f"?{environ['QUERY_STRING']}"
 
-            # Handle SSL/HTTPS
-            if environ.get("wsgi.url_scheme") == "https":
-                headers["X-Forwarded-Proto"] = "https"
+        headers = {key: value for key, value in environ.items() if key.startswith("HTTP_")}
+        headers = {key[5:].replace("_", "-").lower(): value for key, value in headers.items()}
+        
+        # Ensure correct Host and forwarding headers are passed to the backend.
+        # This is crucial for the backend to generate correct redirect URLs.
+        if "host" in headers:
+            headers["x-forwarded-host"] = headers["host"]
 
-            content_length = environ.get("CONTENT_LENGTH")
-            body = None
-            if content_length:
-                try:
-                    content_length = int(content_length)
-                    body = environ["wsgi.input"].read(content_length)
-                    if environ.get("CONTENT_TYPE"):
-                        headers["Content-Type"] = environ["CONTENT_TYPE"]
-                except (ValueError, IOError) as e:
-                    print(f"Error reading request body: {e}", flush=True)
-                    start_response("400 Bad Request", [("Content-Type", "text/plain")])
-                    return [b"Error reading request body"]
+        # Add client IP for backend processing
+        if "HTTP_X_FORWARDED_FOR" in environ:
+            headers["x-forwarded-for"] = environ["HTTP_X_FORWARDED_FOR"] + ", " + environ.get("REMOTE_ADDR", "")
+        else:
+            headers["x-forwarded-for"] = environ.get("REMOTE_ADDR", "")
+        
+        # Add protocol info
+        if "HTTP_X_FORWARDED_PROTO" in environ:
+            headers["x-forwarded-proto"] = environ["HTTP_X_FORWARDED_PROTO"]
+        else:
+            headers["x-forwarded-proto"] = environ.get("wsgi.url_scheme", "http")
 
+        # Clean up hop-by-hop headers that shouldn't be forwarded
+        headers.pop("connection", None)
+        headers.pop("proxy-connection", None)
+        headers.pop('keep-alive', None)
+        headers.pop('proxy-authenticate', None)
+        headers.pop('proxy-authorization', None)
+        headers.pop('te', None)
+        headers.pop('trailers', None)
+        headers.pop('transfer-encoding', None)
+        headers.pop('upgrade', None)
+        
+        content_length = environ.get("CONTENT_LENGTH")
+        body = None
+        if content_length:
             try:
-                resp = requests.request(
-                    method=environ["REQUEST_METHOD"],
-                    url=url,
-                    headers=headers,
-                    data=body,
-                    stream=True,
-                    allow_redirects=False,
-                    verify=False,  # Skip SSL verification for local connections
-                )
+                content_length = int(content_length)
+                if content_length > 0:
+                    body = environ["wsgi.input"].read(content_length)
+            except (ValueError, IOError):
+                 content_length = 0
 
-                start_response(f"{resp.status_code} {resp.reason}", list(resp.headers.items()))
-                return resp.iter_content(chunk_size=4096)
+        if "CONTENT_TYPE" in environ:
+             headers["content-type"] = environ["CONTENT_TYPE"]
 
-            except requests.exceptions.RequestException as e:
-                print(f"Error forwarding request: {e}", flush=True)
-                start_response("502 Bad Gateway", [("Content-Type", "text/plain")])
-                return [b"Error forwarding request"]
+        try:
+            resp = requests.request(
+                method=environ["REQUEST_METHOD"],
+                url=target_url,
+                headers=headers,
+                data=body,
+                stream=True,
+                allow_redirects=False,
+                timeout=30
+            )
 
+            response_headers = []
+            # Hop-by-hop headers. These are removed when sent to the backend.
+            # http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html
+            hop_by_hop_headers = {
+                'connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization', 
+                'te', 'trailers', 'transfer-encoding', 'upgrade'
+            }
+            for key, value in resp.raw.headers.items():
+                if key.lower() not in hop_by_hop_headers:
+                    response_headers.append((key, value))
+
+            # If the backend sent a redirect to its internal address, rewrite it to the public address.
+            # This is a robust way to handle backends that are not proxy-aware.
+            is_redirect = resp.status_code in (301, 302, 307, 308)
+            if is_redirect and target_port == ek_port:
+                location_index = -1
+                for i, (key, value) in enumerate(response_headers):
+                    if key.lower() == 'location':
+                        location_index = i
+                        break
+                
+                if location_index != -1:
+                    location = response_headers[location_index][1]
+                    internal_host_base = f"http://127.0.0.1:{ek_port}"
+                    if location.startswith(internal_host_base):
+                        public_host = environ.get('HTTP_HOST')
+                        public_scheme = environ.get('wsgi.url_scheme', 'http')
+                        if public_host:
+                            # Reconstruct the URL with the public host and scheme
+                            path_and_query = location[len(internal_host_base):]
+                            new_location = f"{public_scheme}://{public_host}{path_and_query}"
+                            # Replace the old Location header with the rewritten one
+                            response_headers[location_index] = ('Location', new_location)
+
+            # Add CORS headers for Gradio responses to allow the frontend to access it
+            if target_port == gradio_port:
+                origin = environ.get("HTTP_ORIGIN")
+                if origin:
+                    # Remove existing CORS headers if they exist, to avoid duplicates
+                    response_headers = [h for h in response_headers if h[0].lower() != 'access-control-allow-origin']
+                    response_headers.append(('Access-Control-Allow-Origin', origin))
+                    response_headers.append(('Access-Control-Allow-Credentials', 'true'))
+
+            start_response(f"{resp.status_code} {resp.reason}", response_headers)
+            
+            # Stream the raw response back to the client. This is more robust as it 
+            # avoids issues with requests' automatic decompression conflicting with 
+            # the headers being sent, which can cause truncated files.
+            return iter(lambda: resp.raw.read(8192), b'')
+
+        except requests.exceptions.RequestException as e:
+            print(f"Error forwarding request: {e}", flush=True)
+            start_response("502 Bad Gateway", [("Content-Type", "text/plain")])
+            return [b"Proxy error: Could not connect to the upstream server."]
         except Exception as e:
-            print(f"Proxy error: {e}", flush=True)
+            print(f"Unhandled proxy error: {e}", flush=True)
             start_response("500 Internal Server Error", [("Content-Type", "text/plain")])
-            return [b"Internal server error"]
+            return [b"An internal error occurred in the proxy."]
 
-    app.wsgi_app = proxy_handler
-    eventlet.wsgi.server(eventlet.listen(("", 7860)), app)
+    # Wrap the proxy_handler with the socketio middleware
+    sio_app = socketio.WSGIApp(sio_server, proxy_handler)
+    return sio_app
 
 
 if __name__ == "__main__":
@@ -326,9 +417,9 @@ if __name__ == "__main__":
 
     print(f"Using ports - Gradio: {gradio_port}, EK: {ek_port}", flush=True)
 
-    gradio_thread = threading.Thread(target=run_gradio)
-    gradio_thread.daemon = True
-    gradio_thread.start()
+    gradio_process = multiprocessing.Process(target=run_gradio)
+    gradio_process.daemon = True
+    gradio_process.start()
 
     ek_thread = threading.Thread(
         target=lambda: subprocess.run(
@@ -338,42 +429,11 @@ if __name__ == "__main__":
     ek_thread.daemon = True
     ek_thread.start()
 
-    # Update proxy to use dynamic ports
-    def proxy_handler(environ, start_response):
-        path = environ["PATH_INFO"]
-
-        if path.startswith("/ek"):
-            target = f"http://127.0.0.1:{ek_port}"
-        else:
-            target = f"http://127.0.0.1:{gradio_port}"
-
-        url = f"{target}{path}"
-        headers = {}
-        for key, value in environ.items():
-            if key.startswith("HTTP_"):
-                header_key = key[5:].replace("_", "-").title()
-                if header_key.lower() not in ["connection", "upgrade", "proxy-connection"]:
-                    headers[header_key] = value
-        content_length = environ.get("CONTENT_LENGTH")
-        body = None
-        if content_length:
-            content_length = int(content_length)
-            body = environ["wsgi.input"].read(content_length)
-
-            if environ.get("CONTENT_TYPE"):
-                headers["Content-Type"] = environ["CONTENT_TYPE"]
-        resp = requests.request(
-            method=environ["REQUEST_METHOD"],
-            url=url,
-            headers=headers,
-            data=body,
-            stream=True,
-            allow_redirects=False,
-        )
-
-        start_response(f"{resp.status_code} {resp.reason}", list(resp.headers.items()))
-        return resp.iter_content(chunk_size=4096)
-
     # Start proxy server on fixed port 7860
     print("Starting proxy server on port 7860...", flush=True)
-    run_proxy()
+    
+    # Create the combined WSGI app
+    app = create_proxy_app()
+    
+    # Run the server
+    eventlet.wsgi.server(eventlet.listen(("", 7860)), app, log=None)
