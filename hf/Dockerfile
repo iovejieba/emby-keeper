@@ -18,4 +18,4 @@ RUN mkdir -p /root/.local/share/embykeeper/hf/version
 EXPOSE 7860
 
 # Run the application
-CMD ["python", "-u", "app.py"] 
+CMD ["python", "-u", "app.py"]

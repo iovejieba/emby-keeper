@@ -257,7 +257,7 @@ def create_proxy_app():
 
     def proxy_handler(environ, start_response):
         path = environ.get("PATH_INFO", "")
-        
+
         if path.startswith("/ek/socket.io"):
             # This path is handled by sio_server, so we let the wrapper handle it.
             # Returning a 404 or another response here would prevent socket.io from working.
@@ -272,23 +272,23 @@ def create_proxy_app():
             origin = environ.get("HTTP_ORIGIN")
             if origin:
                 response_headers = [
-                    ('Access-Control-Allow-Origin', origin),
-                    ('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS'),
-                    ('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With'),
-                    ('Access-Control-Allow-Credentials', 'true'),
-                    ('Access-Control-Max-Age', '86400') # Cache preflight for 1 day
+                    ("Access-Control-Allow-Origin", origin),
+                    ("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS"),
+                    ("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With"),
+                    ("Access-Control-Allow-Credentials", "true"),
+                    ("Access-Control-Max-Age", "86400"),  # Cache preflight for 1 day
                 ]
                 start_response("204 No Content", response_headers)
                 return []
-        
+
         target_url = f"http://127.0.0.1:{target_port}{path}"
-        
+
         if environ.get("QUERY_STRING"):
             target_url += f"?{environ['QUERY_STRING']}"
 
         headers = {key: value for key, value in environ.items() if key.startswith("HTTP_")}
         headers = {key[5:].replace("_", "-").lower(): value for key, value in headers.items()}
-        
+
         # Ensure correct Host and forwarding headers are passed to the backend.
         # This is crucial for the backend to generate correct redirect URLs.
         if "host" in headers:
@@ -296,10 +296,12 @@ def create_proxy_app():
 
         # Add client IP for backend processing
         if "HTTP_X_FORWARDED_FOR" in environ:
-            headers["x-forwarded-for"] = environ["HTTP_X_FORWARDED_FOR"] + ", " + environ.get("REMOTE_ADDR", "")
+            headers["x-forwarded-for"] = (
+                environ["HTTP_X_FORWARDED_FOR"] + ", " + environ.get("REMOTE_ADDR", "")
+            )
         else:
             headers["x-forwarded-for"] = environ.get("REMOTE_ADDR", "")
-        
+
         # Add protocol info
         if "HTTP_X_FORWARDED_PROTO" in environ:
             headers["x-forwarded-proto"] = environ["HTTP_X_FORWARDED_PROTO"]
@@ -309,14 +311,14 @@ def create_proxy_app():
         # Clean up hop-by-hop headers that shouldn't be forwarded
         headers.pop("connection", None)
         headers.pop("proxy-connection", None)
-        headers.pop('keep-alive', None)
-        headers.pop('proxy-authenticate', None)
-        headers.pop('proxy-authorization', None)
-        headers.pop('te', None)
-        headers.pop('trailers', None)
-        headers.pop('transfer-encoding', None)
-        headers.pop('upgrade', None)
-        
+        headers.pop("keep-alive", None)
+        headers.pop("proxy-authenticate", None)
+        headers.pop("proxy-authorization", None)
+        headers.pop("te", None)
+        headers.pop("trailers", None)
+        headers.pop("transfer-encoding", None)
+        headers.pop("upgrade", None)
+
         content_length = environ.get("CONTENT_LENGTH")
         body = None
         if content_length:
@@ -325,10 +327,10 @@ def create_proxy_app():
                 if content_length > 0:
                     body = environ["wsgi.input"].read(content_length)
             except (ValueError, IOError):
-                 content_length = 0
+                content_length = 0
 
         if "CONTENT_TYPE" in environ:
-             headers["content-type"] = environ["CONTENT_TYPE"]
+            headers["content-type"] = environ["CONTENT_TYPE"]
 
         try:
             resp = requests.request(
@@ -338,15 +340,21 @@ def create_proxy_app():
                 data=body,
                 stream=True,
                 allow_redirects=False,
-                timeout=30
+                timeout=30,
             )
 
             response_headers = []
             # Hop-by-hop headers. These are removed when sent to the backend.
             # http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html
             hop_by_hop_headers = {
-                'connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization', 
-                'te', 'trailers', 'transfer-encoding', 'upgrade'
+                "connection",
+                "keep-alive",
+                "proxy-authenticate",
+                "proxy-authorization",
+                "te",
+                "trailers",
+                "transfer-encoding",
+                "upgrade",
             }
             for key, value in resp.raw.headers.items():
                 if key.lower() not in hop_by_hop_headers:
@@ -358,38 +366,40 @@ def create_proxy_app():
             if is_redirect and target_port == ek_port:
                 location_index = -1
                 for i, (key, value) in enumerate(response_headers):
-                    if key.lower() == 'location':
+                    if key.lower() == "location":
                         location_index = i
                         break
-                
+
                 if location_index != -1:
                     location = response_headers[location_index][1]
                     internal_host_base = f"http://127.0.0.1:{ek_port}"
                     if location.startswith(internal_host_base):
-                        public_host = environ.get('HTTP_HOST')
-                        public_scheme = environ.get('wsgi.url_scheme', 'http')
+                        public_host = environ.get("HTTP_HOST")
+                        public_scheme = environ.get("wsgi.url_scheme", "http")
                         if public_host:
                             # Reconstruct the URL with the public host and scheme
-                            path_and_query = location[len(internal_host_base):]
+                            path_and_query = location[len(internal_host_base) :]
                             new_location = f"{public_scheme}://{public_host}{path_and_query}"
                             # Replace the old Location header with the rewritten one
-                            response_headers[location_index] = ('Location', new_location)
+                            response_headers[location_index] = ("Location", new_location)
 
             # Add CORS headers for Gradio responses to allow the frontend to access it
             if target_port == gradio_port:
                 origin = environ.get("HTTP_ORIGIN")
                 if origin:
                     # Remove existing CORS headers if they exist, to avoid duplicates
-                    response_headers = [h for h in response_headers if h[0].lower() != 'access-control-allow-origin']
-                    response_headers.append(('Access-Control-Allow-Origin', origin))
-                    response_headers.append(('Access-Control-Allow-Credentials', 'true'))
+                    response_headers = [
+                        h for h in response_headers if h[0].lower() != "access-control-allow-origin"
+                    ]
+                    response_headers.append(("Access-Control-Allow-Origin", origin))
+                    response_headers.append(("Access-Control-Allow-Credentials", "true"))
 
             start_response(f"{resp.status_code} {resp.reason}", response_headers)
-            
-            # Stream the raw response back to the client. This is more robust as it 
-            # avoids issues with requests' automatic decompression conflicting with 
+
+            # Stream the raw response back to the client. This is more robust as it
+            # avoids issues with requests' automatic decompression conflicting with
             # the headers being sent, which can cause truncated files.
-            return iter(lambda: resp.raw.read(8192), b'')
+            return iter(lambda: resp.raw.read(8192), b"")
 
         except requests.exceptions.RequestException as e:
             print(f"Error forwarding request: {e}", flush=True)
@@ -431,9 +441,9 @@ if __name__ == "__main__":
 
     # Start proxy server on fixed port 7860
     print("Starting proxy server on port 7860...", flush=True)
-    
+
     # Create the combined WSGI app
     app = create_proxy_app()
-    
+
     # Run the server
     eventlet.wsgi.server(eventlet.listen(("", 7860)), app, log=None)
