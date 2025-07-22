@@ -23,9 +23,22 @@ try:
     import websockets
     import asyncio
 except ImportError:
-    print("Installing required packages: starlette, uvicorn[standard], httpx, websockets, gradio...", flush=True)
+    print(
+        "Installing required packages: starlette, uvicorn[standard], httpx, websockets, gradio...", flush=True
+    )
     subprocess.run(
-        [sys.executable, "-m", "pip", "install", "-U", "starlette", "uvicorn[standard]", "httpx", "websockets", "gradio"],
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "-U",
+            "starlette",
+            "uvicorn[standard]",
+            "httpx",
+            "websockets",
+            "gradio",
+        ],
         check=True,
     )
     # Re-import after installation
@@ -109,7 +122,10 @@ def setup_embykeeper():
             raise Exception("Obfuscation failed")
 
         print("Installing dependencies...", flush=True)
-        subprocess.run([sys.executable, "-m", "pip", "install", "-r", os.path.join(extracted_dir, "requirements.txt")], check=True)
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "-r", os.path.join(extracted_dir, "requirements.txt")],
+            check=True,
+        )
         subprocess.run([sys.executable, "-m", "pip", "install", extracted_dir], check=True)
 
         shutil.copytree(extracted_dir, cached_version, dirs_exist_ok=True)
@@ -134,8 +150,10 @@ def run_gradio(port):
             prompt = open("pr1.txt").read().splitlines()
         elif choice == "Prompt Generator v0.2(More tags)":
             prompt = open("pr2.txt").read().splitlines()
-        if int(num) < 1 or int(num) > 20: num = 10
-        if int(artist) < 0 or int(artist) > 40: artist = 2
+        if int(num) < 1 or int(num) > 20:
+            num = 10
+        if int(artist) < 0 or int(artist) > 40:
+            artist = 2
         vocab = len(prompt)
         generated = []
         artists_num = 0
@@ -150,7 +168,8 @@ def run_gradio(port):
 
     with gr.Blocks() as demo:
         # The Gradio UI layout is preserved
-        gr.HTML("""
+        gr.HTML(
+            """
                 <div style="text-align: center; margin: 0 auto;">
                   <div style="display: inline-flex;align-items: center;gap: 0.8rem;font-size: 1.75rem;">
                     <h1 style="font-weight: 900; margin-bottom: 7px;margin-top:5px">
@@ -164,7 +183,8 @@ def run_gradio(port):
                     <img style="display: inline-block, margin-right: 1%;" src='https://visitor-badge.laobi.icu/badge?page_id=WiNE-iNEFF.Simple_Prompt_Generator&left_color=red&right_color=green&left_text=Visitors' alt='visitor badge'>
                   </center>
                 </div>
-            """) # Preserving the large HTML blocks
+            """
+        )  # Preserving the large HTML blocks
         with gr.Column():
             model_size = gr.Radio(
                 ["Prompt Generator v0.1(Better quality)", "Prompt Generator v0.2(More tags)"],
@@ -194,16 +214,16 @@ def run_gradio(port):
 # Use a global client for connection pooling and better performance
 client = httpx.AsyncClient()
 
+
 async def http_proxy(request: Request):
     """A general-purpose HTTP reverse proxy using Starlette and HTTPX."""
     path = request.url.path
-    
+
     # Determine the target backend based on the path
     target_port = ek_port if path.startswith("/ek") else gradio_port
-        
+
     target_url = httpx.URL(
-        scheme="http", host="127.0.0.1", port=target_port, path=path,
-        query=request.url.query.encode("utf-8")
+        scheme="http", host="127.0.0.1", port=target_port, path=path, query=request.url.query.encode("utf-8")
     )
 
     # Build a new request to the backend, streaming the body
@@ -227,33 +247,34 @@ async def http_proxy(request: Request):
         headers=resp.headers,
     )
 
+
 async def ws_proxy(websocket: WebSocket):
     """A general-purpose WebSocket reverse proxy using the 'websockets' library."""
     path = websocket.url.path
-    
+
     # Determine target WebSocket URL based on path
     if path.startswith("/socket.io") or path.startswith("/ek/socket.io"):
         target_port = ek_port
-    elif path.startswith("/queue/join"): # Gradio's WebSocket path
+    elif path.startswith("/queue/join"):  # Gradio's WebSocket path
         target_port = gradio_port
     else:
         await websocket.close(code=1003)
         return
 
     target_ws_url = f"ws://127.0.0.1:{target_port}{path}"
-    
+
     # Add query params to the target URL
     query_string = websocket.url.query
     if query_string:
         target_ws_url += f"?{query_string}"
 
     await websocket.accept()
-    
+
     try:
         # Use the 'websockets' library to connect to the backend
         async with websockets.connect(
             target_ws_url,
-            extra_headers=websocket.headers.raw, # Pass raw headers
+            extra_headers=websocket.headers.raw,  # Pass raw headers
             subprotocols=websocket.scope.get("subprotocols", []),
         ) as backend_ws:
             # Run two tasks concurrently:
@@ -271,7 +292,7 @@ async def ws_proxy(websocket: WebSocket):
             # Cancel the other task to ensure it exits cleanly
             for task in pending:
                 task.cancel()
-            
+
     except websockets.exceptions.ConnectionClosedError:
         print(f"Connection closed to {target_ws_url}", flush=True)
     except Exception as e:
@@ -306,10 +327,11 @@ async def forward_to_client(server_ws, client_ws: WebSocket):
             elif isinstance(message, bytes):
                 await client_ws.send_bytes(message)
     except (websockets.exceptions.ConnectionClosed, asyncio.CancelledError):
-         # The connection was closed or the task was cancelled.
-         # Ensure the other connection is closed as well.
-        if client_ws.client_state != 'DISCONNECTED':
+        # The connection was closed or the task was cancelled.
+        # Ensure the other connection is closed as well.
+        if client_ws.client_state != "DISCONNECTED":
             await client_ws.close()
+
 
 # --- Main Application Execution Block ---
 
@@ -335,9 +357,9 @@ if __name__ == "__main__":
     # Define the proxy application routes
     # The order is important: more specific routes should come first.
     routes = [
-        WebSocketRoute("/queue/join", endpoint=ws_proxy), # For Gradio
-        WebSocketRoute("/socket.io/", endpoint=ws_proxy),   # For embykeeperweb (at root)
-        WebSocketRoute("/ek/socket.io/", endpoint=ws_proxy), # For embykeeperweb (with prefix, just in case)
+        WebSocketRoute("/queue/join", endpoint=ws_proxy),  # For Gradio
+        WebSocketRoute("/socket.io/", endpoint=ws_proxy),  # For embykeeperweb (at root)
+        WebSocketRoute("/ek/socket.io/", endpoint=ws_proxy),  # For embykeeperweb (with prefix, just in case)
         Route("/ek/{path:path}", endpoint=http_proxy, methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]),
         Route("/{path:path}", endpoint=http_proxy, methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]),
     ]
