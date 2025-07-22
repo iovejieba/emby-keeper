@@ -218,10 +218,10 @@ client = httpx.AsyncClient()
 async def http_proxy(request: Request):
     """A general-purpose HTTP reverse proxy using Starlette and HTTPX."""
     path = request.url.path
-    
+
     # Determine the target backend based on the path
     target_port = ek_port if path.startswith("/ek") else gradio_port
-        
+
     target_url = httpx.URL(
         scheme="http", host="127.0.0.1", port=target_port, path=path, query=request.url.query.encode("utf-8")
     )
@@ -237,11 +237,7 @@ async def http_proxy(request: Request):
         headers.pop("host", None)
 
         resp = await client.request(
-            method=request.method,
-            url=target_url,
-            headers=headers,
-            content=body,
-            timeout=60.0
+            method=request.method, url=target_url, headers=headers, content=body, timeout=60.0
         )
 
         # Create a new, clean set of response headers.
@@ -251,7 +247,7 @@ async def http_proxy(request: Request):
         response_headers.pop("content-length", None)
         response_headers.pop("content-encoding", None)
         response_headers.pop("transfer-encoding", None)
-        
+
         # Return a standard Response. Starlette will automatically calculate
         # the correct Content-Length for the buffered content.
         return Response(
