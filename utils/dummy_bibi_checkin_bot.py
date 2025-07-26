@@ -126,7 +126,7 @@ async def callback_checkin(client: Client, callback: CallbackQuery):
     start_content = dedent(
         """
     🎯 开始签到验证...
-    
+
     系统正在生成验证问题
     请稍等...
     """.strip()
@@ -154,10 +154,10 @@ async def callback_checkin(client: Client, callback: CallbackQuery):
 
     · ❓ 验证问题 | {num1} + {num2} + {num3} = ?
     · ⏰ 剩余时间 | 60秒
-    · 💰 奖励说明 | 
+    · 💰 奖励说明 |
       答对：随机获得 10-30 BB币
       答错：扣除 5-15 BB币
-    
+
     请直接发送答案数字
     """.strip()
     )

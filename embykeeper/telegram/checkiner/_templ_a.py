@@ -74,14 +74,15 @@ class TemplateACheckin(BotCheckin):
 
     async def message_handler(self, client, message: Message):
         text = message.caption or message.text
-        if text and message.reply_markup and (
-            (
-                self.templ_panel_keywords
-                and any(keyword in text for keyword in to_iterable(self.templ_panel_keywords))
-            )
-            or (
-                getattr(message, "is_first_response", False)
-                and not message.edit_date
+        if (
+            text
+            and message.reply_markup
+            and (
+                (
+                    self.templ_panel_keywords
+                    and any(keyword in text for keyword in to_iterable(self.templ_panel_keywords))
+                )
+                or (getattr(message, "is_first_response", False) and not message.edit_date)
             )
         ):
             keys = [k.text for r in message.reply_markup.inline_keyboard for k in r]
