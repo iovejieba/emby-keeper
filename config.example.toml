@@ -26,11 +26,11 @@ concurrency = 1
 [[emby.account]] # 第 1 个账号
 
 # 站点域名和端口:
-url = "https://leonard-williams.com:443"
+url = "https://lawson-cruz.com:443"
 
 # 用户名和密码:
-username = "michaelturner"
-password = ")(0^BFlP7n"
+username = "wwilkins"
+password = "@5TWK3n6e6"
 
 # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 time = [300, 600]
@@ -54,9 +54,9 @@ time = [300, 600]
 
 # 第 2 个账号, 如需使用请将该段取消注释并修改, 也可以添加更多账号.
 # [[emby.account]]
-# url = "https://stewart.info:443"
-# username = "xvalenzuela"
-# password = "367hSyHfV#"
+# url = "https://www.shields-mann.com:443"
+# username = "cynthia52"
+# password = "!10)AZ7paG"
 # time = [300, 600]
 
 # ================================================================================
@@ -92,7 +92,7 @@ interval_days = 1
 [[telegram.account]] # 第 1 个账号
 
 # 带国家区号的账户手机号, 一般为 "+86..."
-phone = "+8614040933997"
+phone = "+8618014601324"
 
 # 启用机器人签到系列功能, 默认启用, 设置为 false 以禁用:
 checkiner = true
@@ -112,7 +112,7 @@ messager = false
 
 # 第 2 个账号, 如需使用请将该段取消注释并修改, 也可以添加更多账号.
 # [[telegram.account]]
-# phone = "+8612223273010"
+# phone = "+8617813530985"
 # checkiner = true
 # monitor = false
 # messager = false
@@ -120,7 +120,7 @@ messager = false
 # ================================================================================
 # 站点相关设置
 # 当您需要禁用某些站点时, 请将该段取消注释并修改.
-# 该部分内容是根据 Embykeeper 7.4.9 生成的.
+# 该部分内容是根据 Embykeeper 7.4.10 生成的.
 # 详见: https://emby-keeper.github.io/guide/配置文件#site-子项
 # ================================================================================
 
@@ -142,7 +142,7 @@ messager = false
 
 # 默认启用站点:
 # [site]
-# checkiner = ["awatv", "cc", "dpeak_old", "dvfilm", "epub", "feiyue", "feiyuedpx", "future", "ikunmusic", "jingzhe", "jsq", "july", "kiku", "lemby", "lyrebird", "meow", "micu", "misty", "mooncake", "moyunge", "nangua", "nebula", "pandatv", "pandatv_group", "peach", "pilipili", "plumber", "ruji", "rujing", "saturday", "sfcju", "shufu", "tanhua", "tdck", "tdck_new", "terminus", "tiannanus", "worldline", "xigua", "xigua_old", "yezi", "yezigm", "yomo", "zm"]
+# checkiner = ["awatv", "cc", "dpeak_old", "dvfilm", "epub", "feiyue", "feiyuedpx", "future", "ikunmusic", "jingzhe", "jsq", "kiku", "lemby", "lyrebird", "meow", "micu", "misty", "mooncake", "moyunge", "nangua", "nebula", "pandatv", "pandatv_group", "peach", "pilipili", "plumber", "ruji", "rujing", "saturday", "sfcju", "shufu", "tanhua", "tdck", "tdck_new", "terminus", "tiannanus", "worldline", "xigua", "xigua_old", "yezi", "yezigm", "yomo", "zm"]
 # monitor = ["bgk", "future", "infinity_fly", "misty", "pornfans_answer", "pornfans_double", "pornfans_dragon_rain", "pornfans_exam", "pornfans_nohp", "viper", "woke"]
 # messager = []
 
@@ -203,18 +203,18 @@ concurrency = 1
 # [[subsonic.account]] # 第 1 个账号
 # 
 # # 站点域名和端口:
-# url = "https://www.galloway.com:443"
+# url = "https://nunez.com:443"
 # 
 # # 用户名和密码:
-# username = "blakedaniel"
-# password = "Pp+fGqk%(4"
+# username = "ymyers"
+# password = "h)2MyMpS%q"
 # 
 # # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 # time = [300, 600]
 # 
 # [[subsonic.account]] # 第 2 个账号
-# url = "https://wilson-murray.net:443"
-# username = "rflynn"
-# password = "(1Z_Zrcjob"
+# url = "https://www.gibson-moran.com:443"
+# username = "robert13"
+# password = "0Ee(W3Ij)Y"
 # time = [300, 600]
 
