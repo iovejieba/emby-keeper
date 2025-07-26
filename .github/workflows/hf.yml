@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  HF_SPACE_REPO: ekuser/paragen
+  HF_SPACE_REPO: ekuser/ek
 
 jobs:
   sync-to-hf:
