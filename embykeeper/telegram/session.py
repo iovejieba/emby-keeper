@@ -15,6 +15,7 @@ import random
 import httpx
 from pyrogram.errors import ApiIdPublishedFlood, AuthKeyDuplicated, BadMsgNotification, RPCError, Unauthorized
 from pyrogram.storage.storage import Storage
+from pyrogram.session import Session
 from rich.prompt import Prompt
 
 from embykeeper import __name__ as __product__, __version__, var
@@ -248,8 +249,17 @@ class ClientsSession:
             .rstrip("=")
         )
 
-    async def _disconnect_handler(self, client: Client):
-        logger.bind(username=client.me.full_name).debug("客户端与 Telegram 服务器断开连接.")
+    async def _disconnect_handler(self, client: Client, session: Session):
+        if session.restart_event.is_set():
+            logger.bind(username=client.me.full_name).debug("客户端与 Telegram 服务器断开连接, 正在重新连接.")
+        else:
+            logger.bind(username=client.me.full_name).debug("客户端与 Telegram 服务器断开连接.")
+
+    async def _connect_handler(self, client: Client, session: Session):
+        if session.restart_event.is_set():
+            logger.bind(username=client.me.full_name).debug("已重新连接到 Telegram 服务器.")
+        else:
+            logger.bind(username=client.me.full_name).debug("已连接到 Telegram 服务器.")
 
     async def login(self, account: TelegramAccount, use_telethon=True):
         try:
@@ -363,6 +373,7 @@ class ClientsSession:
                         session_str_key = f"telegram.session_str.{account.get_config_key()}"
                         cache.set(session_str_key, session_str)
                         client.disconnect_handler = self._disconnect_handler
+                        client.connect_handler = self._connect_handler
                         logger.debug(f'登录账号 "{phone_masked}": "{client.me.full_name}" 成功.')
                         return client
                 except ApiIdPublishedFlood:

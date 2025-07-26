@@ -9,7 +9,7 @@ faker
 aiofiles
 python-dateutil
 ddddocrfix>=1.5.5
-embygram
+embygram==2025.7.28
 tgcrypto
 pillow>10.0.0
 thefuzz[speedup]

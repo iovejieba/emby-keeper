@@ -60,7 +60,7 @@ default_keywords = {
         "你有号吗",
     ),
     "too_many_tries_fail": ("已尝试", "过多"),
-    "checked": ("只能", "已经", "下次", "过了", "签过", "明日再来", "上次签到", "重复签到"),
+    "checked": ("只能", "已经", "过了", "签过", "明日再来", "重复签到"),
     "fail": ("失败", "错误", "超时"),
     "success": ("成功", "通过", "完成", "获得"),
 }
@@ -190,6 +190,7 @@ class BotCheckin(BaseBotCheckin):
         super().__init__(*args, **kw)
         self.current_retries = 0  # 当前重试次数
         self._waiting = {}  # 当前等待的消息
+        self._first_waiting = False  # 是否在等待首个消息
         self._handler_tasks = set()  # 存储所有正在运行的 message_handler 任务
         if instant:
             self.checked_retries = None
@@ -302,7 +303,10 @@ class BotCheckin(BaseBotCheckin):
                 specs.append(f"[green]{bot.full_name}[/] [gray50](@{bot.username})[/]")
             if chat.title:
                 specs.append(f"[green]{chat.title}[/] [gray50](@{chat.username})[/]")
-            self.log.info(f"开始执行签到: {' @ '.join(specs)}.")
+            else:
+                specs.append(f"[green]@{chat.username}[/]")
+            if specs:
+                self.log.info(f"开始执行签到: {' @ '.join(specs)}.")
 
             if not self.chat_name:
                 self.log.debug(f"[gray50]禁用提醒 {self.timeout} 秒: {bot.username}[/]")
@@ -426,11 +430,15 @@ class BotCheckin(BaseBotCheckin):
                 await asyncio.sleep(self.bot_retry_wait)
             if i < len(cmds):
                 await asyncio.sleep(self.bot_send_interval)
+            self._first_waiting = True
             await self.send(cmd)
 
     async def _message_handler(self, client: Client, message: Message):
         """消息处理入口函数的错误处理外壳."""
         try:
+            if self._first_waiting:
+                self._first_waiting = False
+                message.is_first_response = True
             # 创建新的任务并存储
             task = asyncio.create_task(self.message_handler(client, message))
             self._handler_tasks.add(task)

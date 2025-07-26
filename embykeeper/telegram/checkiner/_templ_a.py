@@ -18,7 +18,6 @@ __ignore__ = True
 class TemplateACheckinConfig(BaseModel):
     # fmt: off
     name: Optional[str] = None  # 签到器的名称
-    templ_panel_keywords: Union[str, List[str]] = None  # 面板关键词
     use_button_answer: bool = None  # 点击按钮后等待并识别响应
     bot_text_ignore_answer: Union[str, List[str]] = None  # 忽略的响应文本
     bot_fail_keywords: Union[str, List[str]] = None  # 签到错误将重试时检测的关键词 (暂不支持regex), 置空使用内置关键词表
@@ -29,14 +28,17 @@ class TemplateACheckinConfig(BaseModel):
     bot_checkin_caption_pat: Optional[str] = None  # 当 Bot 返回图片时, 仅当符合该 regex 才识别为验证码, 置空不限制
     bot_checkin_cmd: Optional[str] = None  # Bot 依次执行的签到命令
     bot_use_captcha: Optional[bool] = None  # 当 Bot 返回图片时, 识别验证码并调用 on_captcha
+    bot_checkin_button: Union[str, List[str]] = None  # 签到按钮文本
+    templ_panel_keywords: Union[str, List[str]] = None  # 面板关键词
     # fmt: on
 
 
 class TemplateACheckin(BotCheckin):
-    templ_panel_keywords = ["请选择功能", "用户面板"]
     bot_text_ignore_answer = ["Done"]
     use_button_answer = True
     bot_checkin_cmd = "/start"
+    bot_checkin_button = ["签到", "簽到"]
+    templ_panel_keywords = None
 
     async def init(self):
         try:
@@ -46,7 +48,6 @@ class TemplateACheckin(BotCheckin):
             return False
 
         self.name = self.t_config.name or self.name
-        self.templ_panel_keywords = self.t_config.templ_panel_keywords or self.templ_panel_keywords
         self.use_button_answer = (
             self.t_config.use_button_answer
             if self.t_config.use_button_answer is not None
@@ -60,6 +61,8 @@ class TemplateACheckin(BotCheckin):
         self.bot_text_ignore = self.t_config.bot_text_ignore or self.bot_text_ignore
         self.bot_checkin_caption_pat = self.t_config.bot_checkin_caption_pat or self.bot_checkin_caption_pat
         self.bot_checkin_cmd = self.t_config.bot_checkin_cmd or self.bot_checkin_cmd
+        self.bot_checkin_button = self.t_config.bot_checkin_button or self.bot_checkin_button
+        self.templ_panel_keywords = self.t_config.templ_panel_keywords or self.templ_panel_keywords
         self.bot_use_captcha = (
             self.t_config.bot_use_captcha
             if self.t_config.bot_use_captcha is not None
@@ -71,14 +74,19 @@ class TemplateACheckin(BotCheckin):
 
     async def message_handler(self, client, message: Message):
         text = message.caption or message.text
-        if (
-            text
-            and any(keyword in text for keyword in to_iterable(self.templ_panel_keywords))
-            and message.reply_markup
+        if text and message.reply_markup and (
+            (
+                self.templ_panel_keywords
+                and any(keyword in text for keyword in to_iterable(self.templ_panel_keywords))
+            )
+            or (
+                getattr(message, "is_first_response", False)
+                and not message.edit_date
+            )
         ):
             keys = [k.text for r in message.reply_markup.inline_keyboard for k in r]
             for k in keys:
-                if "签到" in k or "簽到" in k:
+                if any(btn in k for btn in self.bot_checkin_button):
                     await asyncio.sleep(random.uniform(0.5, 1.5))
                     try:
                         answer: BotCallbackAnswer = await message.click(k)
@@ -87,14 +95,7 @@ class TemplateACheckin(BotCheckin):
                     except MessageIdInvalid:
                         pass
                     else:
-                        if self.use_button_answer:
-                            if not isinstance(answer, BotCallbackAnswer):
-                                self.log.warning(f"签到失败: 签到按钮指向 URL, 不受支持.")
-                                return await self.fail()
-                            if answer.message and not any(
-                                ignore in answer.message for ignore in self.bot_text_ignore_answer
-                            ):
-                                await self.on_text(Message(id=0, text=answer.message), answer.message)
+                        await self.on_button_answer(answer)
                     return
             else:
                 self.log.warning(f"签到失败: 账户错误.")
@@ -105,6 +106,14 @@ class TemplateACheckin(BotCheckin):
             return await self.fail()
 
         await super().message_handler(client, message)
+
+    async def on_button_answer(self, answer: BotCallbackAnswer):
+        if self.use_button_answer:
+            if not isinstance(answer, BotCallbackAnswer):
+                self.log.warning(f"签到失败: 签到按钮指向 URL, 不受支持.")
+                return await self.fail()
+            if answer.message and not any(ignore in answer.message for ignore in self.bot_text_ignore_answer):
+                await self.on_text(Message(id=0, text=answer.message), answer.message)
 
 
 def use(**kw):

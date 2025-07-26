@@ -10,19 +10,15 @@ import os
 from pathlib import Path
 import sqlite3
 import struct
-from typing import List, Union
+from typing import Union
 import logging
 
 from rich.prompt import Prompt
 from loguru import logger
 import pyrogram
-from pyrogram import raw, types, utils, filters, dispatcher
-from pyrogram.session import Session
+from pyrogram import raw, types, filters, dispatcher
 from pyrogram.enums import SentCodeType
 from pyrogram.errors import (
-    ChannelPrivate,
-    PersistentTimestampOutdated,
-    PersistentTimestampInvalid,
     BadRequest,
     SessionPasswordNeeded,
     CodeInvalid,
@@ -59,7 +55,7 @@ class LogRedirector(logging.StreamHandler):
     def emit(self, record):
         try:
             if record.levelno >= logging.WARNING:
-                logger.debug(f"Pyrogram log: {record.getMessage()}")
+                logger.debug(f"Pyrogram 警告: {record.getMessage()}")
         except (KeyboardInterrupt, SystemExit):
             raise
         except:
@@ -81,6 +77,14 @@ class Dispatcher(dispatcher.Dispatcher):
 
     async def start(self):
         logger.debug("Telegram 更新分配器启动.")
+
+        if callable(self.client.start_handler):
+            try:
+                await self.client.start_handler(self.client)
+            except Exception as e:
+                show_exception(e, regular=False)
+                logger.error("Telegram 更新分配器启动错误.")
+
         if not self.client.no_updates:
 
             self.handler_worker_tasks = []
@@ -91,6 +95,13 @@ class Dispatcher(dispatcher.Dispatcher):
                 await self.client.recover_gaps()
 
     async def stop(self, clear: bool = True):
+        if callable(self.client.stop_handler):
+            try:
+                await self.client.stop_handler(self.client)
+            except Exception as e:
+                show_exception(e, regular=False)
+                logger.error("Telegram 更新分配器停止错误.")
+
         if not self.client.no_updates:
             for i in range(self.client.workers):
                 self.updates_queue.put_nowait(None)
@@ -489,7 +500,11 @@ class Client(pyrogram.Client):
         timeout: float = WAIT_TIMEOUT,
         **kw,
     ):
-        return await super().invoke(*args, retries=retries, timeout=timeout, **kw)
+        try:
+            return await super().invoke(*args, retries=retries, timeout=timeout, **kw)
+        except OSError as e:
+            logger.warning(f"与 Telegram 服务器连接错误, 请求失败 ({args}): {e}")
+            raise
 
     async def handle_updates(self, updates):
         try:

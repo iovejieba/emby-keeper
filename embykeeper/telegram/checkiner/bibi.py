@@ -8,11 +8,13 @@ __ignore__ = True
 class BibiCheckin(TemplateACheckin):
     name = "比比"
     bot_username = "BBFreeFilm_bot"
+    bot_use_captcha = False
 
     async def message_handler(self, client, message: Message):
-        if message.text and "开始签到验证" not in message.text:
-            return
-        if message.text and "签到验证" in message.text:
+        text = message.text or message.caption
+        if text and "签到验证" in text:
+            if "开始" in text:
+                return
             if not await self.gpt_handle_message(message, unexpected=False):
                 self.log.info(f"签到失败: 智能解析错误, 正在重试.")
                 return await self.retry()

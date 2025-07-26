@@ -1,6 +1,0 @@
-localhost {
-    reverse_proxy localhost:7860 {
-        header_up Host {host}
-        header_up X-Forwarded-Proto {scheme}
-    }
-}

@@ -1,6 +1,0 @@
-pyarmor>=8.0
-starlette
-uvicorn[standard]
-httpx
-websockets
-gradio
