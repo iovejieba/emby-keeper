@@ -8,8 +8,10 @@ import asyncio
 import inspect
 import os
 from pathlib import Path
+import shutil
 import sqlite3
 import struct
+import tempfile
 from typing import Union
 import logging
 
@@ -26,7 +28,6 @@ from pyrogram.errors import (
     FloodWait,
     PhoneNumberInvalid,
     PhoneNumberBanned,
-    BadRequest,
     MessageIdInvalid,
 )
 from pyrogram.handlers import (
@@ -253,7 +254,41 @@ class FileStorage(SQLiteStorage):
         path = self.database
         file_exists = path.is_file()
 
-        self.conn = sqlite3.connect(str(path), timeout=1, check_same_thread=False)
+        # Try to create database in the original path
+        try:
+            # Ensure parent directory exists
+            path.parent.mkdir(parents=True, exist_ok=True)
+            self.conn = sqlite3.connect(str(path), timeout=1, check_same_thread=False)
+        except sqlite3.OperationalError as e:
+            if "unable to open database file" in str(e):
+                logger.debug(f"无法在默认路径创建数据库文件 {path}: {e}")
+
+                # Fallback to system temp directory
+                temp_dir = Path(tempfile.gettempdir())
+                temp_path = temp_dir / (self.name + self.FILE_EXTENSION)
+
+                logger.debug(f"尝试在临时目录创建会话文件: {temp_path}")
+
+                # If original file exists and is readable, try to copy it
+                if file_exists and path.is_file():
+                    try:
+                        shutil.copy2(str(path), str(temp_path))
+                        logger.info(f"已复制现有会话文件到临时目录: {temp_path}")
+                    except Exception as copy_e:
+                        logger.warning(f"复制会话文件失败: {copy_e}")
+
+                try:
+                    self.conn = sqlite3.connect(str(temp_path), timeout=1, check_same_thread=False)
+                    # Update the database path to the new location
+                    self.database = temp_path
+                    path = temp_path
+                    file_exists = temp_path.is_file()
+                    logger.info(f"成功在临时目录创建会话文件: {temp_path}")
+                except sqlite3.OperationalError as temp_e:
+                    logger.error(f"无法创建数据库文件: {temp_e}")
+                    raise temp_e
+            else:
+                raise
 
         if not file_exists:
             self.create()
@@ -300,7 +335,13 @@ class FileStorage(SQLiteStorage):
             self.conn.execute("VACUUM")
 
     async def delete(self):
-        os.remove(self.database)
+        try:
+            os.remove(self.database)
+        except FileNotFoundError:
+            logger.debug(f"会话文件已不存在: {self.database}")
+        except OSError as e:
+            logger.warning(f"删除会话文件失败: {self.database}, 错误: {e}")
+            raise
 
 
 class Client(pyrogram.Client):
