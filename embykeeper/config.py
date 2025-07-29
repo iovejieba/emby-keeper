@@ -557,6 +557,10 @@ class ConfigManager(ProxyBase):
                             deep_update(cfg_dict, tomllib.load(f))
                     except tomllib.TOMLDecodeError as e:
                         logger.error(f'配置文件 "{conf_file}" 中的 TOML 格式错误:\n\t{e}.')
+                        return False
+                    except FileNotFoundError:
+                        logger.error(f'配置文件 "{conf_file}" 不存在, 请您检查.')
+                        return False
                 else:
                     logger.error(f'配置文件 "{conf_file}" 不是 TOML 格式的配置文件.')
                     return False

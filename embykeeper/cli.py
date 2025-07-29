@@ -337,8 +337,6 @@ async def main(
         if not await public_preparation():
             raise typer.Exit(1)
     else:
-        if not config_file.is_file():
-            logger.warning(f"配置文件 {config_file} 不存在, 请您检查.")
         if not await config.reload_conf(config_file):
             raise typer.Exit(1)
 
