@@ -261,21 +261,28 @@ class FileStorage(SQLiteStorage):
             self.conn = sqlite3.connect(str(path), timeout=1, check_same_thread=False)
         except sqlite3.OperationalError as e:
             if "unable to open database file" in str(e):
-                logger.debug(f"无法在默认路径创建数据库文件 {path}: {e}")
+                # Test write permission by trying to create a temporary file
+                test_error = None
+                try:
+                    test_file = path.parent / f".{self.name}_test"
+                    test_file.write_text("test")
+                    test_file.unlink()
+                except Exception as write_e:
+                    test_error = str(write_e)
+
+                error_msg = f"无法在默认路径创建数据库文件 {path}: {e}"
+                if test_error:
+                    error_msg += f" (写入测试失败: {test_error})"
+                else:
+                    error_msg += " (目录可写，可能是 SQLite 特定问题)"
+
+                logger.warning(error_msg)
 
                 # Fallback to system temp directory
                 temp_dir = Path(tempfile.gettempdir())
                 temp_path = temp_dir / (self.name + self.FILE_EXTENSION)
 
-                logger.debug(f"尝试在临时目录创建会话文件: {temp_path}")
-
-                # If original file exists and is readable, try to copy it
-                if file_exists and path.is_file():
-                    try:
-                        shutil.copy2(str(path), str(temp_path))
-                        logger.info(f"已复制现有会话文件到临时目录: {temp_path}")
-                    except Exception as copy_e:
-                        logger.warning(f"复制会话文件失败: {copy_e}")
+                logger.info(f"尝试在临时目录创建会话文件: {temp_path}")
 
                 try:
                     self.conn = sqlite3.connect(str(temp_path), timeout=1, check_same_thread=False)
