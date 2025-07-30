@@ -290,7 +290,23 @@ class FileStorage(SQLiteStorage):
             else:
                 raise
 
-        if not file_exists:
+        # Check if database has required tables before calling update
+        database_is_valid = False
+        if file_exists:
+            try:
+                # Try to check if version table exists
+                cursor = self.conn.cursor()
+                cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='version';")
+                if cursor.fetchone():
+                    database_is_valid = True
+                cursor.close()
+            except sqlite3.Error:
+                # Database is corrupted or incomplete
+                database_is_valid = False
+
+        if not file_exists or not database_is_valid:
+            if file_exists and not database_is_valid:
+                logger.debug(f"数据库文件结构不完整，重新初始化: {path}")
             self.create()
             if self.session_string:
                 # Old format
