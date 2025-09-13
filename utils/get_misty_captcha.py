@@ -54,7 +54,7 @@ async def label(config_file: Path, inp: Path = "captchas.txt"):
         async for _, tg in clients:
             for photo in tqdm(photos, desc="标记验证码"):
                 await tg.send_photo(chat, photo)
-                labelmsg = await tg.wait_reply(chat, timeout=None, outgoing=True)
+                labelmsg = await tg.wait_reply(chat, timeout=None)
                 if not len(labelmsg.text) == 5:
                     continue
                 else:

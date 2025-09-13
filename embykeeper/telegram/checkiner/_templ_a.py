@@ -1,6 +1,6 @@
 import asyncio
 import random
-from typing import Iterable, List, Optional, Union
+from typing import List, Optional, Union
 
 from loguru import logger
 from pydantic import BaseModel, ValidationError
