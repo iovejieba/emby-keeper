@@ -9,6 +9,8 @@ from embykeeper.config import config
 
 from . import BotCheckin
 
+__ignore__ = True
+
 
 class DPeakCheckin(BotCheckin):
     name = "DPeak"

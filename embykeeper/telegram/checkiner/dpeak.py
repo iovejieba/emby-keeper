@@ -2,8 +2,6 @@ from pyrogram.types import Message
 
 from ._templ_a import TemplateACheckin
 
-__ignore__ = True
-
 
 class DPeakCheckin(TemplateACheckin):
     name = "DPeak"
