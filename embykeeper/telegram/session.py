@@ -250,16 +250,10 @@ class ClientsSession:
         )
 
     async def _disconnect_handler(self, client: Client, session: Session):
-        if session.restart_event.is_set():
-            logger.bind(username=client.me.full_name).debug("客户端与 Telegram 服务器断开连接, 正在重新连接.")
-        else:
-            logger.bind(username=client.me.full_name).debug("客户端与 Telegram 服务器断开连接.")
+        logger.bind(username=client.me.full_name).debug("客户端与 Telegram 服务器断开连接.")
 
     async def _connect_handler(self, client: Client, session: Session):
-        if session.restart_event.is_set():
-            logger.bind(username=client.me.full_name).debug("已重新连接到 Telegram 服务器.")
-        else:
-            logger.bind(username=client.me.full_name).debug("已连接到 Telegram 服务器.")
+        logger.bind(username=client.me.full_name).debug("已连接到 Telegram 服务器.")
 
     async def login(self, account: TelegramAccount, use_telethon=True):
         try:
