@@ -35,10 +35,11 @@ from pyrogram.handlers import (
     RawUpdateHandler,
     DisconnectHandler,
     EditedMessageHandler,
+    StartHandler,
+    StopHandler,
+    ConnectHandler,
 )
-from pyrogram.storage.memory_storage import MemoryStorage
 from pyrogram.storage.sqlite_storage import SQLiteStorage
-from pyrogram.storage.file_storage import USERNAMES_SCHEMA, UPDATE_STATE_SCHEMA
 from pyrogram.handlers.handler import Handler
 
 from embykeeper import var, __name__ as __product__, __version__
@@ -47,10 +48,6 @@ from embykeeper.utils import async_partial, show_exception
 var.tele_used.set()
 
 logger = logger.bind(scheme="telegram", nonotify=True)
-
-MAX_RETRIES = 5
-WAIT_TIMEOUT = 60
-
 
 class LogRedirector(logging.StreamHandler):
     def emit(self, record):
@@ -77,7 +74,7 @@ class Dispatcher(dispatcher.Dispatcher):
         self.mutex = asyncio.Lock()
 
     async def start(self):
-        logger.debug("Telegram 更新分配器启动.")
+        logger.bind(username=self.client.phone_number).debug(f"Telegram 更新分配器正在启动.")
 
         if callable(self.client.start_handler):
             try:
@@ -85,17 +82,19 @@ class Dispatcher(dispatcher.Dispatcher):
             except Exception as e:
                 show_exception(e, regular=False)
                 logger.error("Telegram 更新分配器启动错误.")
-
+            
         if not self.client.no_updates:
-
-            self.handler_worker_tasks = []
             for _ in range(self.client.workers):
                 self.handler_worker_tasks.append(self.client.loop.create_task(self.handler_worker()))
-
+            
             if not self.client.skip_updates:
                 await self.client.recover_gaps()
 
-    async def stop(self, clear: bool = True):
+        logger.bind(username=self.client.phone_number).debug("Telegram 更新分配器已启动.")
+
+    async def stop(self, clear_handlers: bool = True):
+        logger.bind(username=self.client.phone_number).debug("Telegram 更新分配器正在停止.")
+
         if callable(self.client.stop_handler):
             try:
                 await self.client.stop_handler(self.client)
@@ -106,15 +105,18 @@ class Dispatcher(dispatcher.Dispatcher):
         if not self.client.no_updates:
             for i in range(self.client.workers):
                 self.updates_queue.put_nowait(None)
+
             for i in self.handler_worker_tasks:
                 i.cancel()
                 try:
                     await i
                 except asyncio.CancelledError:
                     pass
-            if clear:
+            if clear_handlers:
                 self.handler_worker_tasks.clear()
                 self.groups.clear()
+            
+        logger.bind(username=self.client.phone_number).debug("Telegram 更新分配器已停止.")
 
     def add_handler(self, handler, group: int):
         async def fn():
@@ -153,7 +155,9 @@ class Dispatcher(dispatcher.Dispatcher):
                     parsed_update, handler_type = (
                         await parser(update, users, chats) if parser is not None else (None, type(None))
                     )
-                except (ValueError, BadRequest):
+                except (ValueError, BadRequest) as e:
+                    logger.warning(f"更新处理器发生错误, 可能遗漏消息.")
+                    show_exception(e, regular=False)
                     continue
 
                 async with self.mutex:
@@ -168,7 +172,8 @@ class Dispatcher(dispatcher.Dispatcher):
                                 if await handler.check(self.client, parsed_update):
                                     args = (parsed_update,)
                             except Exception as e:
-                                logger.warning(f"Telegram 错误: {e}")
+                                logger.warning(f"更新处理器发生错误, 可能遗漏消息.")
+                                show_exception(e, regular=False)
                                 continue
 
                         elif isinstance(handler, RawUpdateHandler):
@@ -176,8 +181,10 @@ class Dispatcher(dispatcher.Dispatcher):
                                 if await handler.check(self.client, update):
                                     args = (update, users, chats)
                             except Exception as e:
-                                logger.debug(f"更新回调函数内发生错误.")
+                                logger.warning(f"更新处理器发生错误, 可能遗漏消息.")
                                 show_exception(e, regular=False)
+                                continue
+                        
                         if args is None:
                             continue
 
@@ -205,51 +212,7 @@ class Dispatcher(dispatcher.Dispatcher):
                 logger.warning("更新控制器错误.")
                 show_exception(e, regular=False)
 
-
 class FileStorage(SQLiteStorage):
-    FILE_EXTENSION = ".session"
-
-    def __init__(self, name: str, workdir: Path, session_string: str = None):
-        super().__init__(name)
-
-        self.database = workdir / (self.name + self.FILE_EXTENSION)
-        self.session_string = session_string
-
-    def update(self):
-        version = self.version()
-
-        if version == 1:
-            with self.conn:
-                self.conn.execute("DELETE FROM peers")
-
-            version += 1
-
-        if version == 2:
-            with self.conn:
-                self.conn.execute("ALTER TABLE sessions ADD api_id INTEGER")
-
-            version += 1
-
-        if version == 3:
-            with self.conn:
-                self.conn.executescript(USERNAMES_SCHEMA)
-
-            version += 1
-
-        if version == 4:
-            with self.conn:
-                self.conn.executescript(UPDATE_STATE_SCHEMA)
-
-            version += 1
-
-        if version == 5:
-            with self.conn:
-                self.conn.execute("CREATE INDEX idx_usernames_id ON usernames (id);")
-
-            version += 1
-
-        self.version(version)
-
     async def open(self):
         path = self.database
         file_exists = path.is_file()
@@ -370,12 +333,15 @@ class FileStorage(SQLiteStorage):
 class Client(pyrogram.Client):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self.dispatcher = Dispatcher(self)
-        self.stop_handlers = []
+
         if self.in_memory:
-            self.storage = MemoryStorage(self.name, self.session_string)
+            self.storage = FileStorage(self.name, workdir=self.workdir, session_string=self.session_string, in_memory=self.in_memory)
         else:
-            self.storage = FileStorage(self.name, self.workdir, self.session_string)
+            self.storage = SQLiteStorage(self.name, workdir=self.workdir, session_string=self.session_string)
+
+        self.dispatcher: Dispatcher = Dispatcher(self)
+
+        self.stop_handlers = []
 
     async def authorize(self):
         if self.bot_token:
@@ -441,23 +407,39 @@ class Client(pyrogram.Client):
             raise BadRequest("该账户尚未注册")
 
     def add_handler(self, handler: Handler, group: int = 0):
-        if isinstance(handler, DisconnectHandler):
+        async def dummy():
+            pass
+
+        if isinstance(handler, StartHandler):
+            self.start_handler = handler.callback
+            return asyncio.ensure_future(dummy())
+        elif isinstance(handler, StopHandler):
+            self.stop_handler = handler.callback
+            return asyncio.ensure_future(dummy())
+        elif isinstance(handler, ConnectHandler):
+            self.connect_handler = handler.callback
+            return asyncio.ensure_future(dummy())
+        elif isinstance(handler, DisconnectHandler):
             self.disconnect_handler = handler.callback
-
-            async def dummy():
-                pass
-
             return asyncio.ensure_future(dummy())
         else:
             return self.dispatcher.add_handler(handler, group)
 
     def remove_handler(self, handler: Handler, group: int = 0):
-        if isinstance(handler, DisconnectHandler):
+        async def dummy():
+            pass
+
+        if isinstance(handler, StartHandler):
+            self.start_handler = None
+            return asyncio.ensure_future(dummy())
+        elif isinstance(handler, StopHandler):
+            self.stop_handler = None
+            return asyncio.ensure_future(dummy())
+        elif isinstance(handler, ConnectHandler):
+            self.connect_handler = None
+            return asyncio.ensure_future(dummy())
+        elif isinstance(handler, DisconnectHandler):
             self.disconnect_handler = None
-
-            async def dummy():
-                pass
-
             return asyncio.ensure_future(dummy())
         else:
             return self.dispatcher.remove_handler(handler, group)
@@ -513,7 +495,6 @@ class Client(pyrogram.Client):
         chat_id: Union[int, str],
         send: str = None,
         timeout: float = 10,
-        outgoing=False,
         filter=None,
     ):
         async with self.catch_reply(chat_id=chat_id, filter=filter) as f:
@@ -556,19 +537,6 @@ class Client(pyrogram.Client):
                 ),
             )
         )
-
-    async def invoke(
-        self,
-        *args,
-        retries: int = MAX_RETRIES,
-        timeout: float = WAIT_TIMEOUT,
-        **kw,
-    ):
-        try:
-            return await super().invoke(*args, retries=retries, timeout=timeout, **kw)
-        except OSError as e:
-            logger.warning(f"与 Telegram 服务器连接错误, 请求失败 ({args}): {e}")
-            raise
 
     async def handle_updates(self, updates):
         try:
