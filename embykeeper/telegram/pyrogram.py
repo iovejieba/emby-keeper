@@ -49,6 +49,7 @@ var.tele_used.set()
 
 logger = logger.bind(scheme="telegram", nonotify=True)
 
+
 class LogRedirector(logging.StreamHandler):
     def emit(self, record):
         try:
@@ -82,11 +83,11 @@ class Dispatcher(dispatcher.Dispatcher):
             except Exception as e:
                 show_exception(e, regular=False)
                 logger.error("Telegram 更新分配器启动错误.")
-            
+
         if not self.client.no_updates:
             for _ in range(self.client.workers):
                 self.handler_worker_tasks.append(self.client.loop.create_task(self.handler_worker()))
-            
+
             if not self.client.skip_updates:
                 await self.client.recover_gaps()
 
@@ -115,7 +116,7 @@ class Dispatcher(dispatcher.Dispatcher):
             if clear_handlers:
                 self.handler_worker_tasks.clear()
                 self.groups.clear()
-            
+
         logger.bind(username=self.client.phone_number).debug("Telegram 更新分配器已停止.")
 
     def add_handler(self, handler, group: int):
@@ -184,7 +185,7 @@ class Dispatcher(dispatcher.Dispatcher):
                                 logger.warning(f"更新处理器发生错误, 可能遗漏消息.")
                                 show_exception(e, regular=False)
                                 continue
-                        
+
                         if args is None:
                             continue
 
@@ -211,6 +212,7 @@ class Dispatcher(dispatcher.Dispatcher):
             except Exception as e:
                 logger.warning("更新控制器错误.")
                 show_exception(e, regular=False)
+
 
 class FileStorage(SQLiteStorage):
     async def open(self):
@@ -335,7 +337,9 @@ class Client(pyrogram.Client):
         super().__init__(*args, **kw)
 
         if self.in_memory:
-            self.storage = FileStorage(self.name, workdir=self.workdir, session_string=self.session_string, in_memory=self.in_memory)
+            self.storage = FileStorage(
+                self.name, workdir=self.workdir, session_string=self.session_string, in_memory=self.in_memory
+            )
         else:
             self.storage = SQLiteStorage(self.name, workdir=self.workdir, session_string=self.session_string)
 

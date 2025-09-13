@@ -76,13 +76,13 @@ class CheckinerManager:
         # Cancel main account scheduler
         if phone in self._schedulers:
             del self._schedulers[phone]
-            
+
         # Cancel all independent site schedulers for this account
         keys_to_remove = []
         for key in self._schedulers.keys():
             if key.startswith(f"{phone}."):
                 keys_to_remove.append(key)
-        
+
         for key in keys_to_remove:
             del self._schedulers[key]
 
@@ -111,7 +111,7 @@ class CheckinerManager:
                 site_name = cls.templ_name
             else:
                 site_name = cls.__module__.rsplit(".", 1)[-1]
-                
+
             if self._has_independent_time_range(site_name, config_to_use):
                 self._schedule_independent_site(account, site_name, config_to_use)
 
@@ -120,11 +120,13 @@ class CheckinerManager:
         site_config = config_to_use.get_site_config(site_name)
         site_time_range = site_config.get("time_range")
         site_interval_days = site_config.get("interval_days", config_to_use.interval_days)
-        
+
         phone_masked = TelegramAccount.get_phone_masked(account.phone)
-        
+
         def on_next_time(t: datetime):
-            logger.info(f"下一次 \"{phone_masked}\" 账号 {site_name} 站点的签到将在 {t.strftime('%m-%d %H:%M %p')} 进行.")
+            logger.info(
+                f"下一次 \"{phone_masked}\" 账号 {site_name} 站点的签到将在 {t.strftime('%m-%d %H:%M %p')} 进行."
+            )
             date_ctx = RunContext.get_or_create(f"checkiner.date.{t.strftime('%Y%m%d')}")
             account_ctx = RunContext.get_or_create(f"checkiner.account.{account.phone}")
             site_ctx = RunContext.get_or_create(f"checkiner.site.{site_name}")
@@ -144,7 +146,7 @@ class CheckinerManager:
             description=f"{account.phone} 账号 {site_name} 站点签到定时任务",
             sid=f"checkiner.{account.phone}.{site_name}",
         )
-        
+
         # Store scheduler with unique key
         scheduler_key = f"{account.phone}.{site_name}"
         self._schedulers[scheduler_key] = scheduler
@@ -157,7 +159,7 @@ class CheckinerManager:
 
         # Use account-specific config if available, otherwise use global
         config_to_use = account.checkiner_config or config.checkiner
-        
+
         # Schedule sites with independent time_range configurations
         self._schedule_independent_sites(account, config_to_use)
 
@@ -215,7 +217,7 @@ class CheckinerManager:
                 description = f"{account.phone} 账号 {site} 站点重新签到"
             else:
                 description = f"{account.phone} 账号 {site} 站点签到"
-            
+
             site_ctx = RunContext.prepare(description=description, parent_ids=[account_ctx.id, ctx.id])
             site_ctx.reschedule = (ctx.reschedule or 0) + 1
 
@@ -312,12 +314,12 @@ class CheckinerManager:
                 site_name = cls.templ_name
             else:
                 site_name = cls.__module__.rsplit(".", 1)[-1]
-            
+
             # Skip sites with independent time_range configurations
             if self._has_independent_time_range(site_name, config_to_use):
                 log.debug(f"跳过站点 {site_name}，该站点有独立的 time_range 配置")
                 continue
-                
+
             site_ctx = RunContext.prepare(f"{site_name} 站点签到", parent_ids=ctx.id)
             checkiners.append(
                 cls(
