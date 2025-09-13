@@ -73,8 +73,82 @@ class CheckinerManager:
                 task.cancel()
             del self._site_tasks[phone]
 
+        # Cancel main account scheduler
         if phone in self._schedulers:
             del self._schedulers[phone]
+            
+        # Cancel all independent site schedulers for this account
+        keys_to_remove = []
+        for key in self._schedulers.keys():
+            if key.startswith(f"{phone}."):
+                keys_to_remove.append(key)
+        
+        for key in keys_to_remove:
+            del self._schedulers[key]
+
+    def _has_independent_time_range(self, site_name: str, config_to_use) -> bool:
+        """Check if a site has independent time_range configuration"""
+        site_config = config_to_use.get_site_config(site_name)
+        return isinstance(site_config, dict) and "time_range" in site_config
+
+    def _schedule_independent_sites(self, account: TelegramAccount, config_to_use):
+        """Schedule sites with independent time_range configurations"""
+        from .dynamic import get_cls, get_names, extract
+
+        # Get checkin classes based on account config or global config
+        site = None
+        if account.site and account.site.checkiner is not None:
+            site = account.site.checkiner
+        elif config.site and config.site.checkiner is not None:
+            site = config.site.checkiner
+        else:
+            site = get_names("checkiner")
+
+        clses: List[Type[BaseBotCheckin]] = extract(get_cls("checkiner", names=site))
+
+        for cls in clses:
+            if hasattr(cls, "templ_name"):
+                site_name = cls.templ_name
+            else:
+                site_name = cls.__module__.rsplit(".", 1)[-1]
+                
+            if self._has_independent_time_range(site_name, config_to_use):
+                self._schedule_independent_site(account, site_name, config_to_use)
+
+    def _schedule_independent_site(self, account: TelegramAccount, site_name: str, config_to_use):
+        """Schedule a site with independent time_range configuration"""
+        site_config = config_to_use.get_site_config(site_name)
+        site_time_range = site_config.get("time_range")
+        site_interval_days = site_config.get("interval_days", config_to_use.interval_days)
+        
+        phone_masked = TelegramAccount.get_phone_masked(account.phone)
+        
+        def on_next_time(t: datetime):
+            logger.info(f"下一次 \"{phone_masked}\" 账号 {site_name} 站点的签到将在 {t.strftime('%m-%d %H:%M %p')} 进行.")
+            date_ctx = RunContext.get_or_create(f"checkiner.date.{t.strftime('%Y%m%d')}")
+            account_ctx = RunContext.get_or_create(f"checkiner.account.{account.phone}")
+            site_ctx = RunContext.get_or_create(f"checkiner.site.{site_name}")
+            return RunContext.prepare(
+                description=f"{account.phone} 账号 {site_name} 站点签到",
+                parent_ids=[account_ctx.id, date_ctx.id, site_ctx.id],
+            )
+
+        def func(ctx: RunContext):
+            return asyncio.create_task(self._run_single_site(ctx, account, site_name))
+
+        scheduler = Scheduler.from_str(
+            func=func,
+            interval_days=site_interval_days,
+            time_range=site_time_range,
+            on_next_time=on_next_time,
+            description=f"{account.phone} 账号 {site_name} 站点签到定时任务",
+            sid=f"checkiner.{account.phone}.{site_name}",
+        )
+        
+        # Store scheduler with unique key
+        scheduler_key = f"{account.phone}.{site_name}"
+        self._schedulers[scheduler_key] = scheduler
+        self._pool.add(scheduler.schedule())
 
     def schedule_account(self, account: TelegramAccount):
         """Schedule checkins for an account"""
@@ -83,6 +157,9 @@ class CheckinerManager:
 
         # Use account-specific config if available, otherwise use global
         config_to_use = account.checkiner_config or config.checkiner
+        
+        # Schedule sites with independent time_range configurations
+        self._schedule_independent_sites(account, config_to_use)
 
         def on_next_time(t: datetime):
             phone_masked = TelegramAccount.get_phone_masked(account.phone)
@@ -128,23 +205,32 @@ class CheckinerManager:
             async for a, client in clients:
                 await self._run_account(ctx, a, client, instant)
 
-    def schedule_reschedule(
-        self, ctx: RunContext, at: datetime, account: TelegramAccount, site: str
+    def schedule_site(
+        self, ctx: RunContext, at: datetime, account: TelegramAccount, site: str, reschedule: bool = False
     ) -> asyncio.Task:
         try:
             account_ctx = RunContext.get_or_create(f"checkiner.account.{account.phone}")
-            site_ctx = RunContext.prepare(
-                description=f"{account.phone} 账号 {site} 站点重新签到", parent_ids=[account_ctx.id, ctx.id]
-            )
+
+            if reschedule:
+                description = f"{account.phone} 账号 {site} 站点重新签到"
+            else:
+                description = f"{account.phone} 账号 {site} 站点签到"
+            
+            site_ctx = RunContext.prepare(description=description, parent_ids=[account_ctx.id, ctx.id])
             site_ctx.reschedule = (ctx.reschedule or 0) + 1
 
             async def _schedule():
                 # 计算延迟时间(秒)
                 delay = (at - datetime.now()).total_seconds()
                 if delay > 0:
-                    logger.debug(
-                        f"已安排账户 {account.phone} 的 {site} 站点在 {at.strftime('%m-%d %H:%M %p')} 重新尝试签到."
-                    )
+                    if reschedule:
+                        logger.debug(
+                            f"已安排账户 {account.phone} 的 {site} 站点在 {at.strftime('%m-%d %H:%M %p')} 重新尝试签到."
+                        )
+                    else:
+                        logger.debug(
+                            f"已安排账户 {account.phone} 的 {site} 站点在 {at.strftime('%m-%d %H:%M %p')} 签到."
+                        )
                     await asyncio.sleep(delay)
                 if account.phone in self._site_tasks and site in self._site_tasks[account.phone]:
                     self._site_tasks[account.phone][site].cancel()
@@ -159,7 +245,10 @@ class CheckinerManager:
             self._site_tasks[account.phone][site] = task
             return task
         except Exception as e:
-            logger.warning(f"重新安排 {site} 站点签到时间失败: {e}")
+            if reschedule:
+                logger.warning(f"重新安排 {site} 站点签到时间失败: {e}")
+            else:
+                logger.warning(f"安排 {site} 站点签到时间失败: {e}")
             show_exception(e, regular=False)
 
     async def _run_single_site(self, ctx: RunContext, account: TelegramAccount, site_name: str):
@@ -186,7 +275,7 @@ class CheckinerManager:
                 elif result.status == RunStatus.RESCHEDULE:
                     if c.ctx.next_time:
                         log.debug("继续等待重新签到.")
-                        self.schedule_reschedule(ctx, c.ctx.next_time, account, site_name)
+                        self.schedule_site(ctx, c.ctx.next_time, account, site_name, reschedule=True)
                 else:
                     log.debug("站点重新签到失败.")
 
@@ -223,6 +312,12 @@ class CheckinerManager:
                 site_name = cls.templ_name
             else:
                 site_name = cls.__module__.rsplit(".", 1)[-1]
+            
+            # Skip sites with independent time_range configurations
+            if self._has_independent_time_range(site_name, config_to_use):
+                log.debug(f"跳过站点 {site_name}，该站点有独立的 time_range 配置")
+                continue
+                
             site_ctx = RunContext.prepare(f"{site_name} 站点签到", parent_ids=ctx.id)
             checkiners.append(
                 cls(
@@ -265,7 +360,7 @@ class CheckinerManager:
                 else:
                     site_name = cls.__module__.rsplit(".", 1)[-1]
                 if c.ctx.next_time:
-                    self.schedule_reschedule(ctx, c.ctx.next_time, account, site_name)
+                    self.schedule_site(ctx, c.ctx.next_time, account, site_name, reschedule=True)
                 checked.append(c.name)
             else:
                 failed.append(c.name)
