@@ -26,11 +26,11 @@ concurrency = 1
 [[emby.account]] # 第 1 个账号
 
 # 站点域名和端口:
-url = "https://farmer-jones.com:443"
+url = "https://maddox-dixon.com:443"
 
 # 用户名和密码:
-username = "mckinneyrebecca"
-password = "!8TcRUYH^m"
+username = "vlam"
+password = "ZSFi_8Zqv_"
 
 # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 time = [300, 600]
@@ -54,9 +54,9 @@ time = [300, 600]
 
 # 第 2 个账号, 如需使用请将该段取消注释并修改, 也可以添加更多账号.
 # [[emby.account]]
-# url = "https://davis.com:443"
-# username = "iclark"
-# password = "p+A(x9Uwox"
+# url = "https://www.gamble-hamilton.info:443"
+# username = "mward"
+# password = "*AnT3PCap5"
 # time = [300, 600]
 
 # ================================================================================
@@ -92,7 +92,7 @@ interval_days = 1
 [[telegram.account]] # 第 1 个账号
 
 # 带国家区号的账户手机号, 一般为 "+86..."
-phone = "+8616418686685"
+phone = "+8618777378757"
 
 # 启用机器人签到系列功能, 默认启用, 设置为 false 以禁用:
 checkiner = true
@@ -103,6 +103,9 @@ monitor = false
 # 启用自动水群系列功能, 风险较高, 默认禁用, 设置为 true 以启用:
 messager = false
 
+# 启用定时抢注功能, 默认禁用, 设置为 true 以启用:
+registrar = false
+
 # 针对该账号的独特设置, 如需使用请将该段取消注释并修改. 详见 site 项和 checkiner 项.
 # [telegram.account.site]
 # checkiner = ["all"]
@@ -112,10 +115,34 @@ messager = false
 
 # 第 2 个账号, 如需使用请将该段取消注释并修改, 也可以添加更多账号.
 # [[telegram.account]]
-# phone = "+8619606750334"
+# phone = "+8618240365968"
 # checkiner = true
 # monitor = false
 # messager = false
+# registrar = false
+
+# ================================================================================
+# 定时抢注相关设置
+# 详见: https://emby-keeper.github.io/guide/配置文件#registrar-子项
+# ================================================================================
+# times = ["9:00AM", "9:00PM"]
+# interval_minutes = 2
+
+[registrar]
+
+# 最大可同时进行的注册任务数:
+concurrency = 1
+
+# ================================================================================
+# 各站点注册设置 (必须配置, 每个站点必须设置 times 或 interval_minutes)
+# ================================================================================
+
+# 案例 (Embyboss 站点每天定时抢注):
+
+# 案例 (TestBot 站点间隔抢注):
+
+# 注: interval_minutes 小于 3 分钟时将使用连续模式以提高效率
+# 注: 可选参数 timeout = 120, retries = 1
 
 # ================================================================================
 # 站点相关设置
@@ -139,18 +166,21 @@ messager = false
 # checkiner = ["-terminus", "-temby"]
 # monitor = ["-misty"]
 # messager = ["pornfans"]
+# registrar = ["templ_a<XiguaEmbyBot>"]
 
 # 默认启用站点:
 # [site]
-# checkiner = ["awatv", "cc", "dpeak_old", "dvfilm", "epub", "feiyue", "feiyuedpx", "future", "ikunmusic", "jingzhe", "jsq", "kiku", "lemby", "lyrebird", "meow", "micu", "misty", "mooncake", "moyunge", "nangua", "nebula", "pandatv", "pandatv_group", "peach", "pilipili", "plumber", "ruji", "rujing", "saturday", "sfcju", "shufu", "tanhua", "tdck", "tdck_new", "terminus", "tiannanus", "worldline", "xigua", "xigua_old", "yezi", "yezigm", "yomo", "zm"]
+# checkiner = ["awatv", "cc", "dpeak", "dvfilm", "epub", "feiyue", "feiyuedpx", "future", "ikunmusic", "jingzhe", "jsq", "kiku", "lemby", "lyrebird", "meow", "micu", "misty", "mooncake", "moyunge", "nangua", "nebula", "pandatv", "pandatv_group", "peach", "pilipili", "plumber", "ruji", "rujing", "saturday", "sfcju", "shufu", "tanhua", "tdck", "tdck_new", "terminus", "tiannanus", "worldline", "xigua", "xigua_old", "yezi", "yezigm", "yomo", "zm"]
 # monitor = ["bgk", "future", "infinity_fly", "misty", "pornfans_answer", "pornfans_double", "pornfans_dragon_rain", "pornfans_exam", "pornfans_nohp", "viper", "woke"]
 # messager = []
+# registrar = []
 
 # 全部可用站点:
 # [site]
 # checkiner = ["agentsgk", "aisgk", "aivbi", "akile", "akile_group", "akuai", "alpha", "apop", "apoppro", "ask", "aurora", "awamusic", "awatv", "baidusgk", "bearsgk", "bibi", "bingdaosgk", "bitsgk", "bluesea", "bostsgk", "bytevirt_group", "carll1sgk", "carll2sgk", "cc", "charon", "charon_old", "chunjiangsgk", "ciji", "datasgk", "dingdangsgk", "dogsgk", "dpeak", "dpeak_old", "dvfilm", "embyhub", "epub", "epub_group", "epub_group_chat", "fanhuasgk", "feiji", "feiyue", "feiyuedpx", "feiyuemusic", "feiyuemusic_group_old", "future", "happy", "hdhive", "heisi", "hka", "huasgk", "ikunmusic", "infsgk", "ingeeksgk", "jinding", "jingzhe", "jms", "jms_iptv", "jms_old", "johnsgk", "jsq", "judog", "july", "kiku", "koisgk", "lemby", "levilde", "lily", "ljyy", "ljyy_old", "lyrebird", "m78", "magic", "marmot_group_old", "mastersgk", "meow", "micu", "minisgk", "misty", "mjj", "mooncake", "moonkk", "moshensgk", "moyunge", "nangua", "navidrome", "nebula", "nebula_old", "niaoge", "oixel", "pandatv", "pandatv_group", "peach", "pilipili", "pingansgk", "plumber", "pornemby_old", "pornfans_game_group", "pornfans_group", "qingfengsgk", "qingmei", "raismusic", "rednosesgk", "ruji", "rujing", "saturday", "seedsgk", "sfcju", "shufu", "singularity", "skysink", "sssq", "star1", "star2", "starcat", "starsgk", "tanhua", "tdck", "tdck_new", "temby", "temby_beta", "temby_old", "terminus", "terminus_old", "theend", "tianmaosgk", "tiannan", "tiannanus", "unionsgk", "worldline", "xigua", "xigua_old", "xraysgk", "yezi", "yezigm", "yomo", "youno", "zhihusgk", "zhipian", "zhushousgk", "zm"]
 # monitor = ["bgk", "embyhub", "future", "infinity_fly", "judog", "misty", "polo", "pornfans_alert", "pornfans_answer", "pornfans_double", "pornfans_dragon_rain", "pornfans_exam", "pornfans_nohp", "pornfans_register", "shufu", "terminus_exam", "viper", "woke"]
 # messager = ["marmot", "nakonako", "pornfans", "smart_pornfans"]
+# registrar = []
 
 # ================================================================================
 # 代理相关设置
@@ -203,18 +233,18 @@ concurrency = 1
 # [[subsonic.account]] # 第 1 个账号
 # 
 # # 站点域名和端口:
-# url = "https://www.meyer-johnson.net:443"
+# url = "https://morris.com:443"
 # 
 # # 用户名和密码:
-# username = "philip77"
-# password = "7wrYDLfb%i"
+# username = "chloe24"
+# password = "#LI$+jzW%2"
 # 
 # # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 # time = [300, 600]
 # 
 # [[subsonic.account]] # 第 2 个账号
-# url = "https://www.benson-wilkinson.com:443"
-# username = "feliciajefferson"
-# password = "!#1s2wKm!0"
+# url = "https://santiago.biz:443"
+# username = "nelsonscott"
+# password = "y%&+4DeTGH"
 # time = [300, 600]
 
