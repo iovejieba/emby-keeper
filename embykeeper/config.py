@@ -341,8 +341,8 @@ class ConfigManager(ProxyBase):
         registrar1_lines = [
             '[registrar."templ_a<XiguaEmbyBot>"]',
             'times = ["9:00AM", "9:00PM"]',
-            'timeout = 120',
-            'retries = 1'
+            "timeout = 120",
+            "retries = 1",
         ]
         for line in registrar1_lines:
             c.add(comment(line))
@@ -350,9 +350,9 @@ class ConfigManager(ProxyBase):
         c.add(comment("案例 (站点间隔抢注):"))
         registrar2_lines = [
             '[registrar."templ_a<XiguaEmbyBot>"]',
-            'interval_minutes = 2',
-            'timeout = 120', 
-            'retries = 1'
+            "interval_minutes = 2",
+            "timeout = 120",
+            "retries = 1",
         ]
         for line in registrar2_lines:
             c.add(comment(line))
@@ -397,7 +397,7 @@ class ConfigManager(ProxyBase):
                     "checkiner": ["-terminus", "-temby"],
                     "monitor": ["-misty"],
                     "messager": ["pornfans"],
-                                "registrar": ["templ_a<XiguaEmbyBot>"],
+                    "registrar": ["templ_a<XiguaEmbyBot>"],
                 }
             }
         )

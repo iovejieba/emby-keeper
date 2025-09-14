@@ -28,4 +28,3 @@ def __getattr__(spec: str):
             return m
         except ImportError:
             raise AttributeError(f"module '{__name__}' has no attribute '{spec}'") from None
-

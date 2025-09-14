@@ -500,7 +500,7 @@ async def main(
             subsonic_man = SubsonicManager()
 
         pool = AsyncTaskPool()
-        
+
         if registrar_bot:
             logger.info(f"开始快速注册 @{registrar_bot}")
             if register_man:
@@ -508,7 +508,7 @@ async def main(
             else:
                 logger.error("注册管理器未初始化")
             return
-            
+
         if instant and not debug_cron:
             if checkin_man:
                 pool.add(checkin_man.run_all(instant=True), "站点签到")

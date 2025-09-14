@@ -40,11 +40,11 @@ class BaseBotRegister(ABC):
 
     @property
     def retries(self):
-        return self._retries or getattr(config, 'register', {}).get('retries', 1)
+        return self._retries or getattr(config, "register", {}).get("retries", 1)
 
     @property
     def timeout(self):
-        return self._timeout or getattr(config, 'register', {}).get('timeout', 120)
+        return self._timeout or getattr(config, "register", {}).get("timeout", 120)
 
     async def _start(self):
         """注册器的入口函数的错误处理外壳."""
@@ -60,7 +60,7 @@ class BaseBotRegister(ABC):
             else:
                 raise
         finally:
-            if hasattr(self.client, 'stop_handlers') and self.stop in self.client.stop_handlers:
+            if hasattr(self.client, "stop_handlers") and self.stop in self.client.stop_handlers:
                 self.client.stop_handlers.remove(self.stop)
             self._task = None
 

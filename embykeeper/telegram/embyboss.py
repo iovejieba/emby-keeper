@@ -25,7 +25,7 @@ class EmbybossRegister:
     async def run(self, bot: str):
         """单次注册尝试"""
         return await self._register_once(bot)
-        
+
     async def run_continuous(self, bot: str, interval_seconds: int = 1):
         try:
             panel = await self.client.wait_reply(bot, "/start")
@@ -39,7 +39,7 @@ class EmbybossRegister:
                 if result:
                     self.log.info(f"注册成功")
                     return True
-                
+
                 if interval_seconds:
                     self.log.debug(f"注册失败, {interval_seconds} 秒后重试.")
                     await asyncio.sleep(interval_seconds)
@@ -81,7 +81,7 @@ class EmbybossRegister:
         except (AttributeError, ValueError):
             self.log.warning("无法解析界面, 无法注册, 可能您已注册.")
             return False
-            
+
         if current_status != "未注册":
             self.log.warning("当前状态不是未注册, 无法注册.")
             return False
@@ -91,7 +91,7 @@ class EmbybossRegister:
         if available_slots <= 0:
             self.log.debug("可注册席位不足, 将继续监控.")
             return False
-            
+
         return await self._attempt_with_panel(panel)
 
     async def _attempt_with_panel(self, panel: Message):

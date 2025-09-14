@@ -99,7 +99,7 @@ docker-compose up -d
 
 ## 自动版本更新
 
-您可以使用 [watchtower](https://github.com/containrrr/watchtower) 来自动更新 Embykeeper 的 Docker 镜像. 
+您可以使用 [watchtower](https://github.com/containrrr/watchtower) 来自动更新 Embykeeper 的 Docker 镜像.
 
 在您的 `docker-compose.yml` 中添加 watchtower 服务：
 
@@ -130,7 +130,7 @@ services:
 - 发现新版本时自动拉取镜像并重启容器
 
 ::: tip 提示
-您可以通过修改 `--interval` 参数来调整检查更新的时间间隔（单位：秒）. 
+您可以通过修改 `--interval` 参数来调整检查更新的时间间隔（单位：秒）.
 :::
 
 ## 使用其他版本
