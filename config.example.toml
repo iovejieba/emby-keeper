@@ -26,11 +26,11 @@ concurrency = 1
 [[emby.account]] # 第 1 个账号
 
 # 站点域名和端口:
-url = "https://bell.org:443"
+url = "https://www.clayton.com:443"
 
 # 用户名和密码:
-username = "brandonphillips"
-password = "%0P5eSu+r6"
+username = "lindsey70"
+password = "^2vM5F6PZk"
 
 # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 time = [300, 600]
@@ -54,9 +54,9 @@ time = [300, 600]
 
 # 第 2 个账号, 如需使用请将该段取消注释并修改, 也可以添加更多账号.
 # [[emby.account]]
-# url = "https://patel.com:443"
-# username = "john94"
-# password = "o1^ndCa^+U"
+# url = "https://barrett.com:443"
+# username = "bowenjulie"
+# password = "4vIqvFtf&6"
 # time = [300, 600]
 
 # ================================================================================
@@ -92,7 +92,7 @@ interval_days = 1
 [[telegram.account]] # 第 1 个账号
 
 # 带国家区号的账户手机号, 一般为 "+86..."
-phone = "+8612496396401"
+phone = "+8617648942819"
 
 # 启用机器人签到系列功能, 默认启用, 设置为 false 以禁用:
 checkiner = true
@@ -115,7 +115,7 @@ registrar = false
 
 # 第 2 个账号, 如需使用请将该段取消注释并修改, 也可以添加更多账号.
 # [[telegram.account]]
-# phone = "+8615641829890"
+# phone = "+8615380215023"
 # checkiner = true
 # monitor = false
 # messager = false
@@ -209,6 +209,11 @@ account = 1
 immediately = false
 # 默认情况下, 启动时立刻执行的一次签到/保活不会推送消息, 设置为 true 以推送
 once = false
+# 推送方式, 可选: telegram (默认), apprise
+method = "telegram"
+# Apprise 推送地址, 仅当 method = "apprise" 时有效
+# 例如: bark://你的Bark设备Key@api.day.app
+apprise_uri = ""
 
 # ================================================================================
 # Subsonic 保活相关设置 (包括 Navidrome 和其他支持 Subsonic API 的音乐服站点)
@@ -234,18 +239,18 @@ concurrency = 1
 # [[subsonic.account]] # 第 1 个账号
 # 
 # # 站点域名和端口:
-# url = "https://green-nichols.net:443"
+# url = "https://www.palmer.com:443"
 # 
 # # 用户名和密码:
-# username = "johnsonnicholas"
-# password = "al7MXqzu%h"
+# username = "hwalker"
+# password = "$Ll8d1Fi2z"
 # 
 # # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 # time = [300, 600]
 # 
 # [[subsonic.account]] # 第 2 个账号
-# url = "https://jackson.com:443"
-# username = "glowe"
-# password = "U4aMNmtf_5"
+# url = "https://wheeler.com:443"
+# username = "mharris"
+# password = "h#9BhD4#IF"
 # time = [300, 600]
 
