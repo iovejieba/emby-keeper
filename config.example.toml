@@ -26,11 +26,11 @@ concurrency = 1
 [[emby.account]] # 第 1 个账号
 
 # 站点域名和端口:
-url = "https://maddox-dixon.com:443"
+url = "https://www.yoder.net:443"
 
 # 用户名和密码:
-username = "vlam"
-password = "ZSFi_8Zqv_"
+username = "iscott"
+password = ")ohFenqM84"
 
 # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 time = [300, 600]
@@ -54,9 +54,9 @@ time = [300, 600]
 
 # 第 2 个账号, 如需使用请将该段取消注释并修改, 也可以添加更多账号.
 # [[emby.account]]
-# url = "https://www.gamble-hamilton.info:443"
-# username = "mward"
-# password = "*AnT3PCap5"
+# url = "https://collins.com:443"
+# username = "dreid"
+# password = "Nu9mDjuo!_"
 # time = [300, 600]
 
 # ================================================================================
@@ -92,7 +92,7 @@ interval_days = 1
 [[telegram.account]] # 第 1 个账号
 
 # 带国家区号的账户手机号, 一般为 "+86..."
-phone = "+8618777378757"
+phone = "+8613920056437"
 
 # 启用机器人签到系列功能, 默认启用, 设置为 false 以禁用:
 checkiner = true
@@ -115,7 +115,7 @@ registrar = false
 
 # 第 2 个账号, 如需使用请将该段取消注释并修改, 也可以添加更多账号.
 # [[telegram.account]]
-# phone = "+8618240365968"
+# phone = "+8618839148967"
 # checkiner = true
 # monitor = false
 # messager = false
@@ -126,23 +126,22 @@ registrar = false
 # 详见: https://emby-keeper.github.io/guide/配置文件#registrar-子项
 # ================================================================================
 # times = ["9:00AM", "9:00PM"]
+# timeout = 120
+# retries = 1
 # interval_minutes = 2
+# timeout = 120
+# retries = 1
 
 [registrar]
 
 # 最大可同时进行的注册任务数:
 concurrency = 1
 
-# ================================================================================
-# 各站点注册设置 (必须配置, 每个站点必须设置 times 或 interval_minutes)
-# ================================================================================
+# 各站点注册设置:
 
 # 案例 (Embyboss 站点每天定时抢注):
 
 # 案例 (TestBot 站点间隔抢注):
-
-# 注: interval_minutes 小于 3 分钟时将使用连续模式以提高效率
-# 注: 可选参数 timeout = 120, retries = 1
 
 # ================================================================================
 # 站点相关设置
@@ -233,18 +232,18 @@ concurrency = 1
 # [[subsonic.account]] # 第 1 个账号
 # 
 # # 站点域名和端口:
-# url = "https://morris.com:443"
+# url = "https://hawkins.com:443"
 # 
 # # 用户名和密码:
-# username = "chloe24"
-# password = "#LI$+jzW%2"
+# username = "abates"
+# password = "5@2FY8&*iy"
 # 
 # # 模拟观看的随机时长范围 (秒), 可以为单个数字 (120) 或时间范围 ([120, 240]):
 # time = [300, 600]
 # 
 # [[subsonic.account]] # 第 2 个账号
-# url = "https://santiago.biz:443"
-# username = "nelsonscott"
-# password = "y%&+4DeTGH"
+# url = "https://miller.com:443"
+# username = "mmoore"
+# password = "*%5Zh_PpY0"
 # time = [300, 600]
 
