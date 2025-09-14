@@ -66,7 +66,7 @@ class Cache:
             current = self._data
             path = []
 
-            # 遍历路径，检查每一层
+            # 遍历路径, 检查每一层
             for part in parts[:-1]:
                 if not isinstance(current, dict) or part not in current:
                     return
@@ -122,14 +122,14 @@ class Cache:
         if self._mongo_client:
             self._collection.delete_many({"_id": {"$in": keys}})
         else:
-            # 批量删除所有键，只写入一次文件
+            # 批量删除所有键, 只写入一次文件
             changed = False
             for key in keys:
                 parts = key.split(".")
                 current = self._data
                 path = []
 
-                # 遍历路径，检查每一层
+                # 遍历路径, 检查每一层
                 for part in parts[:-1]:
                     if not isinstance(current, dict) or part not in current:
                         break

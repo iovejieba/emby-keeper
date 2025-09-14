@@ -239,7 +239,7 @@ class FileStorage(SQLiteStorage):
                 if test_error:
                     error_msg += f" (写入测试失败: {test_error})"
                 else:
-                    error_msg += " (目录可写，可能是 SQLite 特定问题)"
+                    error_msg += " (目录可写, 可能是 SQLite 特定问题)"
 
                 logger.warning(error_msg)
 
@@ -278,7 +278,7 @@ class FileStorage(SQLiteStorage):
 
         if not file_exists or not database_is_valid:
             if file_exists and not database_is_valid:
-                logger.debug(f"数据库文件结构不完整，重新初始化: {path}")
+                logger.debug(f"数据库文件结构不完整, 重新初始化: {path}")
             self.create()
             if self.session_string:
                 # Old format

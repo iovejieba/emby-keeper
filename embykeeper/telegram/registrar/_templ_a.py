@@ -15,8 +15,8 @@ __ignore__ = True
 
 class TemplateARegisterConfig(BaseModel):
     name: Optional[str] = None
-    username: Optional[str] = None  # 可选，不填则自动生成
-    password: Optional[str] = None  # 可选，不填则自动生成
+    username: Optional[str] = None  # 可选, 不填则自动生成
+    password: Optional[str] = None  # 可选, 不填则自动生成
 
 class TemplateARegister(BaseBotRegister):
     def __init__(self, client, context=None, retries=None, timeout=None, config=None, **kwargs):
@@ -36,7 +36,7 @@ class TemplateARegister(BaseBotRegister):
             
     async def start(self):
         if not self.bot_username:
-            self.log.warning("未配置bot_username，无法进行注册")
+            self.log.warning("未配置bot_username, 无法进行注册")
             return self.ctx.finish(RunStatus.FAIL, "未配置bot_username")
             
         for attempt in range(self.retries + 1):

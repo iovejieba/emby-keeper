@@ -20,7 +20,7 @@ class EPubGroupChatCheckin(BotCheckin):
             min_letters = self.config.get("letters", 7)
             prompt = self.config.get(
                 "prompt",
-                f"请输出{times}行的诗，所有行都至少{min_letters}个字，必须严格遵守每行字数要求！最多{times+2}行，只输出古诗内容，禁止输出其他提示语言，禁止输出逗号句号，每行开头必须有标号'@@@'",
+                f"请输出{times}行的诗, 所有行都至少{min_letters}个字, 必须严格遵守每行字数要求！最多{times+2}行, 只输出古诗内容, 禁止输出其他提示语言, 禁止输出逗号句号, 每行开头必须有标号'@@@'",
             )
             answer, by = await Link(self.client).gpt(prompt)
             if not answer:

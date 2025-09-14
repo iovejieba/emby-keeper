@@ -181,7 +181,7 @@ def main():
         for name, (_, new_ver) in updates.items():
             final_packages[name] = new_ver
 
-    # 如果有任何改动，更新配置文件
+    # 如果有任何改动, 更新配置文件
     if final_packages != cfg_packages:
         print("\nUpdating configuration file...")
         update_config_file(file_path, final_packages)

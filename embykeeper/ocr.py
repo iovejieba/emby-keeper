@@ -144,7 +144,7 @@ class OCRService:
         self._last_active = time.time()
 
     async def _monitor(self):
-        """监控进程状态和空闲时间，同时处理返回结果"""
+        """监控进程状态和空闲时间, 同时处理返回结果"""
         while True:
             try:
                 # 检查进程状态和空闲超时

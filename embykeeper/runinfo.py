@@ -61,7 +61,7 @@ class RunContext(BaseModel):
     reschedule: int = None
 
     def start(self, status: RunStatus = RunStatus.RUNNING):
-        """开始任务，设置开始时间和状态"""
+        """开始任务, 设置开始时间和状态"""
         self.start_time = datetime.now()
         self.set(status)
         self._started.set()
@@ -76,7 +76,7 @@ class RunContext(BaseModel):
             )
 
     def finish(self, status: RunStatus = None, status_info: str = None):
-        """完成任务，记录状态和时间，并保存到缓存"""
+        """完成任务, 记录状态和时间, 并保存到缓存"""
 
         # 设置结束状态
         self.set(status)
@@ -150,7 +150,7 @@ class RunContext(BaseModel):
         # 添加到运行中任务列表
         _running_runs[run_id] = run
 
-        # 如果有父任务，记录父子关系
+        # 如果有父任务, 记录父子关系
         if parent_ids:
             for parent_id in parent_ids:
                 children = cache.get(f"runinfo.children.{parent_id}", [])

@@ -34,3 +34,4 @@ pymongo
 pydantic
 watchfiles
 python-socks[asyncio]
+apprise

@@ -100,7 +100,7 @@ class SubsonicPlayer:
                         retry = 0
                         break
                     except asyncio.TimeoutError:
-                        # 正常超时，说明歌曲播放完成
+                        # 正常超时, 说明歌曲播放完成
                         played_time += play_duration
                         await client.scrobble(song_id, submission=True)
                         self.log.info(f'完成播放 "{song_title}", 已播放 {played_time:.0f} 秒.')

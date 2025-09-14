@@ -317,7 +317,7 @@ class CheckinerManager:
 
             # Skip sites with independent time_range configurations
             if self._has_independent_time_range(site_name, config_to_use):
-                log.debug(f"跳过站点 {site_name}，该站点有独立的 time_range 配置")
+                log.debug(f"跳过站点 {site_name}, 该站点有独立的 time_range 配置")
                 continue
 
             site_ctx = RunContext.prepare(f"{site_name} 站点签到", parent_ids=ctx.id)

@@ -55,7 +55,7 @@ def count_devices_per_user(users, devices):
     for user in users:
         user_id = user.get("Id")
         user_name = user.get("Name")
-        # 过滤设备，统计与当前用户关联的设备数量
+        # 过滤设备, 统计与当前用户关联的设备数量
         associated_devices = [
             device for device in devices.get("Items", []) if device.get("LastUserId") == user_id
         ]
@@ -89,13 +89,13 @@ def main():
     print("正在获取用户信息...")
     users = fetch_users()
     if not users:
-        print("未能获取到用户信息，请检查服务器配置或网络连接。")
+        print("未能获取到用户信息, 请检查服务器配置或网络连接。")
         return
 
     print("正在获取设备信息...")
     devices = fetch_devices()
     if not devices:
-        print("未能获取设备信息，请检查服务器配置或网络连接。")
+        print("未能获取设备信息, 请检查服务器配置或网络连接。")
         return
 
     print("正在统计每个用户的设备数量...")

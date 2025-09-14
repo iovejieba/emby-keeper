@@ -78,7 +78,7 @@ app = AsyncTyper(
     pretty_exceptions_enable=False,
     rich_markup_mode="rich",
     add_completion=False,
-    context_settings={"help_option_names": ["-h", "--help"]},
+    add_help_option=False,
 )
 
 
@@ -94,6 +94,13 @@ def print_example_config(flag):
         raise typer.Exit()
 
 
+def print_help(ctx: typer.Context, param: typer.CallbackParam, value: bool):
+    if not value or ctx.resilient_parsing:
+        return
+    typer.echo(ctx.get_help())
+    raise typer.Exit()
+
+
 @app.async_command(
     help=(
         f"欢迎使用 [orange3]{__product__.capitalize()}[/] {__version__} " ":cinema: 无参数默认开启全部功能."
@@ -107,6 +114,15 @@ async def main(
         envvar=f"EK_CONFIG_FILE",
         rich_help_panel="参数",
         help="配置文件 (置空以生成)",
+    ),
+    help: bool = typer.Option(
+        None,
+        "--help",
+        "-h",
+        callback=print_help,
+        is_eager=True,
+        rich_help_panel="调试参数",
+        help="显示此帮助信息并退出.",
     ),
     checkiner: bool = typer.Option(
         False,
@@ -203,13 +219,17 @@ async def main(
     ),
     debug_cron: bool = typer.Option(
         False,
+        "--debug-cron",
         envvar="EK_DEBUG_CRON",
         show_envvar=False,
+        rich_help_panel="调试工具",
         help="开启任务调试模式, 在三秒后立刻开始执行计划任务",
     ),
     debug_notify: bool = typer.Option(
         False,
+        "--debug-notify",
         show_envvar=False,
+        rich_help_panel="调试工具",
         help="开启日志调试模式, 发送一条日志记录和即时日志记录后退出",
     ),
     simple_log: bool = typer.Option(
@@ -300,7 +320,7 @@ async def main(
     clean: bool = typer.Option(
         False,
         "--clean",
-        rich_help_panel="调试参数",
+        rich_help_panel="调试工具",
         help="显示或清理 Emby 模拟设备和登陆凭据等缓存",
     ),
 ):

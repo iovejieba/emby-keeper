@@ -28,8 +28,8 @@ class Scheduler:
 
         Args:
             func: 要执行的异步函数
-            interval_days: 间隔天数字符串，支持数字或 "<min,max>" 格式
-            time_range: 时间范围字符串，支持具体时间或 "<start,end>" 格式
+            interval_days: 间隔天数字符串, 支持数字或 "<min,max>" 格式
+            time_range: 时间范围字符串, 支持具体时间或 "<start,end>" 格式
         Returns:
             Scheduler: 调度器实例
         """
@@ -71,12 +71,12 @@ class Scheduler:
         """
         Args:
             func: 要执行的异步函数
-            days: 执行间隔天数，可以是固定天数或者[最小天数, 最大天数]
+            days: 执行间隔天数, 可以是固定天数或者[最小天数, 最大天数]
             start_time: 执行时间范围起始时间 (可选)
             end_time: 执行时间范围结束时间 (可选)
             sid: 调度器ID, 用于缓存下次执行时间
             description: 调度器描述
-            on_next_time: 回调函数，在计算出下一次执行时间时调用
+            on_next_time: 回调函数, 在计算出下一次执行时间时调用
         """
         self.func = func
         if config.debug_cron:

@@ -65,7 +65,7 @@ class NebulaCheckin(BotCheckin):
                         hour=23, minute=59, second=59, microsecond=999999
                     )
                     if next_checkin_time <= today_end:
-                        # 今天还可以签到，等待到指定时间
+                        # 今天还可以签到, 等待到指定时间
                         sleep = next_checkin_time - datetime.now(timezone.utc)
                         self.log.info(f"即将在 {format_timedelta_human(sleep)} 后重试.")
                         # 将UTC时间转换为本地时间并移除时区信息

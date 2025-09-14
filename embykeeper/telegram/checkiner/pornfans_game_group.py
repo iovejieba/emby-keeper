@@ -25,7 +25,7 @@ class PornfansGameGroupCheckin(BotCheckin):
                 "prompt",
                 f"请输出{min_letters}个字以上, {max_letters}个字以下的中文回复. 你需要进行一个群组聊天中的发言,"
                 "表示的意思是 '发言换取答题资格', 你可以口语化一点, 像真人会说的话, 或者有水群一下的意思."
-                "必须严格遵守字数要求！禁止输出逗号句号，开头必须有标号'@@@' (不计入字数)",
+                "必须严格遵守字数要求！禁止输出逗号句号, 开头必须有标号'@@@' (不计入字数)",
             )
             answer, by = await Link(self.client).gpt(prompt)
             if not answer:

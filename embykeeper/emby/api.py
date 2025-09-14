@@ -303,7 +303,7 @@ class Emby:
         if self.proxy:
             if self.proxy.scheme != "socks5":
                 self.log.warning(
-                    f"该站点验证解析仅支持 SOCKS5 代理，由于当前代理协议不支持, 将尝试不使用代理."
+                    f"该站点验证解析仅支持 SOCKS5 代理, 由于当前代理协议不支持, 将尝试不使用代理."
                 )
                 self.a.use_proxy = False
             else:

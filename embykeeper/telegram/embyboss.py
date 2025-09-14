@@ -47,7 +47,7 @@ class EmbybossRegister:
                     self.log.debug(f"注册失败, 即将重试.")
                     return False
             except (MessageIdInvalid, ValueError, AttributeError):
-                # 面板失效或结构变化，重新获取
+                # 面板失效或结构变化, 重新获取
                 self.log.debug("面板失效, 正在重新获取...")
                 try:
                     panel = await self.client.wait_reply(bot, "/start")

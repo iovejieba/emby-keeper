@@ -32,7 +32,7 @@ class _PornfansExamAnswerMonitor(Monitor):
     name = "PornFans 科举"
     chat_user = ["Porn_Emby_Bot", "Porn_emby_ScriptsBot"]
     chat_keyword = (
-        r"问题\d*：根据以上封面图，猜猜是什么番号？\n+A:(.*)\n+B:(.*)\n+C:(.*)\n+D:(.*)\n(?!\n*答案)"
+        r"问题\d*：根据以上封面图, 猜猜是什么番号？\n+A:(.*)\n+B:(.*)\n+C:(.*)\n+D:(.*)\n(?!\n*答案)"
     )
     additional_auth = ["pornemby_pack"]
     allow_edit = True
@@ -49,7 +49,7 @@ class _PornfansExamAnswerMonitor(Monitor):
 
         if self.proxy:
             if self.proxy.scheme != "socks5":
-                self.log.warning(f"站点验证解析仅支持 SOCKS5 代理，由于当前代理协议不支持, 将尝试不使用代理.")
+                self.log.warning(f"站点验证解析仅支持 SOCKS5 代理, 由于当前代理协议不支持, 将尝试不使用代理.")
                 self.proxy = None
             else:
                 self.log.info(
@@ -99,7 +99,7 @@ class _PornfansExamAnswerMonitor(Monitor):
                         if self.cf_clearance:
                             self.log.warning("初始化失败: Javdatabase 在 Cloudflare 验证码解析后依然有验证")
                             return False
-                        self.log.info("Javdatabase 存在 Cloudflare 保护，正在尝试解析.")
+                        self.log.info("Javdatabase 存在 Cloudflare 保护, 正在尝试解析.")
                         await self.use_cfsolver()
                         continue
                     elif not resp.ok:
@@ -157,14 +157,14 @@ class _PornfansExamAnswerMonitor(Monitor):
                 retry_count += 1
                 if retry_count < max_retries:
                     self.log.info(
-                        f"获取封面图片失败，正在进行第 {retry_count + 1} 次重试: {e.__class__.__name__}: {str(e)}"
+                        f"获取封面图片失败, 正在进行第 {retry_count + 1} 次重试: {e.__class__.__name__}: {str(e)}"
                     )
                     continue
                 self.log.warning(f"获取封面图片失败: {e.__class__.__name__}: {str(e)}")
                 show_exception(e)
                 return None
 
-            # 如果执行到这里说明成功获取了图片，直接返回
+            # 如果执行到这里说明成功获取了图片, 直接返回
             break
 
         return None
@@ -228,7 +228,7 @@ class _PornfansExamAnswerMonitor(Monitor):
                 retry_count += 1
                 if retry_count < max_retries:
                     self.log.info(
-                        f"获取封面图片失败，正在进行第 {retry_count + 1} 次重试: {e.__class__.__name__}: {str(e)}"
+                        f"获取封面图片失败, 正在进行第 {retry_count + 1} 次重试: {e.__class__.__name__}: {str(e)}"
                     )
                     continue
                 self.log.warning(f"获取封面图片失败: {e.__class__.__name__}: {str(e)}")

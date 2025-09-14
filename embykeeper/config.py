@@ -473,6 +473,10 @@ class ConfigManager(ProxyBase):
         c["immediately"] = False
         c.add(comment("默认情况下, 启动时立刻执行的一次签到/保活不会推送消息, 设置为 true 以推送"))
         c["once"] = False
+        c.add(comment("推送方式, 可选: telegram (默认), apprise"))
+        c["method"] = "telegram"
+        c.add(comment('Apprise 推送地址, 仅当 method = "apprise" 时有效'))
+        c["apprise_uri"] = ""
         doc["notifier"] = c
         doc.add(nl())
 
@@ -547,7 +551,7 @@ class ConfigManager(ProxyBase):
     async def start_observer(self):
         async def observer():
             async for changes in awatch(self._conf_file):
-                logger.info(f"配置文件已更改，正在重新加载.")
+                logger.info(f"配置文件已更改, 正在重新加载.")
                 await self.reload_conf(self._conf_file)
 
         if self._observer:

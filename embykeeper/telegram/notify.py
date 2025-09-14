@@ -5,6 +5,7 @@ from loguru import logger
 
 from embykeeper.log import formatter
 from embykeeper.config import config
+from embykeeper.apprise import AppriseStream
 
 logger = logger.bind(scheme="telegram", nonotify=True)
 
@@ -73,21 +74,47 @@ async def start_notifier():
     def _formatter(record):
         return "{level}#" + formatter(record)
 
-    accounts = config.telegram.account
     notifier = config.notifier
-    if notifier:
-        account = None
-        if notifier.enabled:
-            if isinstance(notifier.account, int):
-                try:
-                    account = accounts[notifier.account - 1]
-                except IndexError:
-                    notifier = None
-            elif isinstance(notifier, str):
-                for a in accounts:
-                    if a.phone == notifier:
-                        account = a
-                        break
+    if not notifier or not notifier.enabled:
+        if not change_handle_notifier:
+            change_handle_notifier = config.on_change("notifier", _handle_config_change)
+        return None
+
+    if notifier.method == "apprise":
+        if not notifier.apprise_uri:
+            logger.error("Apprise URI 未配置, 无法发送消息推送.")
+            return None
+
+        logger.info("关键消息将通过 Apprise 推送.")
+        stream_log = AppriseStream(uri=notifier.apprise_uri)
+        handler_log_id = logger.add(
+            stream_log,
+            format=_formatter,
+            filter=_filter_log,
+        )
+        stream_msg = AppriseStream(uri=notifier.apprise_uri)
+        handler_msg_id = logger.add(
+            stream_msg,
+            format=_formatter,
+            filter=_filter_msg,
+        )
+        if not change_handle_notifier:
+            change_handle_notifier = config.on_change("notifier", _handle_config_change)
+        return stream_log, stream_msg
+
+    # Default to telegram
+    accounts = config.telegram.account
+    account = None
+    if isinstance(notifier.account, int):
+        try:
+            account = accounts[notifier.account - 1]
+        except IndexError:
+            pass
+    elif isinstance(notifier.account, str):
+        for a in accounts:
+            if a.phone == notifier.account:
+                account = a
+                break
 
     if account:
         from .session import ClientsSession
@@ -125,6 +152,7 @@ async def start_notifier():
             change_handle_notifier = config.on_change("notifier", _handle_config_change)
         return stream_log, stream_msg
     else:
+        logger.error(f"无法找到消息推送所配置的 Telegram 账号.")
         if not change_handle_notifier:
             change_handle_notifier = config.on_change("notifier", _handle_config_change)
         return None

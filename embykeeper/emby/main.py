@@ -37,26 +37,26 @@ class EmbyManager:
         for account in removed:
             spec = self.get_spec(account)
             if account.time_range or account.interval_days:
-                # 独立账号，直接移除其任务
+                # 独立账号, 直接移除其任务
                 self.stop_account(spec)
                 logger.info(f"账号 {spec} 的 Emby 保活及其计划任务已被清除.")
             else:
-                # 整体账号被移除，标记需要重新调度
+                # 整体账号被移除, 标记需要重新调度
                 need_reschedule_unified = True
-                logger.info(f"账号 {spec} Emby 保活已被移除，将重新调度保活任务.")
+                logger.info(f"账号 {spec} Emby 保活已被移除, 将重新调度保活任务.")
 
         for account in added:
             if account.enabled:
                 if account.time_range or account.interval_days:
-                    # 新增独立账号，添加其调度任务
+                    # 新增独立账号, 添加其调度任务
                     scheduler = self.schedule_independent_account(account)
                     if scheduler:
                         self._pool.add(scheduler.schedule())
                         logger.info(f"新增的账号 {self.get_spec(account)} 的 Emby 保活计划任务已添加.")
                 else:
-                    # 新增整体账号，标记需要重新调度
+                    # 新增整体账号, 标记需要重新调度
                     need_reschedule_unified = True
-                    logger.debug(f"新增的账号 {self.get_spec(account)}，将重新调度 Emby 保活任务.")
+                    logger.debug(f"新增的账号 {self.get_spec(account)}, 将重新调度 Emby 保活任务.")
 
         if need_reschedule_unified:
             # 重新调度整体任务

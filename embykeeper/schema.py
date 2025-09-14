@@ -102,6 +102,8 @@ class NotifierConfig(ConfigModel):
     account: Optional[Union[int, str]] = 1
     immediately: Optional[bool] = False
     once: Optional[bool] = False
+    method: Optional[str] = "telegram"
+    apprise_uri: Optional[str] = None
 
 
 class SiteConfig(ConfigModel):
@@ -351,7 +353,7 @@ def format_errors(e: ValidationError) -> str:
         reverse_aliases[old_field].append(new_field)
 
     error_groups = {}
-    error_messages = ["配置文件错误，请检查配置文件:"]
+    error_messages = ["配置文件错误, 请检查配置文件:"]
 
     for error in e.errors():
         location = list(error["loc"])
@@ -364,7 +366,7 @@ def format_errors(e: ValidationError) -> str:
             else:
                 msg = msg.replace(eng, chn)
 
-        # 如果是根级别的错误，直接添加错误信息
+        # 如果是根级别的错误, 直接添加错误信息
         if not location:
             error_messages.append(f"  {msg}")
             continue
