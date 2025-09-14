@@ -23,6 +23,7 @@ scheme_names = {
     "telechecker": "每日签到",
     "telemonitor": "消息监控",
     "telemessager": "定时水群",
+    "teleregistrar": "定时抢注",
     "telelink": "账号服务",
     "telenotifier": "消息推送",
     "embywatcher": "Emby保活",
@@ -50,6 +51,9 @@ def formatter(record):
         username = ifextra("username", " ([cyan]{}[/])")
         name = ifextra("name", "([magenta]{}[/]) ")
         return f"[blue]{scheme_names[scheme]}[/]{username}: {name}{{message}}"
+    elif scheme == "teleregistrar":
+        name = ifextra("name", " ([cyan]{}[/])")
+        return f"[blue]{scheme_names[scheme]}[/]{name}: {{message}}"
     elif scheme == "embywatcher":
         ident = ifextra(["username", "server"], " ([cyan]{}@{}[/])")
         return f"[blue]{scheme_names[scheme]}[/]{ident}: {{message}}"

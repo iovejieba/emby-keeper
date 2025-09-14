@@ -2,7 +2,7 @@ import logging
 import os
 from pathlib import Path
 import sys
-from typing import List
+from typing import List, Optional
 from functools import wraps
 
 import typer
@@ -142,6 +142,20 @@ async def main(
         "-s",
         rich_help_panel="模块开关",
         help="仅启用自动水群功能",
+    ),
+    registrar: bool = typer.Option(
+        False,
+        "--registrar",
+        "-r",
+        rich_help_panel="模块开关",
+        help="仅启用注册功能",
+    ),
+    registrar_bot: Optional[str] = typer.Option(
+        None,
+        "--registrar-bot",
+        "-R",
+        rich_help_panel="模块开关",
+        help="快速反复尝试注册指定机器人 (Embyboss)",
     ),
     version: bool = typer.Option(
         None,
@@ -349,12 +363,13 @@ async def main(
         logger.warning("您当前处于计划任务调试模式, 将在 10 秒后运行计划任务.")
     config.noexit = noexit
 
-    if not checkiner and not monitor and not emby and not messager and not subsonic:
+    if not checkiner and not monitor and not emby and not messager and not subsonic and not registrar:
         checkiner = True
         emby = True
         subsonic = True
         monitor = True
         messager = True
+        registrar = True
 
     config.on_change(
         "proxy", lambda x, y: logger.bind(scheme="config").warning("修改代理设置后, 可能需要重启程序以生效.")
@@ -446,6 +461,12 @@ async def main(
 
             message_man = MessageManager()
 
+        register_man = None
+        if registrar or registrar_bot:
+            from .telegram.registrar_main import RegisterManager
+
+            register_man = RegisterManager()
+
         emby_man = None
         if emby:
             from .emby.main import EmbyManager
@@ -459,6 +480,15 @@ async def main(
             subsonic_man = SubsonicManager()
 
         pool = AsyncTaskPool()
+        
+        if registrar_bot:
+            logger.info(f"开始快速注册 @{registrar_bot}")
+            if register_man:
+                await register_man.run_single_bot(registrar_bot, instant=True)
+            else:
+                logger.error("注册管理器未初始化")
+            return
+            
         if instant and not debug_cron:
             if checkin_man:
                 pool.add(checkin_man.run_all(instant=True), "站点签到")
@@ -475,6 +505,8 @@ async def main(
         if not once:
             if checkin_man:
                 pool.add(checkin_man.schedule_all(), "站点签到")
+            if register_man:
+                pool.add(register_man.start(), "站点注册")
             if monitor_man:
                 pool.add(monitor_man.run_all(), "群组监控")
             if message_man:

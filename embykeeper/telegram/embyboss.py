@@ -23,6 +23,50 @@ class EmbybossRegister:
         self.password = password
 
     async def run(self, bot: str):
+        """单次注册尝试"""
+        return await self._register_once(bot)
+        
+    async def run_continuous(self, bot: str, interval_seconds: int = 1):
+        try:
+            panel = await self.client.wait_reply(bot, "/start")
+        except asyncio.TimeoutError:
+            self.log.warning("初始命令无响应, 无法注册.")
+            return False
+
+        while True:
+            try:
+                result = await self._attempt_with_panel(panel)
+                if result:
+                    self.log.info(f"注册成功")
+                    return True
+                
+                if interval_seconds:
+                    self.log.debug(f"注册失败, {interval_seconds} 秒后重试.")
+                    await asyncio.sleep(interval_seconds)
+                else:
+                    self.log.debug(f"注册失败, 即将重试.")
+                    return False
+            except (MessageIdInvalid, ValueError, AttributeError):
+                # 面板失效或结构变化，重新获取
+                self.log.debug("面板失效, 正在重新获取...")
+                try:
+                    panel = await self.client.wait_reply(bot, "/start")
+                except asyncio.TimeoutError:
+                    if interval_seconds:
+                        self.log.warning("重新获取面板失败, 等待后重试.")
+                        await asyncio.sleep(interval_seconds)
+                        continue
+                    else:
+                        self.log.warning("重新获取面板失败, 无法注册.")
+                        return False
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                self.log.error(f"注册异常: {e}")
+                await asyncio.sleep(5)
+        return False
+
+    async def _register_once(self, bot: str):
         try:
             panel = await self.client.wait_reply(bot, "/start")
         except asyncio.TimeoutError:
@@ -37,19 +81,20 @@ class EmbybossRegister:
         except (AttributeError, ValueError):
             self.log.warning("无法解析界面, 无法注册, 可能您已注册.")
             return False
-
+            
         if current_status != "未注册":
             self.log.warning("当前状态不是未注册, 无法注册.")
             return False
-
         if not register_status:
-            self.log.debug("未开注, 将继续监控.")
+            self.log.debug(f"未开注, 将继续监控.")
             return False
-
         if available_slots <= 0:
             self.log.debug("可注册席位不足, 将继续监控.")
             return False
+            
+        return await self._attempt_with_panel(panel)
 
+    async def _attempt_with_panel(self, panel: Message):
         # 点击创建账户按钮
         buttons = panel.reply_markup.inline_keyboard
         create_button = None
@@ -70,7 +115,7 @@ class EmbybossRegister:
         async with self.client.catch_reply(panel.chat.id) as f:
             try:
                 answer: BotCallbackAnswer = await panel.click(create_button)
-                if "已关闭" in answer.message:
+                if "已关闭" in answer.message or answer.alert:
                     self.log.debug("未开注, 将继续监控.")
                     return False
             except (TimeoutError, MessageIdInvalid):
@@ -98,4 +143,5 @@ class EmbybossRegister:
             self.log.warning("发送凭据后注册失败.")
             return False
         else:
+            self.log.info("注册成功!")
             return True

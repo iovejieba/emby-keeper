@@ -82,7 +82,7 @@ class ClientsSession:
                 cls.pool.pop(phone, None)
                 if client.stop_handlers:
                     logger.debug(
-                        f'开始执行账号 "{client.phone_number}" 的停止处理程序, 共 {len(client.stop_handlers)} 个.'
+                        f'开始执行账号 "{phone_masked}" 的停止处理程序, 共 {len(client.stop_handlers)} 个.'
                     )
                     try:
                         await asyncio.wait_for(

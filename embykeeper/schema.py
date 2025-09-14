@@ -88,6 +88,15 @@ class MessagerConfig(ConfigModel):
         return getattr(self, site, {})
 
 
+class RegistrarConfig(ConfigModel):
+    concurrency: Optional[int] = 1
+
+    model_config = {"extra": "allow"}
+
+    def get_site_config(self, site: str) -> Dict[str, Any]:
+        return getattr(self, site, {})
+
+
 class NotifierConfig(ConfigModel):
     enabled: Optional[bool] = False
     account: Optional[Union[int, str]] = 1
@@ -99,6 +108,7 @@ class SiteConfig(ConfigModel):
     checkiner: Optional[List[str]] = None
     monitor: Optional[List[str]] = None
     messager: Optional[List[str]] = None
+    registrar: Optional[List[str]] = None
 
 
 class MediaServerBaseConfig(ConfigModel):
@@ -181,6 +191,7 @@ class TelegramAccount(ConfigModel):
     checkiner: Optional[bool] = True
     monitor: Optional[bool] = False
     messager: Optional[bool] = False
+    registrar: Optional[bool] = False
     api_id: Optional[str] = None
     api_hash: Optional[str] = None
     session: Optional[str] = None
@@ -189,6 +200,7 @@ class TelegramAccount(ConfigModel):
     # 账号单独配置
     site: Optional[SiteConfig] = None
     checkiner_config: Optional[CheckinerConfig] = None
+    registrar_config: Optional[RegistrarConfig] = None
 
     def get_config_key(self):
         import hashlib
@@ -240,6 +252,7 @@ class Config(ConfigModel):
     checkiner: Optional[CheckinerConfig] = CheckinerConfig()
     monitor: Optional[MonitorConfig] = MonitorConfig()
     messager: Optional[MessagerConfig] = MessagerConfig()
+    registrar: Optional[RegistrarConfig] = RegistrarConfig()
     telegram: Optional[TelegramConfig] = TelegramConfig()
     notifier: Optional[NotifierConfig] = NotifierConfig()
     site: Optional[SiteConfig] = None
