@@ -8,3 +8,4 @@ emby_used = Event()
 subsonic_used = Event()
 exit_handlers = []
 use_mongodb_config = False
+telegram_test_server = False

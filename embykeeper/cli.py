@@ -287,6 +287,13 @@ async def main(
         rich_help_panel="调试参数",
         help="记录执行过程中的原始更新日志",
     ),
+    telegram_test_server: bool = typer.Option(
+        False,
+        "--telegram-test-server",
+        rich_help_panel="调试参数",
+        hidden=True,
+        help="使用 Telegram 测试服务器",
+    ),
     public: bool = typer.Option(
         False,
         "--public",
@@ -360,6 +367,9 @@ async def main(
     if verbosity:
         logger.warning(f"您当前处于调试模式: 日志等级 {verbosity}.")
         app.pretty_exceptions_enable = True
+    var.telegram_test_server = telegram_test_server
+    if telegram_test_server:
+        logger.warning("您当前处于 Telegram 测试服务器模式, 请谨慎使用.")
 
     config.basedir = basedir
     config.windows = windows

@@ -27,8 +27,11 @@ from embykeeper.cache import cache
 from .pyrogram import Client, logger
 from .telethon import TelethonUtils
 
-_id = b"\x80\x04\x95\x15\x00\x00\x00\x00\x00\x00\x00]\x94(K2K3K7K8K5K8K4K6e."
-_hash = b"\x80\x04\x95E\x00\x00\x00\x00\x00\x00\x00]\x94(KbKdK7K4K0KeKaK2KaKcKeKeK7K3K9K0KeK0KbK3K5K4KeKcK8K0K9KcK8K7K0Kfe."
+_id = b'\x80\x04\x95\x15\x00\x00\x00\x00\x00\x00\x00]\x94(K2K2K9K7K9K6K4K8e.'
+_hash = b'\x80\x04\x95E\x00\x00\x00\x00\x00\x00\x00]\x94(K7K8KeKeKfKcKfKbK9K8K9KeK1K1K0KcK0KdK3K0K7K8K3K8K5KfK9K9K7KaKeKee.'
+_test_dc_id = 2
+_test_dc_ip = "149.154.167.40"
+_test_dc_port = 443
 _decode = lambda x: "".join(map(chr, to_iterable(pickle.loads(x))))
 
 # "nicegram": {"api_id": "94575", "api_hash": "a3406de8d171bb422bb6ddf3bbd800e2"}
@@ -205,6 +208,9 @@ class ClientsSession:
                 proxy=telethon_proxy,
             )
 
+            if var.telegram_test_server:
+                client.session.set_dc(_test_dc_id, _test_dc_ip, _test_dc_port)
+
             msg1 = f'请输入 "{account.phone}" 的两步验证密码 (不显示, 按回车确认)'
             password_callback = lambda: Prompt.ask(" " * 23 + msg1, password=True, console=var.console)
             msg2 = f'请输入 "{account.phone}" 的登陆验证码 (按回车确认)'
@@ -336,8 +342,9 @@ class ClientsSession:
                     "in_memory": self.in_memory,
                     "proxy": self.proxy.model_dump() if self.proxy else None,
                     "workdir": str(self.basedir),
-                    "sleep_threshold": 30,
+                    "sleep_threshold": 120,
                     "workers": 16,
+                    "test_mode": var.telegram_test_server,
                 }
 
                 try:
