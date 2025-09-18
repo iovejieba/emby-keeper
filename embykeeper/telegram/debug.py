@@ -284,23 +284,3 @@ async def analyzer(chats, keywords, timerange, limit=10000, outputs=1000):
                     allow_unicode=True,
                     Dumper=IndentDumper,
                 )
-
-
-async def debug_notifier():
-    from .notify import start_notifier
-
-    if await start_notifier():
-        logger.info("以下是发送的日志:")
-        logger.bind(msg=True, scheme="debugtool").info(
-            "这是一条用于测试的即时消息, 使用 debug_notify 触发 😉."
-        )
-        logger.bind(log=True, scheme="debugtool").info(
-            "这是一条用于测试的日志消息, 使用 debug_notify 触发 😉."
-        )
-        if config.notifier.method == "apprise":
-            logger.info("已尝试发送, 请至 Apprise 配置的接收端查看.")
-        elif config.notifier.method == "telegram":
-            logger.info("已尝试发送, 请至 @embykeeper_bot 查看.")
-        await asyncio.sleep(10)
-    else:
-        logger.error("您当前没有配置有效的日志通知 (未启用日志通知或未配置账号), 请检查配置文件.")

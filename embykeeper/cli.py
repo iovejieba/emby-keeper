@@ -458,7 +458,7 @@ async def main(
         return await dumper(dump)
 
     if debug_notify:
-        from .telegram.debug import debug_notifier
+        from .notify import debug_notifier
 
         return await debug_notifier()
 
@@ -519,7 +519,7 @@ async def main(
             await pool.wait()
             logger.debug("启动时立刻执行签到和保活: 已完成.")
         if (not once) or config.noexit:
-            from .telegram.notify import start_notifier
+            from .notify import start_notifier
 
             streams = await start_notifier()
         if not once:
