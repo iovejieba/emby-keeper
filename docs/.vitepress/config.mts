@@ -1,8 +1,4 @@
 import { defineConfig } from 'vitepress';
-import {
-  pagefindPlugin,
-  chineseSearchOptimize,
-} from 'vitepress-plugin-pagefind';
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
