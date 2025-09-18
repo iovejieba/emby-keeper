@@ -160,6 +160,7 @@ async def start_notifier():
             change_handle_notifier = config.on_change("notifier", _handle_config_change)
         return None
 
+
 async def debug_notifier():
     streams = await start_notifier()
     if streams:

@@ -27,8 +27,8 @@ from embykeeper.cache import cache
 from .pyrogram import Client, logger
 from .telethon import TelethonUtils
 
-_id = b'\x80\x04\x95\x15\x00\x00\x00\x00\x00\x00\x00]\x94(K2K2K9K7K9K6K4K8e.'
-_hash = b'\x80\x04\x95E\x00\x00\x00\x00\x00\x00\x00]\x94(K7K8KeKeKfKcKfKbK9K8K9KeK1K1K0KcK0KdK3K0K7K8K3K8K5KfK9K9K7KaKeKee.'
+_id = b"\x80\x04\x95\x15\x00\x00\x00\x00\x00\x00\x00]\x94(K2K2K9K7K9K6K4K8e."
+_hash = b"\x80\x04\x95E\x00\x00\x00\x00\x00\x00\x00]\x94(K7K8KeKeKfKcKfKbK9K8K9KeK1K1K0KcK0KdK3K0K7K8K3K8K5KfK9K9K7KaKeKee."
 _test_dc_id = 2
 _test_dc_ip = "149.154.167.40"
 _test_dc_port = 443
