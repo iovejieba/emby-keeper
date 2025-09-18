@@ -43,6 +43,7 @@ from pyrogram.storage.sqlite_storage import SQLiteStorage
 from pyrogram.handlers.handler import Handler
 
 from embykeeper import var, __name__ as __product__, __version__
+from embykeeper.schema import TelegramAccount
 from embykeeper.utils import async_partial, show_exception
 
 var.tele_used.set()
@@ -75,7 +76,8 @@ class Dispatcher(dispatcher.Dispatcher):
         self.mutex = asyncio.Lock()
 
     async def start(self):
-        logger.bind(username=self.client.phone_number).debug(f"Telegram 更新分配器正在启动.")
+        phone_masked = TelegramAccount.get_phone_masked(self.client.phone_number)
+        logger.debug(f'Telegram 更新分配器正在启动: "{phone_masked}".')
 
         if callable(self.client.start_handler):
             try:
@@ -91,10 +93,11 @@ class Dispatcher(dispatcher.Dispatcher):
             if not self.client.skip_updates:
                 await self.client.recover_gaps()
 
-        logger.bind(username=self.client.phone_number).debug("Telegram 更新分配器已启动.")
+        logger.debug(f'Telegram 更新分配器已启动: "{phone_masked}".')
 
     async def stop(self, clear_handlers: bool = True):
-        logger.bind(username=self.client.phone_number).debug("Telegram 更新分配器正在停止.")
+        phone_masked = TelegramAccount.get_phone_masked(self.client.phone_number)
+        logger.debug(f'Telegram 更新分配器正在停止: "{phone_masked}".')
 
         if callable(self.client.stop_handler):
             try:
@@ -117,7 +120,7 @@ class Dispatcher(dispatcher.Dispatcher):
                 self.handler_worker_tasks.clear()
                 self.groups.clear()
 
-        logger.bind(username=self.client.phone_number).debug("Telegram 更新分配器已停止.")
+        logger.debug(f'Telegram 更新分配器已停止: "{phone_masked}".')
 
     def add_handler(self, handler, group: int):
         async def fn():
