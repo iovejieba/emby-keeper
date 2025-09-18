@@ -32,6 +32,7 @@ scheme_names = {
     "debugtool": "开发工具",
     "config": "配置文件",
     "cfsolver": "验证解析",
+    "notifier": "消息推送",
 }
 
 
@@ -60,7 +61,7 @@ def formatter(record):
     elif scheme == "subsonic":
         ident = ifextra(["username", "server"], " ([cyan]{}@{}[/])")
         return f"[blue]{scheme_names[scheme]}[/]{ident}: {{message}}"
-    elif scheme in ("datamanager", "debugtool", "config", "cfsolver"):
+    elif scheme in ("datamanager", "debugtool", "config", "cfsolver", "notifier"):
         return f"[blue]{scheme_names[scheme]}[/]: {{message}}"
     else:
         return "{message}"

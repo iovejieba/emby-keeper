@@ -1,17 +1,14 @@
 import apprise
 from loguru import logger
-import asyncio
-
 from rich.text import Text
 
-logger = logger.bind(scheme="apprise", nonotify=True)
+logger = logger.bind(scheme="notifier", nonotify=True)
 
 
 class AppriseStream:
     def __init__(self, uri: str):
         self.apobj = apprise.Apprise()
         self.apobj.add(uri)
-        self.loop = asyncio.get_event_loop()
 
     def write(self, message):
         # The message from loguru has a newline at the end, remove it.
@@ -30,11 +27,8 @@ class AppriseStream:
         elif level == "success":
             notify_type = apprise.NotifyType.SUCCESS
 
-        async def notify():
-            if not await self.apobj.async_notify(body=body, title="Embykeeper", notify_type=notify_type):
-                logger.warning(f"Failed to send notification via Apprise.")
-
-        self.loop.create_task(notify())
+        if not self.apobj.notify(body=body, title="Embykeeper", notify_type=notify_type):
+            logger.warning(f"Failed to send notification via Apprise.")
 
     def close(self):
         pass
