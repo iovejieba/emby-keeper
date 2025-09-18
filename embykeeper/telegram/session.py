@@ -74,6 +74,11 @@ class ClientsSession:
             entry = cls.pool.get(phone, None)
             if not entry:
                 return
+            # Check if entry is a Task (account still logging in)
+            if isinstance(entry, asyncio.Task):
+                entry.cancel()
+                cls.pool.pop(phone, None)
+                return
             try:
                 client: Client
                 client, ref = entry
@@ -233,7 +238,13 @@ class ClientsSession:
                 else:
                     break
                 finally:
-                    await client.disconnect()
+                    if client.is_connected():
+                        try:
+                            await asyncio.wait_for(client.disconnect(), timeout=2.0)
+                        except asyncio.TimeoutError:
+                            logger.debug("等待 Telethon 客户端断开超时.")
+                        except Exception:
+                            pass
             else:
                 return None
 
@@ -288,6 +299,7 @@ class ClientsSession:
             for i in range(3):
                 session_str_src = None
                 session_str = account.session
+                is_newly_created_session = False
                 if session_str:
                     session_str_src = "session"
                 else:
@@ -310,6 +322,7 @@ class ClientsSession:
                         f'账号 "{phone_masked}" 登录凭据存在, 仅内存模式{"启用" if self.in_memory else "禁用"}.'
                     )
                 else:
+                    is_newly_created_session = True
                     logger.debug(
                         f'账号 "{phone_masked}" 登录凭据不存在, 即将进入登录流程, 仅内存模式{"启用" if self.in_memory else "禁用"}.'
                     )
@@ -381,6 +394,10 @@ class ClientsSession:
                     logger.warning(f'登录账号 "{phone_masked}" 时发生 API key 限制, 将被跳过.')
                     break
                 except (Unauthorized, AuthKeyDuplicated) as e:
+                    if is_newly_created_session:
+                        logger.error(f'账号 "{phone_masked}" 新生成的会话凭据无法被客户端使用, 登录失败.')
+                        show_exception(e)
+                        return None
                     await client.storage.delete()
                     if session_str_src == "session":
                         logger.error(f'账号 "{phone_masked}" 由于配置中提供的 session 已被注销, 将被跳过.')
