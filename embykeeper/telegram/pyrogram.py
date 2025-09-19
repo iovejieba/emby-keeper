@@ -354,17 +354,19 @@ class Client(pyrogram.Client):
         if self.bot_token:
             return await self.sign_in_bot(self.bot_token)
         retry = False
+        sent_code = await self.send_code(self.phone_number)
+        code_target = {
+            SentCodeType.APP: " Telegram 客户端",
+            SentCodeType.SMS: "短信",
+            SentCodeType.CALL: "来电",
+            SentCodeType.FLASH_CALL: "闪存呼叫",
+            SentCodeType.FRAGMENT_SMS: " Fragment 短信",
+            SentCodeType.EMAIL_CODE: "邮件",
+        }
+
+        attempts = 0
         while True:
             try:
-                sent_code = await self.send_code(self.phone_number)
-                code_target = {
-                    SentCodeType.APP: " Telegram 客户端",
-                    SentCodeType.SMS: "短信",
-                    SentCodeType.CALL: "来电",
-                    SentCodeType.FLASH_CALL: "闪存呼叫",
-                    SentCodeType.FRAGMENT_SMS: " Fragment 短信",
-                    SentCodeType.EMAIL_CODE: "邮件",
-                }
                 if not self.phone_code:
                     if retry:
                         msg = f'验证码错误, 请重新输入 "{self.phone_number}" 的登录验证码 (按回车确认)'
@@ -380,6 +382,10 @@ class Client(pyrogram.Client):
             except (CodeInvalid, PhoneCodeInvalid):
                 self.phone_code = None
                 retry = True
+                attempts += 1
+                if attempts >= 3:
+                    raise BadRequest(f'登录 "{self.phone_number}" 时出现异常: 验证码尝试次数过多, 请稍后重试.')
+                await asyncio.sleep(3)
             except SessionPasswordNeeded:
                 retry = False
                 while True:
@@ -406,6 +412,10 @@ class Client(pyrogram.Client):
                 logger.error(f"登录时出现异常错误!")
                 show_exception(e, regular=False)
                 retry = True
+                attempts += 1
+                if attempts >= 3:
+                    raise BadRequest(f'登录 "{self.phone_number}" 时出现异常: 尝试次数过多, 请稍后重试.')
+                await asyncio.sleep(3)
             else:
                 break
         if isinstance(signed_in, types.User):

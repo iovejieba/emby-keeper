@@ -155,7 +155,10 @@ class ClientsSession:
                 )
             return False
         except (httpx.ConnectError, httpx.ConnectTimeout):
-            logger.warning(f"无法连接到 Telegram 服务器, 您的网络状态可能不好, 敬请注意. 程序将继续运行.")
+            if self.proxy:
+                logger.warning(f"无法连接到 Telegram 服务器, 您的网络状态可能不好, 或代理无法连接, 敬请注意. 程序将继续运行.")
+            else:
+                logger.warning(f"无法连接到 Telegram 服务器, 您的网络状态可能不好, 敬请注意. 您可以通过配置文件设置代理. 程序将继续运行.")
             return False
         except Exception as e:
             logger.warning(f"检测网络状态时发生错误, 网络检测将被跳过.")
@@ -363,24 +366,34 @@ class ClientsSession:
                 try:
                     client = Client(**client_params)
                     try:
-                        await asyncio.wait_for(client.start(), 20)
+                        await client.start()
                     except sqlite3.OperationalError as e:
                         if "database is locked" in str(e) and not self.in_memory:
                             suffix = "".join(str(random.randint(0, 9)) for _ in range(6))
                             client_params["name"] = f"{account.phone}_{suffix}"
                             logger.debug(f'会话文件被锁定, 正在尝试使用新文件: {client_params["name"]}')
+                            try:
+                                await client.stop()
+                            except Exception:
+                                pass
                             client = Client(**client_params)
-                            await asyncio.wait_for(client.start(), 20)
+                            await client.start()
                         else:
                             raise
                     except asyncio.TimeoutError:
+                        try:
+                            await client.stop()
+                        except Exception:
+                            pass
                         if self.proxy:
                             logger.error(
                                 f"无法连接到 Telegram 服务器, 请检查您代理的可用性, 正在重试 ({i+1} / 3)."
                             )
+                            await asyncio.sleep(3)
                             continue
                         else:
                             logger.error(f"无法连接到 Telegram 服务器, 请检查您的网络, 正在重试 ({i+1} / 3).")
+                            await asyncio.sleep(3)
                             continue
                     else:
                         session_str = await client.export_session_string()
@@ -407,6 +420,7 @@ class ClientsSession:
                         logger.error(f'账号 "{phone_masked}" 已被注销, 将在 3 秒后重新登录.')
                         show_exception(e)
                         cache.delete(session_str_key)
+                        await asyncio.sleep(3)
                         continue
                     else:
                         logger.error(f'账号 "{phone_masked}" 已被注销, 将在 3 秒后重新登录.')
