@@ -156,9 +156,13 @@ class ClientsSession:
             return False
         except (httpx.ConnectError, httpx.ConnectTimeout):
             if self.proxy:
-                logger.warning(f"无法连接到 Telegram 服务器, 您的网络状态可能不好, 或代理无法连接, 敬请注意. 程序将继续运行.")
+                logger.warning(
+                    f"无法连接到 Telegram 服务器, 您的网络状态可能不好, 或代理无法连接, 敬请注意. 程序将继续运行."
+                )
             else:
-                logger.warning(f"无法连接到 Telegram 服务器, 您的网络状态可能不好, 敬请注意. 您可以通过配置文件设置代理. 程序将继续运行.")
+                logger.warning(
+                    f"无法连接到 Telegram 服务器, 您的网络状态可能不好, 敬请注意. 您可以通过配置文件设置代理. 程序将继续运行."
+                )
             return False
         except Exception as e:
             logger.warning(f"检测网络状态时发生错误, 网络检测将被跳过.")

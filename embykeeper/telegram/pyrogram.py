@@ -384,7 +384,9 @@ class Client(pyrogram.Client):
                 retry = True
                 attempts += 1
                 if attempts >= 3:
-                    raise BadRequest(f'登录 "{self.phone_number}" 时出现异常: 验证码尝试次数过多, 请稍后重试.')
+                    raise BadRequest(
+                        f'登录 "{self.phone_number}" 时出现异常: 验证码尝试次数过多, 请稍后重试.'
+                    )
                 await asyncio.sleep(3)
             except SessionPasswordNeeded:
                 retry = False
