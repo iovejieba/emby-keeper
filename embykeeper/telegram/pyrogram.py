@@ -8,7 +8,6 @@ import asyncio
 import inspect
 import os
 from pathlib import Path
-import shutil
 import sqlite3
 import struct
 import tempfile
@@ -39,7 +38,7 @@ from pyrogram.handlers import (
     StopHandler,
     ConnectHandler,
 )
-from pyrogram.storage.sqlite_storage import SQLiteStorage
+from pyrogram.storage.sqlite_storage import SQLiteStorage, TEST, PROD
 from pyrogram.handlers.handler import Handler
 
 from embykeeper import var, __name__ as __product__, __version__
@@ -264,6 +263,11 @@ class FileStorage(SQLiteStorage):
                     raise temp_e
             else:
                 raise
+        
+        if self.use_wal:
+            self.conn.execute("PRAGMA journal_mode=WAL")
+        else:
+            self.conn.execute("PRAGMA journal_mode=DELETE")
 
         # Check if database has required tables before calling update
         database_is_valid = False
@@ -282,7 +286,7 @@ class FileStorage(SQLiteStorage):
         if not file_exists or not database_is_valid:
             if file_exists and not database_is_valid:
                 logger.debug(f"数据库文件结构不完整, 重新初始化: {path}")
-            self.create()
+            await self.create()
             if self.session_string:
                 # Old format
                 if len(self.session_string) in [self.SESSION_STRING_SIZE, self.SESSION_STRING_SIZE_64]:
@@ -313,6 +317,14 @@ class FileStorage(SQLiteStorage):
                 )
 
                 await self.dc_id(dc_id)
+
+                if test_mode:
+                    await self.server_address(TEST[dc_id])
+                    await self.port(80)
+                else:
+                    await self.server_address(PROD[dc_id])
+                    await self.port(443)
+
                 await self.api_id(api_id)
                 await self.test_mode(test_mode)
                 await self.auth_key(auth_key)
@@ -320,7 +332,7 @@ class FileStorage(SQLiteStorage):
                 await self.is_bot(is_bot)
                 await self.date(0)
         else:
-            self.update()
+            await self.update()
 
         with self.conn:
             self.conn.execute("VACUUM")
@@ -334,17 +346,18 @@ class FileStorage(SQLiteStorage):
             logger.warning(f"删除会话文件失败: {self.database}, 错误: {e}")
             raise
 
-
 class Client(pyrogram.Client):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
 
         if self.in_memory:
-            self.storage = FileStorage(
+            self.storage = SQLiteStorage(
                 self.name, workdir=self.workdir, session_string=self.session_string, in_memory=self.in_memory
             )
         else:
-            self.storage = SQLiteStorage(self.name, workdir=self.workdir, session_string=self.session_string)
+            self.storage = FileStorage(
+                self.name, workdir=self.workdir, session_string=self.session_string, in_memory=self.in_memory
+            )
 
         self.dispatcher: Dispatcher = Dispatcher(self)
 

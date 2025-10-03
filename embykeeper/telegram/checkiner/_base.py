@@ -311,8 +311,13 @@ class BotCheckin(BaseBotCheckin):
             if not self.chat_name:
                 self.log.debug(f"[gray50]禁用提醒 {self.timeout} 秒: {bot.username}[/]")
                 peer = InputNotifyPeer(peer=await self.client.resolve_peer(ident))
-                settings: PeerNotifySettings = await self.client.invoke(GetNotifySettings(peer=peer))
-                old_mute_until = settings.mute_until
+                try:
+                    settings: PeerNotifySettings = await self.client.invoke(GetNotifySettings(peer=peer))
+                except FloodWait:
+                    self.log.debug(f"[gray50]获取当前提醒设置因访问超限而失败: {bot.username}[/]")
+                    old_mute_until = 0
+                else:
+                    old_mute_until = settings.mute_until
                 try:
                     await self.client.mute_chat(ident, time.time() + self.timeout + 10)
                 except FloodWait:
@@ -343,6 +348,8 @@ class BotCheckin(BaseBotCheckin):
                                     self.log.debug(f"[gray50]重新归档成功: {ident}[/]")
                             except asyncio.TimeoutError:
                                 self.log.debug(f"[gray50]归档失败: {ident}[/]")
+                            except FloodWait:
+                                self.log.debug(f"[gray50]归档因访问超限而失败: {ident}[/]")
                         if not self.chat_name:
                             self.log.debug(f"[gray50]将会话设为已读: {ident}[/]")
                             try:
@@ -350,6 +357,8 @@ class BotCheckin(BaseBotCheckin):
                                     self.log.debug(f"[gray50]设为已读成功: {ident}[/]")
                             except asyncio.TimeoutError:
                                 self.log.debug(f"[gray50]设为已读失败: {ident}[/]")
+                            except FloodWait:
+                                self.log.debug(f"[gray50]设为已读因访问超限而失败: {ident}[/]")
             except OSError as e:
                 self.log.warning(f'初始化错误: "{e}", 签到器将停止.')
                 show_exception(e)

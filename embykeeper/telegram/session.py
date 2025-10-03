@@ -14,6 +14,7 @@ import random
 
 import httpx
 from pyrogram.errors import ApiIdPublishedFlood, AuthKeyDuplicated, BadMsgNotification, RPCError, Unauthorized
+from pyrogram.session.session import AuthKeyNotFound
 from pyrogram.storage.storage import Storage
 from pyrogram.session import Session
 from rich.prompt import Prompt
@@ -104,6 +105,7 @@ class ClientsSession:
                 else:
                     logger.debug("未注册退出处理程序, 开始清理监听.")
                 await client.stop()
+                await client.storage.delete()
                 logger.debug(f'已停止账号 "{phone_masked}" 的监听和任务.')
 
     @classmethod
@@ -214,7 +216,7 @@ class ClientsSession:
                 tmp_file.name,
                 api_id=account.api_id or API_ID,
                 api_hash=account.api_hash or API_HASH,
-                system_version="4.16.30-vxEMBY",
+                system_version="4.16.30-vxEmby",
                 device_model="A320MH",
                 app_version=__version__,
                 proxy=telethon_proxy,
@@ -257,16 +259,17 @@ class ClientsSession:
 
         session = StringSession(session_string)
         Dt = Storage.SESSION_STRING_FORMAT
+
         return (
             base64.urlsafe_b64encode(
                 struct.pack(
                     Dt,
                     session.dc_id,
                     int(account.api_id or API_ID),
-                    None,
+                    int(bool(var.telegram_test_server)),
                     session.auth_key.key,
                     user_id,
-                    user_bot,
+                    int(user_bot),
                 )
             )
             .decode()
@@ -284,23 +287,19 @@ class ClientsSession:
             self.basedir.mkdir(parents=True, exist_ok=True)
             phone_masked = TelegramAccount.get_phone_masked(account.phone)
             logger.info(f'登录至账号 "{phone_masked}", 请耐心等待.')
-
-            # Clean up old suffixed session files that are not locked when not in memory mode
+            
             if not self.in_memory:
                 session_base = str(self.basedir / f"{account.phone}")
                 for session_file in glob.glob(f"{session_base}_[0-9]*.session"):
                     try:
-                        # Try to open the database with immediate timeout
                         conn = sqlite3.connect(session_file, timeout=0.1)
                         conn.close()
-                        # If we can open it, it's not locked, so we can delete it
                         try:
                             os.remove(session_file)
                             logger.debug(f"已清理未被占用的会话文件: {session_file}")
                         except OSError:
                             pass
                     except sqlite3.OperationalError:
-                        # Database is locked by another process
                         pass
 
             for i in range(3):
@@ -312,18 +311,18 @@ class ClientsSession:
                 else:
                     session_str_key = f"telegram.session_str.{account.get_config_key()}"
                     session_str = cache.get(session_str_key)
+                    if session_str:
+                        session_str_src = "cache"
                 old_login_file = config.basedir / f"{account.phone}.login"
                 if not session_str and old_login_file.exists():
                     try:
                         session_str = old_login_file.read_text().strip()
                         cache.set(session_str_key, session_str)
-                        old_login_file.unlink()  # Delete old file after migration
+                        old_login_file.unlink()
                         session_str_src = "cache"
-                        logger.info(f'从旧登录文件迁移账号 "{phone_masked}" 的登录凭据至缓存.')
+                        logger.info(f'从旧版本登录文件迁移账号 "{phone_masked}" 的登录凭据至缓存.')
                     except Exception as e:
                         logger.warning(f"读取旧版本登录文件时发生错误, 请重新登陆.")
-                if session_str:
-                    session_str_src = "cache"
                 if session_str:
                     logger.debug(
                         f'账号 "{phone_masked}" 登录凭据存在, 仅内存模式{"启用" if self.in_memory else "禁用"}.'
@@ -349,7 +348,7 @@ class ClientsSession:
                         else:
                             logger.warning(f'登录账号 "{phone_masked}" 尝试次数超限, 将被跳过.')
                             return None
-
+                
                 client_params = {
                     "app_version": __version__,
                     "device_model": "A320MH",
@@ -371,19 +370,6 @@ class ClientsSession:
                     client = Client(**client_params)
                     try:
                         await client.start()
-                    except sqlite3.OperationalError as e:
-                        if "database is locked" in str(e) and not self.in_memory:
-                            suffix = "".join(str(random.randint(0, 9)) for _ in range(6))
-                            client_params["name"] = f"{account.phone}_{suffix}"
-                            logger.debug(f'会话文件被锁定, 正在尝试使用新文件: {client_params["name"]}')
-                            try:
-                                await client.stop()
-                            except Exception:
-                                pass
-                            client = Client(**client_params)
-                            await client.start()
-                        else:
-                            raise
                     except asyncio.TimeoutError:
                         try:
                             await client.stop()
@@ -410,7 +396,7 @@ class ClientsSession:
                 except ApiIdPublishedFlood:
                     logger.warning(f'登录账号 "{phone_masked}" 时发生 API key 限制, 将被跳过.')
                     break
-                except (Unauthorized, AuthKeyDuplicated) as e:
+                except (Unauthorized, AuthKeyDuplicated, AuthKeyNotFound) as e:
                     if is_newly_created_session:
                         logger.error(f'账号 "{phone_masked}" 新生成的会话凭据无法被客户端使用, 登录失败.')
                         show_exception(e)
