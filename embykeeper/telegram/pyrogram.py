@@ -263,7 +263,7 @@ class FileStorage(SQLiteStorage):
                     raise temp_e
             else:
                 raise
-        
+
         if self.use_wal:
             self.conn.execute("PRAGMA journal_mode=WAL")
         else:
@@ -345,6 +345,7 @@ class FileStorage(SQLiteStorage):
         except OSError as e:
             logger.warning(f"删除会话文件失败: {self.database}, 错误: {e}")
             raise
+
 
 class Client(pyrogram.Client):
     def __init__(self, *args, **kw):

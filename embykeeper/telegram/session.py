@@ -287,7 +287,7 @@ class ClientsSession:
             self.basedir.mkdir(parents=True, exist_ok=True)
             phone_masked = TelegramAccount.get_phone_masked(account.phone)
             logger.info(f'登录至账号 "{phone_masked}", 请耐心等待.')
-            
+
             if not self.in_memory:
                 session_base = str(self.basedir / f"{account.phone}")
                 for session_file in glob.glob(f"{session_base}_[0-9]*.session"):
@@ -348,7 +348,7 @@ class ClientsSession:
                         else:
                             logger.warning(f'登录账号 "{phone_masked}" 尝试次数超限, 将被跳过.')
                             return None
-                
+
                 client_params = {
                     "app_version": __version__,
                     "device_model": "A320MH",
