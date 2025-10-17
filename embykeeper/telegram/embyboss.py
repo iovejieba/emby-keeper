@@ -121,7 +121,7 @@ class EmbybossRegister:
             except (TimeoutError, MessageIdInvalid):
                 pass
             try:
-                msg: Message = await asyncio.wait_for(f, 15)
+                msg: Message = await asyncio.wait_for(f, 10)
             except asyncio.TimeoutError:
                 self.log.warning("创建账户按钮点击无响应, 无法注册.")
                 return False
