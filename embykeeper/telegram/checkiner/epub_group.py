@@ -15,7 +15,7 @@ class EPubGroupCheckin(BotCheckin):
 
     async def send_checkin(self, retry=False):
         try:
-            msg = await self.send("签到")
+            msg = await self.send("就位")
             if msg:
                 self.mid = msg.id
         except ChatWriteForbidden:
