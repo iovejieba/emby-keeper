@@ -1,3 +1,4 @@
+import asyncio
 import random
 import re
 import string
@@ -34,6 +35,11 @@ class TemplateAMonitorConfig(BaseModel):
     try_register_bot: Optional[str] = (
         None  # 尝试注册的机器人名称 (需为: https://github.com/berry8838/Sakura_embyboss)
     )
+    # 注册相关配置
+    register_max_attempts: int = 3  # 注册最大重试次数
+    register_accelerate_threshold: int = 5  # 抢注加速阈值（席位≤该值触发加速）
+    register_interval_seconds: int = 1  # 注册重试间隔（秒）
+    security_code: Optional[str] = None  # 自定义安全码（未指定则随机生成）
 
 
 class TemplateAMonitor(Monitor):
@@ -63,10 +69,22 @@ class TemplateAMonitor(Monitor):
         self.trigger_max_time = self.t_config.trigger_max_time
         self.allow_caption = self.t_config.allow_caption
         self.allow_text = self.t_config.allow_text
+        # 初始化注册相关配置
+        self.register_max_attempts = self.t_config.register_max_attempts
+        self.register_accelerate_threshold = self.t_config.register_accelerate_threshold
+        self.register_interval_seconds = self.t_config.register_interval_seconds
+        self.security_code = self.t_config.security_code  # 自定义安全码
         if (not self.chat_keyword) and (not self.chat_user) and (not self.chat_name):
             self.log.warning(f"初始化失败: 没有定义任何监控项, 请参考教程进行配置.")
             return False
         self.log = logger.bind(scheme="telemonitor", name=self.name, username=self.client.me.full_name)
+        # 预校验自定义安全码格式（若配置）
+        if self.security_code:
+            self._log_security_code_info()  # 输出安全码配置日志
+            if not self._validate_security_code(self.security_code):
+                self.log.warning(f"自定义安全码 '{self.security_code}' 不符合要求（需4-6位数字），可能导致注册失败！")
+        else:
+            self.log.info(f"未配置自定义安全码，当监控到开注时，将自动生成4-6位数字安全码.")
         return True
 
     async def on_trigger(self, message: Message, key, reply):
@@ -82,40 +100,82 @@ class TemplateAMonitor(Monitor):
                 self.log.bind(log=True).info(msg)
         
         if self.t_config.try_register_bot:
-            # 获取预注册的用户名
+            # 1. 获取预注册的用户名并校验格式
             unique_name = self.get_unique_name()
             if not unique_name:
                 error_msg = "无法获取唯一用户名，注册失败"
                 self._send_notification(error_msg, is_error=True)
                 return
             
-            # 生成4-6位数字安全码
-            security_code = "".join(random.choices(string.digits, k=random.randint(4, 6)))
+            # 2. 获取安全码（优先使用自定义，否则随机生成）
+            security_code = self._get_security_code()
+            if not security_code:
+                error_msg = "安全码生成失败（格式不符合要求），注册终止"
+                self._send_notification(error_msg, is_error=True)
+                return
             
             self.log.info(f"开始自动注册: 用户名={unique_name}, 安全码={security_code}")
             
-            # 添加随机延迟避免过于及时
-            delay = random.uniform(1, 5)
-            await asyncio.sleep(delay)
+            # 3. 触发后延迟（可通过配置关闭）
+            if self.t_config.chat_delay > 0:
+                self.log.debug(f"触发后延迟 {self.t_config.chat_delay} 秒执行注册")
+                await asyncio.sleep(self.t_config.chat_delay)
             
-            # 调用注册器
-            register = EmbybossRegister(self.client, self.log, unique_name, security_code)
-            success = await register.run(self.t_config.try_register_bot)
+            # 4. 调用注册器（支持抢注加速、重试）
+            register = EmbybossRegister(
+                client=self.client,
+                logger=self.log,
+                username=unique_name,
+                password=security_code,
+                max_attempts=self.register_max_attempts
+            )
+            if hasattr(register, "accelerate_threshold"):
+                register.accelerate_threshold = self.register_accelerate_threshold
             
-            # 发送注册结果通知
+            # 5. 执行持续注册
+            self.log.info(f"开始尝试注册到 {self.t_config.try_register_bot}（最多{self.register_max_attempts}次重试）")
+            success = await register.run_continuous(
+                bot=self.t_config.try_register_bot,
+                interval_seconds=self.register_interval_seconds
+            )
+            
+            # 6. 发送注册结果通知
             if success:
-                success_msg = f"✅ 成功注册到 {self.t_config.try_register_bot}"
+                success_msg = f"✅ 成功注册到 {self.t_config.try_register_bot}！用户名：{unique_name}，安全码：{security_code}"
                 self._send_notification(success_msg, is_error=False)
-                self.log.bind(log=True).info(f"监控器成功注册机器人 {self.t_config.try_register_bot}.")
+                self.log.bind(log=True).info(f"监控器成功注册机器人 {self.t_config.try_register_bot} (用户名: {unique_name}).")
             else:
-                error_msg = f"❌ 注册 {self.t_config.try_register_bot} 失败"
+                error_msg = f"❌ 注册 {self.t_config.try_register_bot} 失败（已尝试{self.register_max_attempts}次）"
                 self._send_notification(error_msg, is_error=True)
-                self.log.warning(f"注册机器人 {self.t_config.try_register_bot} 失败")
+                self.log.warning(f"注册机器人 {self.t_config.try_register_bot} 失败（用户名: {unique_name}）")
         else:
             if reply:
+                if self.t_config.chat_delay > 0:
+                    await asyncio.sleep(self.t_config.chat_delay)
                 await self.client.send_message(message.chat.id, reply)
                 self.log.info(f"已向 {message.chat.username or message.chat.full_name} 发送: {reply}.")
                 return
+
+    def _get_security_code(self) -> Optional[str]:
+        """获取安全码：优先使用自定义，未指定则随机生成（确保符合4-6位数字要求）"""
+        # 1. 优先使用配置的安全码
+        if self.security_code:
+            if self._validate_security_code(self.security_code):
+                return self.security_code
+            self.log.error(f"自定义安全码 '{self.security_code}' 不符合要求（需4-6位数字）")
+            return None
+        
+        # 2. 随机生成4-6位数字
+        return "".join(random.choices(string.digits, k=random.randint(4, 6)))
+
+    def _log_security_code_info(self):
+        """输出安全码配置日志，与用户名日志格式保持一致"""
+        self.log.info(f'根据您的设置, 当监控到开注时, 该站点将使用安全码 "{self.security_code}" 注册.')
+
+    @staticmethod
+    def _validate_security_code(code: str) -> bool:
+        """验证安全码是否符合要求：4-6位纯数字"""
+        return bool(re.fullmatch(r'^\d{4,6}$', code))
 
     def _send_notification(self, message: str, is_error: bool = False):
         """发送通知消息"""
@@ -136,12 +196,15 @@ class TemplateAMonitor(Monitor):
             return None
         unique_name = self.config.get("unique_name", None)
         if unique_name:
+            # 校验用户名格式（禁止特殊字符）
+            forbidden_chars = r'[\\/*?:"<>|`~!@#$%^&()+=【】{};'\[\]]'
+            if re.search(forbidden_chars, unique_name):
+                self.log.warning(f"用户名 '{unique_name}' 包含禁止的特殊字符，可能导致注册失败！")
             self.log.info(f'根据您的设置, 当监控到开注时, 该站点将以用户名 "{unique_name}" 注册.')
-            if not re.search(r"^\w+$", unique_name):
-                self.log.warning(f"用户名含有除 a-z, A-Z, 0-9, 以及下划线之外的字符, 可能导致注册失败.")
             return unique_name
         else:
-            return Monitor.unique_cache[self.client.me]
+            # 容错：从缓存获取，避免KeyError
+            return Monitor.unique_cache.get(self.client.me)
 
 
 def use(**kw):
