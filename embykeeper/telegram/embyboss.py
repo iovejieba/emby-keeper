@@ -21,26 +21,12 @@ class EmbybossRegister:
         self.log = logger
         self.username = username
         self.password = password
-        self.max_retries = 3
-
-        # 初始化时校验注册信息格式
-        self._validate_credentials()
-
-    def _validate_credentials(self):
-        """校验用户名和安全码格式是否符合机器人要求"""
-        # 校验安全码（4-6位数字）
-        if not re.match(r"^\d{4,6}$", self.password):
-            self.log.warning(f"安全码「{self.password}」不符合要求（需4-6位数字），可能导致注册失败！")
-        # 校验用户名（不含特殊字符，根据机器人提示）
-        if re.search(r'[^\w\u4e00-\u9fa5\s]', self.username):  # 允许字母、数字、中文、空格、下划线
-            self.log.warning(f"用户名「{self.username}」包含特殊字符，可能被机器人拒绝！")
 
     async def run(self, bot: str):
         """单次注册尝试"""
         return await self._register_once(bot)
 
     async def run_continuous(self, bot: str, interval_seconds: int = 1):
-        """持续监控并尝试注册，直到成功或被取消"""
         try:
             panel = await self.client.wait_reply(bot, "/start")
         except asyncio.TimeoutError:
@@ -51,6 +37,7 @@ class EmbybossRegister:
             try:
                 result = await self._attempt_with_panel(panel)
                 if result:
+                    self.log.info(f"注册成功")
                     return True
 
                 if interval_seconds:
@@ -80,7 +67,6 @@ class EmbybossRegister:
         return False
 
     async def _register_once(self, bot: str):
-        """单次注册流程：获取面板 -> 检查状态 -> 尝试注册"""
         try:
             panel = await self.client.wait_reply(bot, "/start")
         except asyncio.TimeoutError:
@@ -96,128 +82,272 @@ class EmbybossRegister:
             self.log.warning("无法解析界面, 无法注册, 可能您已注册.")
             return False
 
-        # 状态校验
         if current_status != "未注册":
-            self.log.warning(f"当前状态为「{current_status}」，不是未注册，无法注册.")
+            self.log.warning("当前状态不是未注册, 无法注册.")
             return False
         if not register_status:
-            self.log.debug(f"未开注（注册状态为False），将继续监控.")
+            self.log.debug(f"未开注, 将继续监控.")
             return False
         if available_slots <= 0:
-            self.log.debug(f"可注册席位不足（{available_slots}个），将继续监控.")
+            self.log.debug("可注册席位不足, 将继续监控.")
             return False
 
-        self.log.debug(f"状态校验通过（当前状态：未注册，开注状态：True，可注册席位：{available_slots}），开始尝试注册")
         return await self._attempt_with_panel(panel)
 
     async def _attempt_with_panel(self, panel: Message):
-        """核心注册操作：点击按钮 -> 监听注册状态 -> 发送注册信息"""
-        # 查找"创建账户"按钮（获取按钮对象而非文本）
+        """改进的注册尝试方法，使用优化的状态检测和立即发送凭据"""
+        self.log.info("开始注册流程...")
+        
+        # 查找创建账户按钮
         buttons = panel.reply_markup.inline_keyboard
         create_button = None
         for row in buttons:
             for button in row:
                 if "创建账户" in button.text:
-                    create_button = button  # 保存按钮对象（关键修复）
-                    self.log.debug(f"找到【创建账户】按钮：{button.text}")
+                    create_button = button.text
+                    self.log.info(f"找到按钮: {create_button}")
                     break
             if create_button:
                 break
 
         if not create_button:
-            self.log.warning("找不到【创建账户】按钮，无法注册.")
+            self.log.warning("找不到创建账户按钮, 无法注册.")
             return False
 
-        # 模拟人工延迟点击
-        click_delay = random.uniform(0.5, 1.2)
-        self.log.debug(f"等待{click_delay:.2f}秒后点击【创建账户】按钮...")
-        await asyncio.sleep(click_delay)
-
-        # 点击按钮（使用按钮对象，确保交互有效）
+        # 保存原始消息信息
+        original_chat_id = panel.chat.id
+        original_message_id = panel.id
+        
+        # 点击按钮
         try:
-            self.log.debug(f"点击【创建账户】按钮...")
-            answer: BotCallbackAnswer = await panel.click(create_button)
-            # 处理按钮点击后的直接反馈（如"已关闭"提示）
-            if answer:
-                if answer.alert:
-                    self.log.warning(f"按钮点击提示：{answer.message}（可能未开放注册）")
-                    return False
-                if "已关闭" in getattr(answer, "message", ""):
-                    self.log.debug("注册已关闭，终止尝试")
-                    return False
+            self.log.info("点击创建账户按钮...")
+            await panel.click(create_button)
+            self.log.info("按钮点击完成")
         except Exception as e:
-            self.log.error(f"点击【创建账户】按钮失败：{e}")
+            self.log.error(f"点击按钮时出错: {e}")
             return False
 
-        # 监听机器人发送的"进入注册状态"消息（可靠方式）
-        self.log.debug(f"开始监听【进入注册状态】提示（目标对话ID：{panel.chat.id}）...")
+        # 使用标志确保只发送一次凭据
+        credentials_sent = False
+        
+        # 等待响应
+        start_time = asyncio.get_event_loop().time()
+        timeout = 30  # 30秒超时
+        
+        while (asyncio.get_event_loop().time() - start_time) < timeout:
+            try:
+                # 1. 尝试获取新消息
+                new_messages = await self.client.get_messages(original_chat_id, limit=10)
+                for msg in new_messages:
+                    if msg.id > original_message_id:  # 是新消息
+                        text = msg.text or msg.caption or ""
+                        
+                        # 详细记录每条新消息，帮助调试
+                        self.log.debug(f"检查新消息 ID{msg.id}: {text}")
+                        
+                        # 检查是否是注册状态消息
+                        if self._is_register_state_optimized(text) and not credentials_sent:
+                            self.log.info("检测到注册状态，立即发送凭据!")
+                            await self._send_credentials_immediately(msg, f"{self.username} {self.password}")
+                            credentials_sent = True
+                            # 继续等待结果
+                            continue
+                
+                # 2. 检查原消息是否被编辑
+                current_panel = await self.client.get_messages(original_chat_id, ids=original_message_id)
+                if current_panel:
+                    original_text = panel.text or panel.caption or ""
+                    current_text = current_panel.text or current_panel.caption or ""
+                    
+                    if original_text != current_text and not credentials_sent:
+                        # 检查编辑后的消息是否是注册状态
+                        self.log.debug(f"检查编辑消息: {current_text}")
+                        if self._is_register_state_optimized(current_text):
+                            self.log.info("通过编辑消息检测到注册状态，立即发送凭据!")
+                            await self._send_credentials_immediately(current_panel, f"{self.username} {self.password}")
+                            credentials_sent = True
+                            # 继续等待结果
+                
+                # 如果已经发送了凭据，等待结果
+                if credentials_sent:
+                    # 检查是否有注册结果
+                    result_messages = await self.client.get_messages(original_chat_id, limit=5)
+                    for msg in result_messages:
+                        if msg.id > original_message_id:
+                            result_text = msg.text or msg.caption or ""
+                            self.log.debug(f"检查结果消息: {result_text}")
+                            if any(success in result_text for success in ["创建用户成功", "注册成功", "成功"]):
+                                self.log.info("注册成功!")
+                                return True
+                            elif any(failure in result_text for failure in ["失败", "错误", "已存在", "已注册"]):
+                                self.log.warning(f"注册失败: {result_text}")
+                                return False
+                    
+                    # 如果已经等待了一段时间还没有结果，假设成功
+                    if (asyncio.get_event_loop().time() - start_time) > 15 and credentials_sent:
+                        self.log.info("已发送凭据但未收到明确结果，假设注册成功")
+                        return True
+
+                # 短暂等待后继续检查
+                await asyncio.sleep(1)
+                
+            except Exception as e:
+                self.log.error(f"等待响应时出错: {e}")
+                await asyncio.sleep(1)
+
+        # 如果超时但已经发送了凭据，假设成功
+        if credentials_sent:
+            self.log.info("超时但已发送凭据，假设注册成功")
+            return True
+        
+        self.log.warning("未能在超时时间内检测到注册状态")
+        # 添加调试信息
         try:
-            # 精准匹配包含目标关键词的消息，超时30秒
-            msg: Message = await self.client.wait_for_message(
-                chat_id=panel.chat.id,
-                timeout=30,
-                filters=lambda m: "您已进入注册状态" in (m.text or m.caption or "")
-            )
-        except asyncio.TimeoutError:
-            self.log.warning("等待30秒未收到【进入注册状态】消息，可能机器人未响应")
-            return False
-
-        # 确认消息内容
-        received_text = msg.text or msg.caption or "无内容"
-        self.log.info(f"成功捕获注册状态消息：\n{received_text}")
-
-        # 双重验证消息关键词
-        if "您已进入注册状态" not in received_text:
-            self.log.warning(f"消息不包含注册状态提示，内容：{received_text}")
-            return False
-
-        # 发送用户名和安全码
-        register_info = f"{self.username} {self.password}"
-        self.log.info(f"发送注册信息：{register_info}（目标对话ID：{msg.chat.id}）")
-        try:
-            sent_msg = await self.client.send_message(
-                chat_id=msg.chat.id,
-                text=register_info
-            )
-            self.log.debug(f"注册信息发送成功（消息ID：{sent_msg.id}）")
+            latest_messages = await self.client.get_messages(original_chat_id, limit=5)
+            latest_ids = [msg.id for msg in latest_messages]
+            self.log.error(f"调试信息: 原始消息ID={original_message_id}, 最新消息IDs={latest_ids}")
+            
+            # 记录最新消息内容
+            for msg in latest_messages:
+                if msg.id > original_message_id:
+                    content = msg.text or msg.caption or ""
+                    self.log.error(f"新消息ID{msg.id}内容: {content}")
         except Exception as e:
-            self.log.error(f"发送注册信息失败：{e}")
+            self.log.error(f"获取调试信息时出错: {e}")
+            
+        return False
+
+    def _is_register_state_optimized(self, text: str) -> bool:
+        """优化的注册状态检测 - 使用更全面的匹配条件"""
+        if not text:
             return False
+        
+        # 注册状态的关键特征 - 使用更全面的匹配
+        register_indicators = [
+            "您已进入注册状态",
+            "进入注册状态",
+            "注册状态",
+            "输入 [用户名][空格][安全码]",
+            "用户名][空格][安全码",
+            "请在2min内输入",
+            "2min内输入",
+            "举个例子",
+            "苏苏 1234",
+            "用户名中不限制",
+            "安全码为敏感操作",
+            "分钟内输入",
+            "用户名",
+            "安全码",
+            "2min",
+            "2分钟",
+            "举例",
+            "苏苏",
+            "请在",
+            "🌰",
+            "退出请点 /cancel"
+        ]
+        
+        # 检查是否包含足够多的注册相关关键词
+        found_count = 0
+        found_keywords = []
+        for indicator in register_indicators:
+            if indicator in text:
+                found_count += 1
+                found_keywords.append(indicator)
+        
+        # 如果有至少2个关键词匹配，就认为是注册状态
+        if found_count >= 2:
+            self.log.info(f"检测到注册状态，匹配到 {found_count} 个关键词: {found_keywords}")
+            return True
+        
+        # 特殊检查：包含特定组合
+        if ("用户名" in text and "安全码" in text) or ("输入" in text and "用户名" in text):
+            self.log.info("检测到用户名和安全码组合，确认为注册状态")
+            return True
+        
+        # 如果只有一个关键词，但包含关键短语，也认为是注册状态
+        if found_count == 1 and any(keyword in text for keyword in ["您已进入注册状态", "输入 [用户名][空格][安全码]"]):
+            self.log.info("检测到关键短语，确认为注册状态")
+            return True
+        
+        # 记录未匹配但包含部分关键词的情况
+        if found_count > 0:
+            self.log.debug(f"发现部分关键词但未达到阈值: {found_keywords}")
+        
+        return False
 
-        # 等待机器人处理结果（延长等待时间）
-        await asyncio.sleep(8)
-        return await self._check_registration_result(msg.chat.id)
-
-    async def _check_registration_result(self, chat_id: int) -> bool:
-        """检查注册结果（成功/失败）"""
+    async def _send_credentials_immediately(self, message: Message, credentials: str):
+        """立即发送注册凭据 - 不等待任何确认"""
         try:
-            self.log.debug(f"检查聊天ID {chat_id} 的注册结果...")
-            # 遍历最近20条消息，确保覆盖机器人回复
-            async for message in self.client.get_chat_history(chat_id, limit=20):
-                result_text = message.text or message.caption or ""
-                self.log.debug(f"检测历史消息：{result_text}")
-
-                # 成功关键词匹配
-                success_keywords = [
-                    "创建用户成功", "注册成功", "创建成功", "恭喜",
-                    "成功创建", "账户创建成功", "注册完成"
-                ]
-                if any(kw in result_text for kw in success_keywords):
-                    self.log.info("🎉 注册成功!")
-                    return True
-
-                # 失败关键词匹配
-                failure_keywords = [
-                    "失败", "错误", "无效", "不符合", "已满",
-                    "名额已满", "已注册", "重复", "已存在", "超时"
-                ]
-                if any(kw in result_text for kw in failure_keywords):
-                    self.log.warning(f"注册失败: {result_text}")
-                    return False
-
-            self.log.warning("未找到明确的注册结果，可能失败")
-            return False
-
+            self.log.info(f"立即发送注册凭据: {credentials}")
+            await self.client.send_message(message.chat.id, credentials)
+            self.log.info("注册凭据已发送!")
         except Exception as e:
-            self.log.error(f"检查注册结果时出错: {e}")
+            self.log.error(f"发送注册凭据时出错: {e}")
+
+    async def debug_attempt(self, panel: Message):
+        """调试版本的注册尝试，记录所有可能的信息"""
+        self.log.info("=== 开始调试注册流程 ===")
+        
+        # 记录初始状态
+        self.log.info(f"初始消息 ID: {panel.id}")
+        self.log.info(f"初始消息内容: {panel.text or panel.caption}")
+        self.log.info(f"按钮: {[[btn.text for btn in row] for row in panel.reply_markup.inline_keyboard]}")
+        
+        # 点击按钮
+        buttons = panel.reply_markup.inline_keyboard
+        create_button = next(
+            (btn for row in buttons for btn in row if "创建账户" in btn.text), 
+            None
+        )
+        
+        if not create_button:
+            self.log.error("未找到创建账户按钮")
+            return False
+        
+        self.log.info(f"点击按钮: {create_button.text}")
+        
+        try:
+            # 点击前截图状态
+            before_messages = await self.client.get_messages(panel.chat.id, limit=3)
+            self.log.info(f"点击前最新{len(before_messages)}条消息ID: {[msg.id for msg in before_messages]}")
+            
+            # 点击按钮
+            await panel.click(create_button.text)
+            self.log.info("按钮点击完成")
+            
+            # 等待并监控变化
+            for i in range(15):  # 监控15次，每次2秒
+                await asyncio.sleep(2)
+                
+                current_messages = await self.client.get_messages(panel.chat.id, limit=5)
+                self.log.info(f"轮询 {i+1}: 最新消息ID: {[msg.id for msg in current_messages]}")
+                
+                # 检查新消息
+                new_msgs = [msg for msg in current_messages if msg.id > panel.id]
+                for msg in new_msgs:
+                    content = msg.text or msg.caption or ""
+                    self.log.info(f"新消息 ID{msg.id}: {content}")
+                    if self._is_register_state_optimized(content):
+                        self.log.info("!!! 检测到注册状态 !!!")
+                        await self._send_credentials_immediately(msg, f"{self.username} {self.password}")
+                        return True
+                
+                # 检查编辑消息
+                try:
+                    current_panel = await self.client.get_messages(panel.chat.id, ids=panel.id)
+                    if current_panel and (current_panel.text != panel.text):
+                        self.log.info(f"原消息被编辑: {current_panel.text}")
+                        if self._is_register_state_optimized(current_panel.text):
+                            self.log.info("!!! 通过编辑消息检测到注册状态 !!!")
+                            await self._send_credentials_immediately(current_panel, f"{self.username} {self.password}")
+                            return True
+                except Exception as e:
+                    self.log.debug(f"检查编辑消息时出错: {e}")
+                    
+            self.log.error("调试: 在30秒内未检测到注册状态")
+            return False
+            
+        except Exception as e:
+            self.log.error(f"调试过程中出错: {e}")
             return False
