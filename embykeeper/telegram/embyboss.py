@@ -6,7 +6,7 @@ import re
 from typing import TYPE_CHECKING
 
 from pyrogram.errors import (
-    FloodWaitError,
+    FloodWait,
     NetworkError,
     MessageIdInvalid,
     PeerIdInvalid,
@@ -97,9 +97,18 @@ class EmbybossRegister:
 
         # 解析面板状态
         try:
-            current_status = re.search(r"当前状态 \| ([^\n]+)", panel.text or panel.caption).group(1).strip()
-            register_status = re.search(r"注册状态 \| (True|False)", panel.text or panel.caption).group(1) == "True"
-            available_slots = int(re.search(r"可注册席位 \| (\d+)", panel.text or panel.caption).group(1))
+            current_status = re.search(
+                r"当前状态 \| ([^\n]+)", 
+                panel.text or panel.caption
+            ).group(1).strip()
+            register_status = re.search(
+                r"注册状态 \| (True|False)", 
+                panel.text or panel.caption
+            ).group(1) == "True"
+            available_slots = int(re.search(
+                r"可注册席位 \| (\d+)", 
+                panel.text or panel.caption
+            ).group(1))
         except (AttributeError, ValueError):
             self.log.warning("无法解析面板状态，可能已注册或格式变更")
             return False
@@ -140,7 +149,10 @@ class EmbybossRegister:
                 # 抢注加速：根据席位动态调整点击延迟
                 if available_slots <= self.accelerate_threshold:
                     click_delay = random.uniform(0.3, 0.8)
-                    self.log.debug(f"抢注加速模式（席位{available_slots}≤{self.accelerate_threshold}），延迟{click_delay:.2f}秒")
+                    self.log.debug(
+                        f"抢注加速模式（席位{available_slots}≤{self.accelerate_threshold}），"
+                        f"延迟{click_delay:.2f}秒"
+                    )
                 else:
                     click_delay = random.uniform(0.5, 1.5)
                     self.log.debug(f"正常模式，点击延迟{click_delay:.2f}秒")
@@ -150,7 +162,11 @@ class EmbybossRegister:
                 async with self.client.catch_reply(panel.chat.id) as f:
                     try:
                         answer: BotCallbackAnswer = await panel.click(create_button)
-                        if answer and ("已关闭" in getattr(answer, 'message', '') or getattr(answer, 'alert', False)):
+                        # 检查按钮点击结果（避免使用续行符，用括号换行）
+                        if answer and (
+                            "已关闭" in getattr(answer, 'message', '') or 
+                            getattr(answer, 'alert', False)
+                        ):
                             self.log.debug("注册已关闭，终止尝试")
                             return False
                     except (MessageIdInvalid, PeerIdInvalid):
@@ -185,7 +201,9 @@ class EmbybossRegister:
                 # 检查注册结果
                 check_delay = 0.5 if available_slots <= self.accelerate_threshold else 1
                 await asyncio.sleep(check_delay)
-                remaining_time = self.registration_timeout - (click_delay + check_delay + 5)  # 预留缓冲
+                remaining_time = self.registration_timeout - (
+                    click_delay + check_delay + 5  # 预留缓冲
+                )
                 return await self._check_registration_result(
                     msg.chat.id,
                     timeout=max(10, remaining_time),  # 至少保留10秒检查时间
@@ -193,7 +211,7 @@ class EmbybossRegister:
                 )
 
             # 处理Telegram频率限制（必须等待）
-            except FloodWaitError as e:
+            except FloodWait as e:
                 self.log.warning(f"触发频率限制，需等待 {e.x} 秒")
                 await asyncio.sleep(e.x)
                 self.current_attempt += 1  # 消耗总重试次数
@@ -205,7 +223,9 @@ class EmbybossRegister:
             # 处理网络波动（短期重试）
             except NetworkError as e:
                 short_retry_count += 1
-                self.log.warning(f"网络异常（{short_retry_count}/{self.short_retry_limit}）: {e}，1秒后重试")
+                self.log.warning(
+                    f"网络异常（{short_retry_count}/{self.short_retry_limit}）: {e}，1秒后重试"
+                )
                 await asyncio.sleep(1)
                 if short_retry_count >= self.short_retry_limit:
                     self.log.error("网络重试次数耗尽，终止当前尝试")
@@ -215,7 +235,9 @@ class EmbybossRegister:
             # 处理机器人超时（短期重试）
             except BotTimeout as e:
                 short_retry_count += 1
-                self.log.warning(f"机器人超时（{short_retry_count}/{self.short_retry_limit}）: {e}，2秒后重试")
+                self.log.warning(
+                    f"机器人超时（{short_retry_count}/{self.short_retry_limit}）: {e}，2秒后重试"
+                )
                 await asyncio.sleep(2)
                 if short_retry_count >= self.short_retry_limit:
                     self.log.error("超时重试次数耗尽，终止当前尝试")
