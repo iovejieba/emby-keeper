@@ -45,7 +45,8 @@ class EPubGroupChatCheckin(BotCheckin):
 
     async def send_checkin(self, retry=False):
         for _ in range(3):
-            times = self.config.get("times", 5)
+            # 固定为4条古诗消息
+            times = 4
             min_letters = self.config.get("letters", 7)
             
             # 生成诗句列表
@@ -90,6 +91,8 @@ class EPubGroupChatCheckin(BotCheckin):
                 for l in selected_lines:
                     self.log.info(f"即将向群组发送水群消息: {l}.")
                 await asyncio.sleep(10)
+                
+                # 发送四条独立的古诗消息
                 cmds = to_iterable(selected_lines)
                 for i, cmd in enumerate(cmds):
                     if retry and not i:
@@ -97,7 +100,7 @@ class EPubGroupChatCheckin(BotCheckin):
                     if i < len(cmds):
                         await asyncio.sleep(self.bot_send_interval)
                     await self.send(cmd)
-                await self.finish(message="已发送发言")
+                await self.finish(message="已发送四条古诗消息")
                 return
             else:
                 self.log.warning(f"生成的行数不符合要求: {len(lines)}行, 期望{times}行")
