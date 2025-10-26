@@ -7,12 +7,12 @@ from typing import TYPE_CHECKING
 
 from pyrogram.errors import (
     FloodWait,
-    NetworkError,
+    ConnectionError,  # 替换 NetworkError 为 ConnectionError
     MessageIdInvalid,
     PeerIdInvalid,
     BotTimeout
 )
-from pyrogram.typesmessages import Message
+from pyrogram.types import Message  # 修正此处的导入错误（原代码可能误写为 typesmessages）
 from pyrogram.raw.types.messages import BotCallbackAnswer
 
 from .pyrogram import Client
@@ -36,14 +36,11 @@ class EmbybossRegister:
         self.short_retry_limit = 3  # 短期快速重试上限（针对网络波动等瞬时错误）
 
     async def run(self, bot: str) -> bool:
-        """单次单次注册尝试
-        """
+        """单次注册尝试"""
         return await self._register_once(bot)
 
     async def run_continuous(self, bot: str, interval_seconds: int = 1) -> bool:
-        """
-带重试的持续注册（直到成功或达到最大次数）
-        """
+        """带重试的持续注册（直到成功或达到最大次数）"""
         self.current_attempt = 0  # 重置总尝试次数
         
         try:
@@ -91,9 +88,7 @@ class EmbybossRegister:
         return False
 
     async def _register_once(self, bot: str) -> bool:
-        """
-单次注册流程（独立调用）
-        """
+        """单次注册流程（独立调用）"""
         try:
             panel = await self.client.wait_reply(bot, "/start")
         except asyncio.TimeoutError:
@@ -132,9 +127,7 @@ class EmbybossRegister:
         return await self._attempt_with_panel(panel, available_slots)
 
     async def _attempt_with_panel(self, panel: Message, available_slots: int) -> bool:
-        """
-核心注册尝试逻辑（含异常重试）
-        """
+        """核心注册尝试逻辑（含异常重试）"""
         short_retry_count = 0  # 短期重试计数器
 
         while short_retry_count < self.short_retry_limit:
@@ -200,7 +193,7 @@ class EmbybossRegister:
                     )
                     return False
                 if not self._validate_password():
-                    self.log.error(f"安全码 '{self.password}' 不符合要求（需4-7位数字）")
+                    self.log.error(f"安全码 '{self.password}' 不符合要求（需4-6位数字）")
                     return False
 
                 # 发送注册信息（即时发送）
@@ -228,8 +221,8 @@ class EmbybossRegister:
                     return False
                 continue
 
-            # 处理网络波动（短期重试）
-            except NetworkError as e:
+            # 处理网络波动（短期重试）：使用ConnectionError替代NetworkError
+            except ConnectionError as e:
                 short_retry_count += 1
                 self.log.warning(
                     "网络异常（{}/{}）：{}，1秒后重试".format(
@@ -265,9 +258,7 @@ class EmbybossRegister:
         return False
 
     async def _get_available_slots(self, panel: Message) -> int:
-        """
-从面板中解析可注册席位数量
-        """
+        """从面板中解析可注册席位数量"""
         try:
             text = panel.text or panel.caption
             return int(re.search(r"可注册席位 \| (\d+)", text).group(1))
@@ -276,21 +267,15 @@ class EmbybossRegister:
             return self.accelerate_threshold
 
     def _validate_username(self) -> bool:
-        """
-验证用户名：仅允许字母、数字、下划线（使用^\w+$正则）
-        """
+        """验证用户名：仅允许字母、数字、下划线（使用^\w+$正则）"""
         return bool(re.fullmatch(r'^\w+$', self.username))
 
     def _validate_password(self) -> bool:
-        """
-验证安全码：4-7位纯数字
-        """
-        return bool(re.fullmatch(r'^\d{4,7}$', self.password))
+        """验证安全码：4-6位纯数字"""
+        return bool(re.fullmatch(r'^\d{4,6}$', self.password))
 
     async def _check_registration_result(self, chat_id: int, timeout: int, is_accelerate: bool) -> bool:
-        """
-检查注册结果（模糊匹配）
-        """
+        """检查注册结果（模糊匹配）"""
         try:
             end_time = asyncio.get_event_loop().time() + timeout
             limit = 5 if is_accelerate else 10
