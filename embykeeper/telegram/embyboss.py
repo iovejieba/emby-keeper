@@ -7,12 +7,12 @@ from typing import TYPE_CHECKING
 
 from pyrogram.errors import (
     FloodWait,
-    ConnectionError,  # 替换 NetworkError 为 ConnectionError
+    TransportError,  # 替换为 Pyrogram 中实际存在的网络传输异常
     MessageIdInvalid,
     PeerIdInvalid,
     BotTimeout
 )
-from pyrogram.types import Message  # 修正此处的导入错误（原代码可能误写为 typesmessages）
+from pyrogram.types import Message
 from pyrogram.raw.types.messages import BotCallbackAnswer
 
 from .pyrogram import Client
@@ -221,8 +221,8 @@ class EmbybossRegister:
                     return False
                 continue
 
-            # 处理网络波动（短期重试）：使用ConnectionError替代NetworkError
-            except ConnectionError as e:
+            # 处理网络波动（短期重试）：使用Pyrogram的TransportError或通用IOError
+            except (TransportError, IOError) as e:  # 兼容不同版本的网络异常
                 short_retry_count += 1
                 self.log.warning(
                     "网络异常（{}/{}）：{}，1秒后重试".format(
