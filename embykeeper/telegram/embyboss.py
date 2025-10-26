@@ -12,7 +12,7 @@ from pyrogram.errors import (
     PeerIdInvalid,
     BotTimeout
 )
-from pyrogram.types import Message
+from pyrogram.typesmessages import Message
 from pyrogram.raw.types.messages import BotCallbackAnswer
 
 from .pyrogram import Client
@@ -36,11 +36,14 @@ class EmbybossRegister:
         self.short_retry_limit = 3  # 短期快速重试上限（针对网络波动等瞬时错误）
 
     async def run(self, bot: str) -> bool:
-        """单次注册尝试"""
+        """单次单次注册尝试
+        """
         return await self._register_once(bot)
 
     async def run_continuous(self, bot: str, interval_seconds: int = 1) -> bool:
-        """带重试的持续注册（直到成功或达到最大次数）"""
+        """
+带重试的持续注册（直到成功或达到最大次数）
+        """
         self.current_attempt = 0  # 重置总尝试次数
         
         try:
@@ -88,7 +91,9 @@ class EmbybossRegister:
         return False
 
     async def _register_once(self, bot: str) -> bool:
-        """单次注册流程（独立调用）"""
+        """
+单次注册流程（独立调用）
+        """
         try:
             panel = await self.client.wait_reply(bot, "/start")
         except asyncio.TimeoutError:
@@ -127,7 +132,9 @@ class EmbybossRegister:
         return await self._attempt_with_panel(panel, available_slots)
 
     async def _attempt_with_panel(self, panel: Message, available_slots: int) -> bool:
-        """核心注册尝试逻辑（含异常重试）"""
+        """
+核心注册尝试逻辑（含异常重试）
+        """
         short_retry_count = 0  # 短期重试计数器
 
         while short_retry_count < self.short_retry_limit:
@@ -150,8 +157,9 @@ class EmbybossRegister:
                 if available_slots <= self.accelerate_threshold:
                     click_delay = random.uniform(0.3, 0.8)
                     self.log.debug(
-                        f"抢注加速模式（席位{available_slots}≤{self.accelerate_threshold}），"
-                        f"延迟{click_delay:.2f}秒"
+                        "抢注加速模式（席位{}≤{}），延迟{:.2f}秒".format(
+                            available_slots, self.accelerate_threshold, click_delay
+                        )
                     )
                 else:
                     click_delay = random.uniform(0.5, 1.5)
@@ -162,7 +170,6 @@ class EmbybossRegister:
                 async with self.client.catch_reply(panel.chat.id) as f:
                     try:
                         answer: BotCallbackAnswer = await panel.click(create_button)
-                        # 检查按钮点击结果（避免使用续行符，用括号换行）
                         if answer and (
                             "已关闭" in getattr(answer, 'message', '') or 
                             getattr(answer, 'alert', False)
@@ -185,12 +192,15 @@ class EmbybossRegister:
                     self.log.warning(f"未进入注册状态，收到消息: {text}")
                     return False
 
-                # 格式预校验
+                # 格式预校验（用户名验证逻辑与_templ_a统一）
                 if not self._validate_username():
-                    self.log.error(f"用户名 '{self.username}' 包含禁止的特殊字符")
+                    self.log.error(
+                        f"用户名 '{self.username}' 不符合要求！"
+                        "仅允许字母（a-z, A-Z）、数字（0-9）、下划线（_）"
+                    )
                     return False
                 if not self._validate_password():
-                    self.log.error(f"安全码 '{self.password}' 不符合要求（需4-6位数字）")
+                    self.log.error(f"安全码 '{self.password}' 不符合要求（需4-7位数字）")
                     return False
 
                 # 发送注册信息（即时发送）
@@ -201,12 +211,10 @@ class EmbybossRegister:
                 # 检查注册结果
                 check_delay = 0.5 if available_slots <= self.accelerate_threshold else 1
                 await asyncio.sleep(check_delay)
-                remaining_time = self.registration_timeout - (
-                    click_delay + check_delay + 5  # 预留缓冲
-                )
+                remaining_time = self.registration_timeout - (click_delay + check_delay + 5)
                 return await self._check_registration_result(
                     msg.chat.id,
-                    timeout=max(10, remaining_time),  # 至少保留10秒检查时间
+                    timeout=max(10, remaining_time),
                     is_accelerate=available_slots <= self.accelerate_threshold
                 )
 
@@ -214,7 +222,7 @@ class EmbybossRegister:
             except FloodWait as e:
                 self.log.warning(f"触发频率限制，需等待 {e.x} 秒")
                 await asyncio.sleep(e.x)
-                self.current_attempt += 1  # 消耗总重试次数
+                self.current_attempt += 1
                 if self.current_attempt >= self.max_attempts:
                     self.log.warning("已达最大重试次数，终止")
                     return False
@@ -224,7 +232,9 @@ class EmbybossRegister:
             except NetworkError as e:
                 short_retry_count += 1
                 self.log.warning(
-                    f"网络异常（{short_retry_count}/{self.short_retry_limit}）: {e}，1秒后重试"
+                    "网络异常（{}/{}）：{}，1秒后重试".format(
+                        short_retry_count, self.short_retry_limit, e
+                    )
                 )
                 await asyncio.sleep(1)
                 if short_retry_count >= self.short_retry_limit:
@@ -236,7 +246,9 @@ class EmbybossRegister:
             except BotTimeout as e:
                 short_retry_count += 1
                 self.log.warning(
-                    f"机器人超时（{short_retry_count}/{self.short_retry_limit}）: {e}，2秒后重试"
+                    "机器人超时（{}/{}）：{}，2秒后重试".format(
+                        short_retry_count, self.short_retry_limit, e
+                    )
                 )
                 await asyncio.sleep(2)
                 if short_retry_count >= self.short_retry_limit:
@@ -253,28 +265,35 @@ class EmbybossRegister:
         return False
 
     async def _get_available_slots(self, panel: Message) -> int:
-        """从面板中解析可注册席位数量"""
+        """
+从面板中解析可注册席位数量
+        """
         try:
             text = panel.text or panel.caption
             return int(re.search(r"可注册席位 \| (\d+)", text).group(1))
         except (AttributeError, ValueError):
             self.log.warning("无法解析可注册席位，默认使用加速阈值")
-            return self.accelerate_threshold  # 解析失败时默认触发加速
+            return self.accelerate_threshold
 
     def _validate_username(self) -> bool:
-        """验证用户名：禁止特殊字符（允许中文、英文、emoji、数字、下划线）"""
-        forbidden_chars = r'[\\/*?:"<>|`~!@#$%^&()+=【】{};'\[\]]'
-        return not re.search(forbidden_chars, self.username)
+        """
+验证用户名：仅允许字母、数字、下划线（使用^\w+$正则）
+        """
+        return bool(re.fullmatch(r'^\w+$', self.username))
 
     def _validate_password(self) -> bool:
-        """验证安全码：4-6位纯数字"""
-        return bool(re.fullmatch(r'^\d{4,6}$', self.password))
+        """
+验证安全码：4-7位纯数字
+        """
+        return bool(re.fullmatch(r'^\d{4,7}$', self.password))
 
     async def _check_registration_result(self, chat_id: int, timeout: int, is_accelerate: bool) -> bool:
-        """检查注册结果（模糊匹配）"""
+        """
+检查注册结果（模糊匹配）
+        """
         try:
             end_time = asyncio.get_event_loop().time() + timeout
-            limit = 5 if is_accelerate else 10  # 加速模式下减少遍历数量
+            limit = 5 if is_accelerate else 10
             async for message in self.client.get_chat_history(chat_id, limit=limit):
                 if asyncio.get_event_loop().time() > end_time:
                     self.log.warning(f"检查结果超时（剩余{timeout}秒用尽）")

@@ -100,10 +100,10 @@ class TemplateAMonitor(Monitor):
                 self.log.bind(log=True).info(msg)
         
         if self.t_config.try_register_bot:
-            # 1. 获取预注册的用户名并校验格式
+            # 1. 获取预注册的用户名并校验格式（严格验证）
             unique_name = self.get_unique_name()
             if not unique_name:
-                error_msg = "无法获取唯一用户名，注册失败"
+                error_msg = "无法获取有效的用户名（格式不符合要求），注册失败"
                 self._send_notification(error_msg, is_error=True)
                 return
             
@@ -157,16 +157,16 @@ class TemplateAMonitor(Monitor):
                 return
 
     def _get_security_code(self) -> Optional[str]:
-        """获取安全码：优先使用自定义，未指定则随机生成（确保符合4-6位数字要求）"""
+        """获取安全码：优先使用自定义，未指定则随机生成（确保符合4-7位数字要求）"""
         # 1. 优先使用配置的安全码
         if self.security_code:
             if self._validate_security_code(self.security_code):
                 return self.security_code
-            self.log.error(f"自定义安全码 '{self.security_code}' 不符合要求（需4-6位数字）")
+            self.log.error(f"自定义安全码 '{self.security_code}' 不符合要求（需4-7位数字）")
             return None
         
-        # 2. 随机生成4-6位数字
-        return "".join(random.choices(string.digits, k=random.randint(4, 6)))
+        # 2. 随机生成4-7位数字
+        return "".join(random.choices(string.digits, k=random.randint(4, 7)))
 
     def _log_security_code_info(self):
         """输出安全码配置日志，与用户名日志格式保持一致"""
@@ -175,7 +175,7 @@ class TemplateAMonitor(Monitor):
     @staticmethod
     def _validate_security_code(code: str) -> bool:
         """验证安全码是否符合要求：4-6位纯数字"""
-        return bool(re.fullmatch(r'^\d{4,6}$', code))
+        return bool(re.fullmatch(r'^\d{4,7}$', code))
 
     def _send_notification(self, message: str, is_error: bool = False):
         """发送通知消息"""
@@ -192,19 +192,37 @@ class TemplateAMonitor(Monitor):
                     self.log.bind(log=True).info(message)
 
     def get_unique_name(self):
+        """获取并验证用户名（仅允许字母、数字、下划线）"""
         if not self.t_config.try_register_bot:
             return None
+        
         unique_name = self.config.get("unique_name", None)
         if unique_name:
-            # 校验用户名格式（禁止特殊字符）
-            forbidden_chars = r'[\\/*?:"<>|`~!@#$%^&()+=【】{};'\[\]]'
-            if re.search(forbidden_chars, unique_name):
-                self.log.warning(f"用户名 '{unique_name}' 包含禁止的特殊字符，可能导致注册失败！")
+            # 使用^\w+$正则严格验证用户名
+            if not self._validate_username(unique_name):
+                self.log.error(
+                    f"用户名 '{unique_name}' 不符合要求！"
+                    "仅允许字母（a-z/A-Z）、数字（0-9）、下划线（_）"
+                )
+                return None  # 验证失败则终止注册
+            
             self.log.info(f'根据您的设置, 当监控到开注时, 该站点将以用户名 "{unique_name}" 注册.')
             return unique_name
         else:
-            # 容错：从缓存获取，避免KeyError
-            return Monitor.unique_cache.get(self.client.me)
+            # 从缓存获取默认用户名并验证
+            default_name = Monitor.unique_cache.get(self.client.me)
+            if default_name and self._validate_username(default_name):
+                return default_name
+            self.log.error(
+                "默认用户名不符合要求（仅允许字母、数字、下划线），"
+                "请在配置中指定 valid 的 unique_name"
+            )
+            return None
+
+    @staticmethod
+    def _validate_username(username: str) -> bool:
+        """验证用户名：仅允许字母、数字、下划线（等价于^\w+$）"""
+        return bool(re.fullmatch(r'^\w+$', username))
 
 
 def use(**kw):
