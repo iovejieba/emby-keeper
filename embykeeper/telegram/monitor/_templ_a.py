@@ -80,17 +80,56 @@ class TemplateAMonitor(Monitor):
                 self.log.bind(msg=True).info(msg)
             else:
                 self.log.bind(log=True).info(msg)
+        
         if self.t_config.try_register_bot:
-            random_code = "".join(random.choices(string.ascii_letters + string.digits, k=4))
-            if await EmbybossRegister(self.client, self.log, self.unique_name, random_code).run(
-                self.t_config.try_register_bot
-            ):
+            # 获取预注册的用户名
+            unique_name = self.get_unique_name()
+            if not unique_name:
+                error_msg = "无法获取唯一用户名，注册失败"
+                self._send_notification(error_msg, is_error=True)
+                return
+            
+            # 生成4-6位数字安全码
+            security_code = "".join(random.choices(string.digits, k=random.randint(4, 6)))
+            
+            self.log.info(f"开始自动注册: 用户名={unique_name}, 安全码={security_code}")
+            
+            # 添加随机延迟避免过于及时
+            delay = random.uniform(1, 5)
+            await asyncio.sleep(delay)
+            
+            # 调用注册器
+            register = EmbybossRegister(self.client, self.log, unique_name, security_code)
+            success = await register.run(self.t_config.try_register_bot)
+            
+            # 发送注册结果通知
+            if success:
+                success_msg = f"✅ 成功注册到 {self.t_config.try_register_bot}"
+                self._send_notification(success_msg, is_error=False)
                 self.log.bind(log=True).info(f"监控器成功注册机器人 {self.t_config.try_register_bot}.")
+            else:
+                error_msg = f"❌ 注册 {self.t_config.try_register_bot} 失败"
+                self._send_notification(error_msg, is_error=True)
+                self.log.warning(f"注册机器人 {self.t_config.try_register_bot} 失败")
         else:
             if reply:
                 await self.client.send_message(message.chat.id, reply)
                 self.log.info(f"已向 {message.chat.username or message.chat.full_name} 发送: {reply}.")
                 return
+
+    def _send_notification(self, message: str, is_error: bool = False):
+        """发送通知消息"""
+        if self.t_config.send:
+            if self.t_config.send_immediately:
+                if is_error:
+                    self.log.bind(msg=True).error(message)
+                else:
+                    self.log.bind(msg=True).info(message)
+            else:
+                if is_error:
+                    self.log.bind(log=True).error(message)
+                else:
+                    self.log.bind(log=True).info(message)
 
     def get_unique_name(self):
         if not self.t_config.try_register_bot:

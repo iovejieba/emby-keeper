@@ -21,6 +21,7 @@ class EmbybossRegister:
         self.log = logger
         self.username = username
         self.password = password
+        self.max_retries = 3
 
     async def run(self, bot: str):
         """单次注册尝试"""
@@ -37,7 +38,6 @@ class EmbybossRegister:
             try:
                 result = await self._attempt_with_panel(panel)
                 if result:
-                    self.log.info(f"注册成功")
                     return True
 
                 if interval_seconds:
@@ -115,33 +115,71 @@ class EmbybossRegister:
         async with self.client.catch_reply(panel.chat.id) as f:
             try:
                 answer: BotCallbackAnswer = await panel.click(create_button)
-                if "已关闭" in answer.message or answer.alert:
+                if answer and ("已关闭" in getattr(answer, 'message', '') or getattr(answer, 'alert', False)):
                     self.log.debug("未开注, 将继续监控.")
                     return False
-            except (TimeoutError, MessageIdInvalid):
-                pass
+            except (TimeoutError, MessageIdInvalid) as e:
+                self.log.warning(f"点击按钮失败: {e}")
+                # 继续尝试，可能仍然会收到回复
+            
             try:
-                msg: Message = await asyncio.wait_for(f, 10)
+                msg: Message = await asyncio.wait_for(f, 15)  # 增加超时时间
             except asyncio.TimeoutError:
                 self.log.warning("创建账户按钮点击无响应, 无法注册.")
                 return False
 
         text = msg.text or msg.caption
-        if "您已进入注册状态" not in text:
-            self.log.warning("未能正常进入注册状态, 注册失败.")
+        if not text or "您已进入注册状态" not in text:
+            self.log.warning(f"未能正常进入注册状态, 注册失败. 收到: {text}")
             return False
 
+        # 自动发送用户名和安全码
+        self.log.info(f"自动发送注册信息: {self.username} {self.password}")
         try:
-            msg = await self.client.wait_reply(msg.chat.id, f"{self.username} {self.password}")
-        except asyncio.TimeoutError:
-            self.log.warning("发送凭据后无响应, 无法注册.")
+            # 直接发送注册信息，不使用wait_reply
+            await self.client.send_message(msg.chat.id, f"{self.username} {self.password}")
+            
+            # 等待机器人处理并回复
+            await asyncio.sleep(3)
+            
+            # 获取最新的消息来检查注册结果
+            return await self._check_registration_result(msg.chat.id)
+                
+        except Exception as e:
+            self.log.error(f"发送注册信息时出错: {e}")
             return False
 
-        msg = await self.client.wait_edit(msg)
-        text = msg.text or msg.caption
-        if "创建用户成功" not in text:
-            self.log.warning("发送凭据后注册失败.")
+    async def _check_registration_result(self, chat_id: int) -> bool:
+        """检查注册结果"""
+        try:
+            # 获取最近的消息检查结果
+            async for message in self.client.get_chat_history(chat_id, limit=10):
+                result_text = message.text or message.caption
+                if not result_text:
+                    continue
+                    
+                # 成功关键词
+                success_keywords = [
+                    "创建用户成功", "注册成功", "创建成功", "恭喜",
+                    "成功创建", "账户创建成功", "注册完成"
+                ]
+                
+                # 失败关键词  
+                failure_keywords = [
+                    "失败", "错误", "无效", "不符合", "已满",
+                    "名额已满", "已注册", "重复", "已存在"
+                ]
+                
+                if any(keyword in result_text for keyword in success_keywords):
+                    self.log.info("🎉 注册成功!")
+                    return True
+                elif any(keyword in result_text for keyword in failure_keywords):
+                    self.log.warning(f"注册失败: {result_text}")
+                    return False
+            
+            self.log.warning("无法确定注册结果，可能失败")
             return False
-        else:
-            self.log.info("注册成功!")
-            return True
+            
+        except Exception as e:
+            self.log.error(f"检查注册结果时出错: {e}")
+            return False
