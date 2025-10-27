@@ -67,6 +67,19 @@ class TemplateAMonitor(Monitor):
             self.log.warning(f"初始化失败: 没有定义任何监控项, 请参考教程进行配置.")
             return False
         self.log = logger.bind(scheme="telemonitor", name=self.name, username=self.client.me.full_name)
+        
+        # 初始化时获取用户名和安全码配置信息
+        if self.t_config.try_register_bot:
+            # 获取用户名
+            self.unique_name = self.get_unique_name()
+            
+            # 获取安全码
+            self.unique_code = self.get_unique_code()
+            
+            # 合并日志显示
+            name_info = f'用户名 "{self.unique_name}"' if self.unique_name else "自动生成用户名"
+            code_info = f'安全码 "{self.unique_code}"' if self.unique_code else "自动生成安全码"
+            self.log.info(f'根据您的设置, 当监控到开注时, 该站点将使用{name_info}和{code_info}进行注册.')
         return True
 
     async def on_trigger(self, message: Message, key, reply):
@@ -81,8 +94,16 @@ class TemplateAMonitor(Monitor):
             else:
                 self.log.bind(log=True).info(msg)
         if self.t_config.try_register_bot:
-            random_code = "".join(random.choices(string.ascii_letters + string.digits, k=4))
-            if await EmbybossRegister(self.client, self.log, self.unique_name, random_code).run(
+            # 使用配置的安全码或生成随机安全码
+            if hasattr(self, 'unique_code') and self.unique_code:
+                # 使用配置的安全码
+                register_code = self.unique_code
+            else:
+                # 生成随机安全码（原方案）
+                register_code = "".join(random.choices(string.ascii_letters + string.digits, k=4))
+                self.log.info(f'未设置自定义安全码, 将使用自动生成的安全码 "{register_code}" 进行注册.')
+                
+            if await EmbybossRegister(self.client, self.log, self.unique_name, register_code).run(
                 self.t_config.try_register_bot
             ):
                 self.log.bind(log=True).info(f"监控器成功注册机器人 {self.t_config.try_register_bot}.")
@@ -97,12 +118,24 @@ class TemplateAMonitor(Monitor):
             return None
         unique_name = self.config.get("unique_name", None)
         if unique_name:
-            self.log.info(f'根据您的设置, 当监控到开注时, 该站点将以用户名 "{unique_name}" 注册.')
             if not re.search(r"^\w+$", unique_name):
                 self.log.warning(f"用户名含有除 a-z, A-Z, 0-9, 以及下划线之外的字符, 可能导致注册失败.")
             return unique_name
         else:
             return Monitor.unique_cache[self.client.me]
+
+    def get_unique_code(self):
+        """获取配置的安全码，如果未配置则返回None，使用原方案的随机生成"""
+        if not self.t_config.try_register_bot:
+            return None
+        unique_code = self.config.get("unique_code", None)
+        if unique_code:
+            if not re.search(r"^\w+$", unique_code):
+                self.log.warning(f"安全码含有除 a-z, A-Z, 0-9, 以及下划线之外的字符, 可能导致注册失败.")
+            return unique_code
+        else:
+            # 返回None，表示使用原方案的随机生成
+            return None
 
 
 def use(**kw):
