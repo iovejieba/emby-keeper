@@ -186,20 +186,41 @@ class EPubGroupChatCheckin(BotCheckin):
 
     async def get_jinrishici_poetry(self):
         """调用今日诗词API获取诗句，失败时自动降级到本地诗句库（带去重逻辑）"""
+        # 检查是否有有效的 token，如果没有则使用默认 token
+        jinrishici_token = self.config.get("jinrishici_token", "TSfVFoBQphRTPALWtsp9sA6NoY7qBbjA").strip()
+        
+        # 如果配置中的 token 为空，使用默认 token
+        if not jinrishici_token:
+            jinrishici_token = "TSfVFoBQphRTPALWtsp9sA6NoY7qBbjA"
+            self.log.info("使用默认今日诗词API Token")
+        
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
-                headers = {"X-User-Token": self.config.get("jinrishici_token", "")}
+                headers = {"X-User-Token": jinrishici_token}
                 response = await client.get(
                     "https://v2.jinrishici.com/sentence",
                     headers=headers
                 )
+                
                 if response.status_code == 200:
                     result = response.json()
                     if result.get("status") == "success":
-                        return result["data"]["content"]
-                    self.log.error(f"今日诗词API返回错误: {result}")
+                        content = result["data"]["content"]
+                        self.log.info(f"成功从今日诗词API获取诗句: {content}")
+                        return content
+                    else:
+                        self.log.error(f"今日诗词API返回错误状态: {result}")
+                elif response.status_code == 400:
+                    self.log.warning("今日诗词API返回400错误，Token可能无效或已过期")
+                    # 记录详细错误信息
+                    try:
+                        error_detail = response.json()
+                        self.log.warning(f"API错误详情: {error_detail}")
+                    except:
+                        self.log.warning(f"API原始响应: {response.text}")
                 else:
-                    self.log.error(f"今日诗词API调用失败: {response.status_code}")
+                    self.log.error(f"今日诗词API调用失败，状态码: {response.status_code}")
+                    
         except (asyncio.TimeoutError, httpx.RequestError) as e:
             self.log.warning(f"API调用异常，自动切换到本地诗句: {e}")
         
@@ -213,29 +234,40 @@ class EPubGroupChatCheckin(BotCheckin):
             self.used_poetry_indices.clear()
             self.log.debug("本地诗句已循环一轮，重置使用记录")
         
+        # 如果所有诗句都已使用过，随机选择一个
+        if len(self.used_poetry_indices) == total:
+            self.used_poetry_indices.clear()
+        
         # 随机选择未使用的诗句
         while True:
             idx = random.randint(0, total - 1)
             if idx not in self.used_poetry_indices:
                 self.used_poetry_indices.add(idx)
-                return self.LOCAL_POETRY[idx]
+                poetry = self.LOCAL_POETRY[idx]
+                self.log.debug(f"从本地库选择诗句: {poetry}")
+                return poetry
 
     async def send_checkin(self, retry=False):
         # 从配置读取参数（默认值兜底）
         send_count = self.config.get("send_count", 4)  # 支持自定义发送数量（默认4条）
-        min_letters = self.config.get("min_letters", 7)  # 最小字数
-        max_length = self.config.get("max_length", 18)  # 最大长度（放宽至18，适配长句）
+        min_letters = self.config.get("min_letters", 5)  # 降低最小字数要求（默认5字）
+        max_length = self.config.get("max_length", 20)  # 增加最大长度（默认20字）
         init_wait = self.config.get("init_wait", 10)  # 初始等待时间（秒）
         send_interval = self.config.get("send_interval", self.bot_send_interval)  # 消息间隔
 
+        self.log.info(f"开始签到，计划发送{send_count}条消息，每条{min_letters}-{max_length}字")
+
         # 一次性获取足够诗句（减少API调用）
         all_poetry = []
-        for _ in range(send_count * 3):  # 按发送量的3倍获取，确保有足够筛选空间
+        for i in range(send_count * 3):  # 按发送量的3倍获取，确保有足够筛选空间
             line = await self.get_jinrishici_poetry()
             if line:
                 # 清理所有标点符号（替换为空格）
                 cleaned_line = re.sub(r'[^\w\s]', ' ', line).strip()
+                # 合并多余空格
+                cleaned_line = re.sub(r'\s+', ' ', cleaned_line)
                 all_poetry.append(cleaned_line)
+                self.log.debug(f"获取到第{i+1}条诗句: {cleaned_line}")
 
         # 最多尝试3次组合有效诗句
         for attempt in range(3):
@@ -245,22 +277,31 @@ class EPubGroupChatCheckin(BotCheckin):
                 if min_letters <= len(line.replace(' ', '')) <= max_length
             ]
 
+            self.log.debug(f"第{attempt+1}次尝试，筛选出{len(valid_lines)}条有效诗句")
+
             # 若数量不足，尝试组合短句（确保组合后仍符合长度）
             if len(valid_lines) < send_count:
                 combined_lines = []
                 temp_line = ""
                 for line in all_poetry:
-                    candidate = f"{temp_line} {line}".strip()
-                    candidate_len = len(candidate.replace(' ', ''))
-                    if min_letters <= candidate_len <= max_length:
-                        temp_line = candidate
+                    if not temp_line:
+                        temp_line = line
                     else:
-                        if temp_line and min_letters <= len(temp_line.replace(' ', '')) <= max_length:
-                            combined_lines.append(temp_line)
-                        temp_line = line if len(line.replace(' ', '')) <= max_length else ""
+                        candidate = f"{temp_line} {line}".strip()
+                        candidate_len = len(candidate.replace(' ', ''))
+                        if candidate_len <= max_length:
+                            temp_line = candidate
+                        else:
+                            if temp_line and min_letters <= len(temp_line.replace(' ', '')) <= max_length:
+                                combined_lines.append(temp_line)
+                            temp_line = line if len(line.replace(' ', '')) <= max_length else ""
+                
                 if temp_line and min_letters <= len(temp_line.replace(' ', '')) <= max_length:
                     combined_lines.append(temp_line)
-                valid_lines = list(set(valid_lines + combined_lines))  # 去重
+                
+                # 合并并去重
+                valid_lines = list(set(valid_lines + combined_lines))
+                self.log.debug(f"组合后共有{len(valid_lines)}条有效诗句")
 
             # 若满足数量，发送消息
             if len(valid_lines) >= send_count:
@@ -274,11 +315,38 @@ class EPubGroupChatCheckin(BotCheckin):
                     if i > 0:  # 第一条不间隔，后续按配置间隔发送
                         await asyncio.sleep(send_interval)
                     await self.send(cmd)
+                    self.log.info(f"已发送第{i+1}条消息: {cmd}")
                 
                 await self.finish(message=f"已成功发送{send_count}条签到消息")
                 return
 
             self.log.warning(f"第{attempt+1}次尝试失败，有效诗句不足{send_count}条")
+
+        # 所有尝试失败，使用备用方案：直接从本地库选择足够数量的诗句
+        self.log.warning("无法生成足够有效诗句，使用备用方案")
+        backup_lines = []
+        while len(backup_lines) < send_count:
+            line = self._get_unique_local_poetry()
+            if min_letters <= len(line.replace(' ', '')) <= max_length:
+                backup_lines.append(line)
+            if len(backup_lines) >= send_count:
+                break
+        
+        if len(backup_lines) >= send_count:
+            selected_lines = backup_lines[:send_count]
+            self.log.info(f"使用备用方案发送{send_count}条消息: {selected_lines}")
+            await asyncio.sleep(init_wait)
+            
+            for i, cmd in enumerate(selected_lines):
+                if retry and i == 0:
+                    await asyncio.sleep(self.bot_retry_wait)
+                if i > 0:
+                    await asyncio.sleep(send_interval)
+                await self.send(cmd)
+                self.log.info(f"已发送第{i+1}条备用消息: {cmd}")
+            
+            await self.finish(message=f"已成功发送{send_count}条备用签到消息")
+            return
 
         # 所有尝试失败
         await self.fail(message=f"无法生成{send_count}条有效签到消息")
