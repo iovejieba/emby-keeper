@@ -12,9 +12,9 @@ from . import BotCheckin
 __ignore__ = True
 
 
-class EPubGroupChatCheckin(BotCheckin):
-    name = "EPub 电子书库群组每日发言"
-    chat_name = "libhsulife"
+class AIGroupChatCheckin(BotCheckin):
+    name = "AI 群组每日发言"
+    chat_name = "webshell666666"
     additional_auth = ["prime"]
     bot_use_captcha = False
     
