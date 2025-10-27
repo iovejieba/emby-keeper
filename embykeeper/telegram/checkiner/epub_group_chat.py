@@ -2,6 +2,7 @@ import asyncio
 import httpx
 import re
 import random
+import json
 
 from embykeeper.utils import to_iterable
 
@@ -12,7 +13,7 @@ __ignore__ = True
 
 
 class EPubGroupChatCheckin(BotCheckin):
-    name = "EPub 电子书库群组每日发言"
+    name = "稳健杂货铺 群组每日发言"
     chat_name = "libhsulife"
     additional_auth = ["prime"]
     bot_use_captcha = False
@@ -184,48 +185,144 @@ class EPubGroupChatCheckin(BotCheckin):
         super().__init__(*args, **kwargs)
         self.used_poetry_indices = set()  # 记录已使用的诗句索引，避免短期重复
 
-    async def get_jinrishici_poetry(self):
-        """调用今日诗词API获取诗句，失败时自动降级到本地诗句库（带去重逻辑）"""
-        # 检查是否有有效的 token，如果没有则使用默认 token
-        jinrishici_token = self.config.get("jinrishici_token", "TSfVFoBQphRTPALWtsp9sA6NoY7qBbjA").strip()
-        
-        # 如果配置中的 token 为空，使用默认 token
-        if not jinrishici_token:
-            jinrishici_token = "TSfVFoBQphRTPALWtsp9sA6NoY7qBbjA"
-            self.log.info("使用默认今日诗词API Token")
+    async def get_ai_poetry_batch(self, count=10):
+        """调用hohai.eu.org AI接口一次性获取多句诗句，减少API调用次数"""
+        # 使用内置的 token 和模型
+        api_token = self.config.get("hohai_api_token", "sk-032e174be8fc4378bd5457c89a2f64d4").strip()
+        api_base_url = self.config.get("hohai_api_base_url", "https://hohai.eu.org/api").strip()
+        # 使用确认的模型ID
+        model = self.config.get("hohai_model", "moonshotai/Kimi-K2-Instruct")
         
         try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                headers = {"X-User-Token": jinrishici_token}
-                response = await client.get(
-                    "https://v2.jinrishici.com/sentence",
-                    headers=headers
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                headers = {
+                    "Authorization": f"Bearer {api_token}",
+                    "Content-Type": "application/json"
+                }
+                
+                # 构建请求数据 - 要求一次性生成多句诗句
+                data = {
+                    "model": model,
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": f"请一次性生成{count}句优美的中国古诗句，要求：1. 每句字数在6-12字之间；2. 不要包含标点符号；3. 语言优美典雅；4. 可以是唐诗、宋词或元曲风格；5. 每句诗句用换行符分隔"
+                        }
+                    ]
+                }
+                
+                self.log.info(f"调用AI接口批量获取{count}句诗句，使用模型: {model}")
+                response = await client.post(
+                    f"{api_base_url}/chat/completions",
+                    headers=headers,
+                    json=data
                 )
                 
                 if response.status_code == 200:
                     result = response.json()
-                    if result.get("status") == "success":
-                        content = result["data"]["content"]
-                        self.log.info(f"成功从今日诗词API获取诗句: {content}")
-                        return content
-                    else:
-                        self.log.error(f"今日诗词API返回错误状态: {result}")
-                elif response.status_code == 400:
-                    self.log.warning("今日诗词API返回400错误，Token可能无效或已过期")
+                    
+                    # 更健壮的响应结构检查
+                    if not result:
+                        self.log.error("API返回了空结果")
+                        return []
+                    
+                    # 检查是否有错误信息
+                    if "error" in result:
+                        self.log.error(f"API返回错误: {result['error']}")
+                        return []
+                    
+                    # 检查choices字段是否存在且有效
+                    if "choices" not in result:
+                        self.log.error(f"API响应缺少choices字段: {result}")
+                        return []
+                    
+                    choices = result.get("choices")
+                    if choices is None:
+                        self.log.error("API响应中choices为None")
+                        return []
+                    
+                    if not isinstance(choices, list):
+                        self.log.error(f"API响应中choices不是列表类型: {type(choices)}")
+                        return []
+                    
+                    if len(choices) == 0:
+                        self.log.error("API响应中choices列表为空")
+                        return []
+                    
+                    first_choice = choices[0]
+                    if first_choice is None:
+                        self.log.error("API响应中第一个choice为None")
+                        return []
+                    
+                    if not isinstance(first_choice, dict):
+                        self.log.error(f"API响应中第一个choice不是字典类型: {type(first_choice)}")
+                        return []
+                    
+                    # 检查message字段
+                    if "message" not in first_choice:
+                        self.log.error(f"API响应中第一个choice缺少message字段: {first_choice}")
+                        return []
+                    
+                    message = first_choice.get("message")
+                    if message is None:
+                        self.log.error("API响应中message为None")
+                        return []
+                    
+                    if not isinstance(message, dict):
+                        self.log.error(f"API响应中message不是字典类型: {type(message)}")
+                        return []
+                    
+                    # 检查content字段
+                    if "content" not in message:
+                        self.log.error(f"API响应中message缺少content字段: {message}")
+                        return []
+                    
+                    content = message.get("content")
+                    if content is None:
+                        self.log.error("API响应中content为None")
+                        return []
+                    
+                    content = content.strip()
+                    
+                    if not content:
+                        self.log.error("API返回的内容为空")
+                        return []
+                    
+                    # 按行分割诗句
+                    lines = content.split('\n')
+                    poetry_list = []
+                    
+                    for line in lines:
+                        line = line.strip()
+                        if line:
+                            # 清理诗句：去除标点符号和多余空格
+                            cleaned_line = re.sub(r'[^\w\s]', ' ', line)
+                            cleaned_line = re.sub(r'\s+', ' ', cleaned_line).strip()
+                            if cleaned_line:
+                                poetry_list.append(cleaned_line)
+                    
+                    self.log.info(f"成功从AI接口批量获取{len(poetry_list)}句诗句")
+                    return poetry_list
+                else:
+                    self.log.error(f"AI接口调用失败，状态码: {response.status_code}")
+                    if response.status_code == 401:
+                        self.log.error("API Token可能无效")
+                    elif response.status_code == 404:
+                        self.log.error("API端点不存在，请检查base_url配置")
+                    elif response.status_code == 429:
+                        self.log.error("API调用频率限制")
+                    
                     # 记录详细错误信息
                     try:
                         error_detail = response.json()
-                        self.log.warning(f"API错误详情: {error_detail}")
+                        self.log.error(f"API错误详情: {error_detail}")
                     except:
-                        self.log.warning(f"API原始响应: {response.text}")
-                else:
-                    self.log.error(f"今日诗词API调用失败，状态码: {response.status_code}")
-                    
+                        self.log.error(f"API原始响应: {response.text}")
+                        
         except (asyncio.TimeoutError, httpx.RequestError) as e:
-            self.log.warning(f"API调用异常，自动切换到本地诗句: {e}")
+            self.log.warning(f"AI接口调用异常: {e}")
         
-        # 本地诗句带去重逻辑
-        return self._get_unique_local_poetry()
+        return []
 
     def _get_unique_local_poetry(self):
         """从本地库选择未使用过的诗句，避免短期重复"""
@@ -254,20 +351,28 @@ class EPubGroupChatCheckin(BotCheckin):
         max_length = self.config.get("max_length", 20)  # 增加最大长度（默认20字）
         init_wait = self.config.get("init_wait", 10)  # 初始等待时间（秒）
         send_interval = self.config.get("send_interval", self.bot_send_interval)  # 消息间隔
+        batch_size = self.config.get("batch_size", 15)  # 一次性获取的诗句数量
 
         self.log.info(f"开始签到，计划发送{send_count}条消息，每条{min_letters}-{max_length}字")
 
         # 一次性获取足够诗句（减少API调用）
         all_poetry = []
-        for i in range(send_count * 3):  # 按发送量的3倍获取，确保有足够筛选空间
-            line = await self.get_jinrishici_poetry()
-            if line:
-                # 清理所有标点符号（替换为空格）
-                cleaned_line = re.sub(r'[^\w\s]', ' ', line).strip()
-                # 合并多余空格
-                cleaned_line = re.sub(r'\s+', ' ', cleaned_line)
-                all_poetry.append(cleaned_line)
-                self.log.debug(f"获取到第{i+1}条诗句: {cleaned_line}")
+        
+        # 尝试从AI接口批量获取诗句
+        try:
+            ai_poetry = await self.get_ai_poetry_batch(batch_size)
+            if ai_poetry:
+                all_poetry.extend(ai_poetry)
+                self.log.info(f"从AI接口成功获取{len(ai_poetry)}句诗句")
+        except Exception as e:
+            self.log.error(f"批量获取AI诗句时发生异常: {e}")
+        
+        # 如果AI接口返回的诗句数量不足，用本地诗句补充
+        if len(all_poetry) < send_count:
+            needed_count = send_count - len(all_poetry)
+            self.log.info(f"AI诗句数量不足，从本地库补充{needed_count}句")
+            for _ in range(needed_count):
+                all_poetry.append(self._get_unique_local_poetry())
 
         # 最多尝试3次组合有效诗句
         for attempt in range(3):
