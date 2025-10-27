@@ -178,8 +178,10 @@ class EPubGroupChatCheckin(BotCheckin):
         "刑天舞干戚 猛志固常在"
     ]
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        # 移除可能引起问题的 context 参数
+        kwargs.pop('context', None)
+        super().__init__(*args, **kwargs)
         self.used_poetry_indices = set()  # 记录已使用的诗句索引，避免短期重复
 
     async def get_jinrishici_poetry(self):
