@@ -347,7 +347,7 @@ class EPubGroupChatCheckin(BotCheckin):
     async def send_checkin(self, retry=False):
         # 从配置读取参数（默认值兜底）
         send_count = self.config.get("send_count", 4)  # 支持自定义发送数量（默认4条）
-        min_letters = self.config.get("min_letters", 5)  # 降低最小字数要求（默认5字）
+        min_letters = self.config.get("min_letters", 6)  # 降低最小字数要求（默认5字）
         max_length = self.config.get("max_length", 20)  # 增加最大长度（默认20字）
         init_wait = self.config.get("init_wait", 10)  # 初始等待时间（秒）
         send_interval = self.config.get("send_interval", self.bot_send_interval)  # 消息间隔
