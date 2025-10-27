@@ -15,7 +15,7 @@ class BavaCheckin(TemplateACheckin):
         self._remaining_times = 0  # 剩余签到次数
         self._completed_times = 0  # 已签到次数
         self._has_sent_start = False  # 防止重复发送start
-        self._waiting_for_response = False  # 等待机器人响应
+        self._waiting_for_f1 = False  # 等待F1按钮出现
     
     async def message_handler(self, client, message: Message):
         # 只处理来自目标机器人的消息
@@ -25,15 +25,16 @@ class BavaCheckin(TemplateACheckin):
         chat_id = message.chat.id
         
         # 发送 /start 命令（只在初始状态）
-        if not self._has_sent_start and not self._waiting_for_response:
+        if not self._has_sent_start:
             await self._send_start_command(client, chat_id)
             self._has_sent_start = True
-            self._waiting_for_response = True
+            self._waiting_for_f1 = True
             return
         
-        # 如果正在等待响应，重置标志
-        if self._waiting_for_response:
-            self._waiting_for_response = False
+        # 如果正在等待F1按钮，检查消息中是否有F1按钮
+        if self._waiting_for_f1:
+            await self._check_for_f1_button(client, message)
+            return
         
         # 解析剩余次数
         self._parse_remaining_times(message)
@@ -43,32 +44,60 @@ class BavaCheckin(TemplateACheckin):
             self.log.info("今日签到已完成")
             return await self.on_checkin_success(client, message)
         
-        # 处理按钮
-        await self._handle_buttons(client, message)
+        # 处理其他按钮
+        await self._handle_other_buttons(client, message)
     
     async def _send_start_command(self, client, chat_id):
         """发送 /start 命令"""
         try:
             await client.send_message(chat_id, "/start")
-            self.log.info("已发送 /start 命令，等待机器人响应...")
-            # 增加等待时间，确保机器人有足够时间响应
-            await asyncio.sleep(12)  # 增加到5秒等待
+            self.log.info("已发送 /start 命令，等待F1按钮出现...")
         except Exception as e:
             self.log.error(f"发送 /start 命令失败: {e}")
             await self.fail()
     
-    async def _handle_buttons(self, client, message: Message):
-        """处理所有按钮逻辑"""
+    async def _check_for_f1_button(self, client, message: Message):
+        """检查消息中是否有F1按钮"""
         if not message.reply_markup:
             return
             
         buttons = self._get_all_buttons(message)
+        self.log.debug(f"检查F1按钮，当前按钮: {buttons}")
         
-        # 检测F1按钮
-        f1_button = self._find_button(buttons, ["F1", "签到"])
+        # 模糊查找F1按钮
+        f1_button = self._find_f1_button(buttons)
         if f1_button:
+            self.log.info(f"找到F1按钮: {f1_button}")
+            self._waiting_for_f1 = False
             await self._click_button(client, message, f1_button, "F1")
+        else:
+            self.log.debug("未找到F1按钮，继续等待...")
+    
+    def _find_f1_button(self, buttons):
+        """模糊查找F1按钮，可能包含表情符号"""
+        for button_text in buttons:
+            # 检查是否包含F1（不区分大小写）
+            if "f1" in button_text.lower():
+                return button_text
+            
+            # 检查是否包含常见的赛车或签到相关表情符号
+            racing_emojis = ["🏎", "🏁", "🚗", "🚙", "🚘", "🚀", "⭐", "🌟", "✨"]
+            for emoji in racing_emojis:
+                if emoji in button_text and any(word in button_text.lower() for word in ["签到", "签", "check", "start"]):
+                    return button_text
+            
+            # 检查是否包含签到相关词汇
+            if any(word in button_text.lower() for word in ["签到", "签", "check", "start", "begin"]):
+                return button_text
+        
+        return None
+    
+    async def _handle_other_buttons(self, client, message: Message):
+        """处理F1之外的其他按钮"""
+        if not message.reply_markup:
             return
+            
+        buttons = self._get_all_buttons(message)
         
         # 检测"准备好了"按钮
         ready_button = self._find_button(buttons, ["准备好了", "开始"])
@@ -113,7 +142,7 @@ class BavaCheckin(TemplateACheckin):
             await message.click(button_text)
             self.log.info(f"已点击 {button_name} 按钮")
             # 等待机器人响应
-            await asyncio.sleep(3)
+            await asyncio.sleep(4)
         except (TimeoutError, MessageIdInvalid) as e:
             self.log.debug(f"点击 {button_name} 按钮时出现异常: {e}")
         except Exception as e:
@@ -181,7 +210,7 @@ class BavaCheckin(TemplateACheckin):
         self._remaining_times -= 1
         
         # 等待机器人响应
-        await asyncio.sleep(3)
+        await asyncio.sleep(4)
         
         # 检查是否还有更多签到次数
         if self._remaining_times > 0:
@@ -197,7 +226,7 @@ class BavaCheckin(TemplateACheckin):
         self._remaining_times = 0
         self._completed_times = 0
         self._has_sent_start = False
-        self._waiting_for_response = False
+        self._waiting_for_f1 = False
         await super().on_checkin_success(client, message)
     
     async def on_checkin_failed(self, client, message: Message):
@@ -206,5 +235,5 @@ class BavaCheckin(TemplateACheckin):
         self._remaining_times = 0
         self._completed_times = 0
         self._has_sent_start = False
-        self._waiting_for_response = False
+        self._waiting_for_f1 = False
         await super().on_checkin_failed(client, message)
