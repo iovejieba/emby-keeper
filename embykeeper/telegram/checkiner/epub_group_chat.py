@@ -1,5 +1,5 @@
 import asyncio
-import aiohttp
+import httpx
 import re
 import random
 
@@ -185,20 +185,20 @@ class EPubGroupChatCheckin(BotCheckin):
     async def get_jinrishici_poetry(self):
         """调用今日诗词API获取诗句，失败时自动降级到本地诗句库（带去重逻辑）"""
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                headers = {"X-User-Token": self.config.get("jinrishici_token", "")}
+                response = await client.get(
                     "https://v2.jinrishici.com/sentence",
-                    headers={"X-User-Token": self.config.get("jinrishici_token", "")},  # 支持配置Token
-                    timeout=10
-                ) as response:
-                    if response.status == 200:
-                        result = await response.json()
-                        if result.get("status") == "success":
-                            return result["data"]["content"]
-                        self.log.error(f"今日诗词API返回错误: {result}")
-                    else:
-                        self.log.error(f"今日诗词API调用失败: {response.status}")
-        except (asyncio.TimeoutError, aiohttp.ClientError) as e:
+                    headers=headers
+                )
+                if response.status_code == 200:
+                    result = response.json()
+                    if result.get("status") == "success":
+                        return result["data"]["content"]
+                    self.log.error(f"今日诗词API返回错误: {result}")
+                else:
+                    self.log.error(f"今日诗词API调用失败: {response.status_code}")
+        except (asyncio.TimeoutError, httpx.RequestError) as e:
             self.log.warning(f"API调用异常，自动切换到本地诗句: {e}")
         
         # 本地诗句带去重逻辑
