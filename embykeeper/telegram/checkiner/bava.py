@@ -12,87 +12,81 @@ class BavaCheckin(TemplateACheckin):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # 状态跟踪
-        self._current_state = "start"  # start -> f1_clicked -> ready_clicked -> clicking -> waiting_for_continue
         self._remaining_times = 0  # 剩余签到次数
         self._completed_times = 0  # 已签到次数
-        self._state_start_time = asyncio.get_event_loop().time()  # 状态开始时间
-        self._max_state_duration = 30  # 最大状态持续时间（秒）
-    
-    async def _check_state_timeout(self):
-        """检查状态是否超时"""
-        current_time = asyncio.get_event_loop().time()
-        if current_time - self._state_start_time > self._max_state_duration:
-            self.log.warning(f"状态 {self._current_state} 已超时，重置状态机")
-            self._reset_state()
-            return True
-        return False
-    
-    def _reset_state(self):
-        """重置状态机"""
-        self._current_state = "start"
-        self._remaining_times = 0
-        self._completed_times = 0
-        self._state_start_time = asyncio.get_event_loop().time()
+        self._has_sent_start = False  # 防止重复发送start
+        self._waiting_for_response = False  # 等待机器人响应
     
     async def message_handler(self, client, message: Message):
-        # 检查状态超时
-        if await self._check_state_timeout():
-            await self._send_start_command(client, message.chat.id)
+        # 只处理来自目标机器人的消息
+        if message.from_user and message.from_user.username != self.bot_username:
             return
             
         chat_id = message.chat.id
         
         # 发送 /start 命令（只在初始状态）
-        if self._current_state == "start":
+        if not self._has_sent_start and not self._waiting_for_response:
             await self._send_start_command(client, chat_id)
-            self._current_state = "waiting_for_panel"
-            self._state_start_time = asyncio.get_event_loop().time()
+            self._has_sent_start = True
+            self._waiting_for_response = True
             return
         
-        # 处理面板信息和按钮
-        await self._handle_panel_flow(client, message)
-    
-    async def _send_start_command(self, client, chat_id):
-        """发送 /start 命令"""
-        try:
-            await client.send_message(chat_id, "/start")
-            self.log.info("已发送 /start 命令")
-            # 等待机器人响应
-            await asyncio.sleep(2)
-        except Exception as e:
-            self.log.error(f"发送 /start 命令失败: {e}")
-            await self.fail()
-    
-    async def _handle_panel_flow(self, client, message: Message):
-        """处理面板流程"""
-        if not message.reply_markup:
-            return await super().message_handler(client, message)
-        
-        # 获取所有按钮文本
-        buttons = self._get_all_buttons(message)
+        # 如果正在等待响应，重置标志
+        if self._waiting_for_response:
+            self._waiting_for_response = False
         
         # 解析剩余次数
         self._parse_remaining_times(message)
         
         # 检查是否已完成所有签到
         if self._remaining_times <= 0 and self._completed_times > 0:
-            self.log.info("今日剩余次数为0，签到完成")
-            self._current_state = "completed"
+            self.log.info("今日签到已完成")
             return await self.on_checkin_success(client, message)
         
-        # 根据当前状态处理不同的按钮
-        if self._current_state == "waiting_for_panel":
-            await self._handle_f1_button(client, message, buttons)
+        # 处理按钮
+        await self._handle_buttons(client, message)
+    
+    async def _send_start_command(self, client, chat_id):
+        """发送 /start 命令"""
+        try:
+            await client.send_message(chat_id, "/start")
+            self.log.info("已发送 /start 命令，等待机器人响应...")
+            # 增加等待时间，确保机器人有足够时间响应
+            await asyncio.sleep(12)  # 增加到5秒等待
+        except Exception as e:
+            self.log.error(f"发送 /start 命令失败: {e}")
+            await self.fail()
+    
+    async def _handle_buttons(self, client, message: Message):
+        """处理所有按钮逻辑"""
+        if not message.reply_markup:
+            return
+            
+        buttons = self._get_all_buttons(message)
         
-        elif self._current_state == "f1_clicked":
-            await self._handle_ready_button(client, message, buttons)
+        # 检测F1按钮
+        f1_button = self._find_button(buttons, ["F1", "签到"])
+        if f1_button:
+            await self._click_button(client, message, f1_button, "F1")
+            return
         
-        elif self._current_state == "ready_clicked":
-            await self._handle_accelerate_button(client, message, buttons)
+        # 检测"准备好了"按钮
+        ready_button = self._find_button(buttons, ["准备好了", "开始"])
+        if ready_button:
+            await self._click_button(client, message, ready_button, "准备好了")
+            return
         
-        elif self._current_state == "waiting_for_continue":
-            await self._handle_continue_button(client, message, buttons)
+        # 检测"加速吧"按钮
+        accelerate_button = self._find_button(buttons, ["加速吧", "加速"])
+        if accelerate_button:
+            await self._continuous_click(client, message, accelerate_button)
+            return
+        
+        # 检测"继续冲刺"按钮
+        continue_button = self._find_button(buttons, ["继续冲刺", "继续"])
+        if continue_button:
+            await self._click_button(client, message, continue_button, "继续冲刺")
+            return
     
     def _get_all_buttons(self, message: Message):
         """提取所有按钮文本"""
@@ -103,6 +97,28 @@ class BavaCheckin(TemplateACheckin):
                     if button.text:
                         buttons.append(button.text)
         return buttons
+    
+    def _find_button(self, buttons, keywords):
+        """根据关键词列表查找按钮"""
+        for button_text in buttons:
+            for keyword in keywords:
+                if keyword in button_text:
+                    return button_text
+        return None
+    
+    async def _click_button(self, client, message: Message, button_text, button_name):
+        """点击按钮"""
+        await asyncio.sleep(random.uniform(1.0, 2.0))
+        try:
+            await message.click(button_text)
+            self.log.info(f"已点击 {button_name} 按钮")
+            # 等待机器人响应
+            await asyncio.sleep(3)
+        except (TimeoutError, MessageIdInvalid) as e:
+            self.log.debug(f"点击 {button_name} 按钮时出现异常: {e}")
+        except Exception as e:
+            self.log.error(f"点击 {button_name} 按钮失败: {e}")
+            await self.fail()
     
     def _parse_remaining_times(self, message: Message):
         """从消息中解析剩余签到次数"""
@@ -122,107 +138,21 @@ class BavaCheckin(TemplateACheckin):
             if match:
                 remaining = int(match.group(1))
                 total = int(match.group(2))
-                self.log.info(f"解析到剩余签到次数: {remaining}/{total}")
-                self._remaining_times = remaining
-                return remaining
+                if remaining != self._remaining_times:  # 只在次数变化时记录
+                    self.log.info(f"解析到剩余签到次数: {remaining}/{total}")
+                    self._remaining_times = remaining
+                return
         
-        self.log.warning("未找到剩余次数信息，文本内容: " + text[:100])  # 记录部分文本用于调试
-        return 0
-    
-    async def _handle_f1_button(self, client, message: Message, buttons: list):
-        """处理 F1 按钮"""
-        f1_button = None
-        for button_text in buttons:
-            if "F1" in button_text.upper():
-                f1_button = button_text
-                break
-        
-        if f1_button:
-            await asyncio.sleep(random.uniform(0.5, 1.0))
-            try:
-                await message.click(f1_button)
-                self.log.info(f"已点击 F1 按钮，今日剩余签到次数: {self._remaining_times}")
-                self._current_state = "f1_clicked"
-                self._state_start_time = asyncio.get_event_loop().time()
-                # 等待按钮状态更新
-                await asyncio.sleep(2)
-            except (TimeoutError, MessageIdInvalid) as e:
-                self.log.debug(f"点击 F1 按钮时出现异常: {e}")
-            except Exception as e:
-                self.log.error(f"点击 F1 按钮失败: {e}")
-                await self.fail()
-        else:
-            self.log.debug("未找到 F1 按钮，继续等待...")
-    
-    async def _handle_ready_button(self, client, message: Message, buttons: list):
-        """处理 '准备好了' 按钮"""
-        ready_button = None
-        for button_text in buttons:
-            if "准备好了" in button_text:
-                ready_button = button_text
-                break
-        
-        if ready_button:
-            await asyncio.sleep(random.uniform(0.5, 1.0))
-            try:
-                await message.click(ready_button)
-                self.log.info(f"第 {self._completed_times + 1} 次签到 - 已点击 '准备好了' 按钮")
-                self._current_state = "ready_clicked"
-                self._state_start_time = asyncio.get_event_loop().time()
-                # 等待按钮变成 '加速吧'
-                await asyncio.sleep(3)
-            except (TimeoutError, MessageIdInvalid) as e:
-                self.log.debug(f"点击 '准备好了' 按钮时出现异常: {e}")
-            except Exception as e:
-                self.log.error(f"点击 '准备好了' 按钮失败: {e}")
-                await self.fail()
-        else:
-            self.log.debug("未找到 '准备好了' 按钮，继续等待...")
-    
-    async def _handle_accelerate_button(self, client, message: Message, buttons: list):
-        """处理 '加速吧' 按钮并进行快速连点"""
-        accelerate_button = None
-        for button_text in buttons:
-            if "加速吧" in button_text:
-                accelerate_button = button_text
-                break
-        
-        if accelerate_button:
-            self.log.info(f"第 {self._completed_times + 1} 次签到 - 开始快速连点 '加速吧' 按钮...")
-            await self._continuous_click(client, message, accelerate_button)
-        else:
-            self.log.debug("未找到 '加速吧' 按钮，继续等待...")
-    
-    async def _handle_continue_button(self, client, message: Message, buttons: list):
-        """处理 '继续冲刺' 按钮"""
-        continue_button = None
-        for button_text in buttons:
-            if "继续冲刺" in button_text:
-                continue_button = button_text
-                break
-        
-        if continue_button:
-            await asyncio.sleep(random.uniform(0.5, 1.0))
-            try:
-                await message.click(continue_button)
-                self.log.info(f"已点击 '继续冲刺' 按钮，准备第 {self._completed_times + 1} 次签到")
-                self._current_state = "ready_clicked"
-                self._state_start_time = asyncio.get_event_loop().time()
-                # 等待按钮变成 '加速吧'
-                await asyncio.sleep(3)
-            except (TimeoutError, MessageIdInvalid) as e:
-                self.log.debug(f"点击 '继续冲刺' 按钮时出现异常: {e}")
-            except Exception as e:
-                self.log.error(f"点击 '继续冲刺' 按钮失败: {e}")
-                await self.fail()
-        else:
-            self.log.debug("未找到 '继续冲刺' 按钮，继续等待...")
+        # 如果没有找到剩余次数，但文本包含特定关键词，尝试其他方式解析
+        if "剩余" in text or "次数" in text:
+            self.log.debug(f"可能包含次数信息的文本: {text[:100]}")
     
     async def _continuous_click(self, client, message: Message, button_text: str):
         """连续点击按钮"""
+        self.log.info(f"第 {self._completed_times + 1} 次签到 - 开始快速连点")
+        
         click_count = 0
         max_clicks = 50  # 最大点击次数，避免无限循环
-        success_click_count = 0  # 成功点击次数
         
         while click_count < max_clicks:
             try:
@@ -230,7 +160,6 @@ class BavaCheckin(TemplateACheckin):
                 await asyncio.sleep(random.uniform(0.1, 0.3))
                 await message.click(button_text)
                 click_count += 1
-                success_click_count += 1
                 
                 if click_count % 10 == 0:  # 每10次点击记录一次
                     self.log.info(f"第 {self._completed_times + 1} 次签到 - 已连续点击 {click_count} 次")
@@ -243,39 +172,39 @@ class BavaCheckin(TemplateACheckin):
                 await asyncio.sleep(e.value + 1)
             except Exception as e:
                 self.log.error(f"点击过程中出现错误: {e}")
-                # 如果连续多次失败，可能消息已过期
-                if click_count - success_click_count > 5:
-                    self.log.warning("连续点击失败次数过多，停止点击")
-                    break
+                break
         
-        self.log.info(f"第 {self._completed_times + 1} 次签到 - 连续点击完成，成功点击 {success_click_count} 次")
+        self.log.info(f"第 {self._completed_times + 1} 次签到 - 连续点击完成，总共点击 {click_count} 次")
         
         # 完成一次签到
         self._completed_times += 1
         self._remaining_times -= 1
         
+        # 等待机器人响应
+        await asyncio.sleep(3)
+        
         # 检查是否还有更多签到次数
         if self._remaining_times > 0:
             self.log.info(f"准备第 {self._completed_times + 1} 次签到，剩余 {self._remaining_times} 次")
-            # 设置状态为等待继续冲刺按钮
-            self._current_state = "waiting_for_continue"
-            self._state_start_time = asyncio.get_event_loop().time()
-            # 等待按钮更新为"继续冲刺"
-            await asyncio.sleep(3)
         else:
             # 所有签到完成
-            self._current_state = "completed"
             self.log.info(f"已完成所有 {self._completed_times} 次签到")
             await self.on_checkin_success(client, message)
     
     async def on_checkin_success(self, client, message: Message):
         """签到成功回调"""
         # 重置状态，以备下次使用
-        self._reset_state()
+        self._remaining_times = 0
+        self._completed_times = 0
+        self._has_sent_start = False
+        self._waiting_for_response = False
         await super().on_checkin_success(client, message)
     
     async def on_checkin_failed(self, client, message: Message):
         """签到失败回调"""
         # 重置状态，以备下次使用
-        self._reset_state()
+        self._remaining_times = 0
+        self._completed_times = 0
+        self._has_sent_start = False
+        self._waiting_for_response = False
         await super().on_checkin_failed(client, message)
