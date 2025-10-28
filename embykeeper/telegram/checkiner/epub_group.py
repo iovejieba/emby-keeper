@@ -10,7 +10,7 @@ __ignore__ = True
 class EPubGroupCheckin(BotCheckin):
     name = "EPub 电子书库群组签到"
     chat_name = "libhsulife"
-    bot_username = "zhruonanbot"
+    bot_username = "afoolGroupBot"
     bot_use_captcha = False
 
     async def send_checkin(self, retry=False):
