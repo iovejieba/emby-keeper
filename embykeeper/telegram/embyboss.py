@@ -410,7 +410,7 @@ class EmbybossRegister:
     def _validate_credentials(self) -> bool:
         """验证用户名和安全码格式"""
         # 安全码验证：4-6位数字
-        if not re.fullmatch(r"\d{4,6}", self.password):
+        if not re.fullmatch(r"\d{4,10}", self.password):
             self.log.error(f"安全码格式错误: {self.password}（需4-6位数字）")
             return False
 
