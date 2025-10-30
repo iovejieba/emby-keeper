@@ -31,13 +31,17 @@ class EmbybossRegister:
             "security_code": re.compile(r"安全码.*\d+~?\d*位", re.IGNORECASE)
         }
         
-        # 注册成功检测规则
+        # 注册成功检测规则 - 扩展以匹配更多成功消息格式
         self.SUCCESS_PATTERNS = [
             re.compile(r"创建用户成功🎉", re.IGNORECASE),
             re.compile(r"用户名称\s*\|", re.IGNORECASE),
             re.compile(r"用户密码\s*\|", re.IGNORECASE),
             re.compile(r"安全密码\s*\|", re.IGNORECASE),
-            re.compile(r"到期时间\s*\|", re.IGNORECASE)
+            re.compile(r"到期时间\s*\|", re.IGNORECASE),
+            re.compile(r"用户名：.*安全码：\d+", re.IGNORECASE),  # 新增：匹配"用户名：xxx 安全码：xxx"格式
+            re.compile(r"正在为您初始化账户", re.IGNORECASE),  # 新增：匹配初始化账户提示
+            re.compile(r"会话结束，收到设置", re.IGNORECASE),  # 新增：匹配会话结束提示
+            re.compile(r"🆗", re.IGNORECASE),  # 新增：匹配OK符号
         ]
 
     async def run(self, bot: str):
@@ -375,22 +379,41 @@ class EmbybossRegister:
             self.log.debug("使用回退匹配：包含'创建用户成功'")
             return True
             
+        # 新增：匹配您提供的成功消息格式
+        success_indicators = [
+            "会话结束，收到设置",
+            "正在为您初始化账户",
+            "更新用户策略",
+            "🆗",
+            "用户名：.*安全码："
+        ]
+        
+        for indicator in success_indicators:
+            if re.search(indicator, text, re.IGNORECASE):
+                self.log.debug(f"使用新增成功指示器匹配: {indicator}")
+                return True
+                
+        # 如果消息包含用户名和安全码，并且有"初始化"或"更新"等词，认为是成功
+        if re.search(r"用户名：.*安全码：\d+", text) and ("初始化" in text or "更新" in text):
+            self.log.debug("使用用户名和安全码格式匹配")
+            return True
+            
         return False
 
     def _log_registration_details(self, text: str):
         """提取并记录注册详情"""
         try:
             # 提取用户名
-            username_match = re.search(r"用户名称\s*\|\s*([^\n]+)", text)
+            username_match = re.search(r"用户名：\s*([^\s]+)", text)
             if username_match:
                 username = username_match.group(1).strip()
                 self.log.info(f"注册用户名: {username}")
                 
             # 提取用户密码
-            password_match = re.search(r"用户密码\s*\|\s*([^\n]+)", text)
+            password_match = re.search(r"安全码：\s*(\d+)", text)
             if password_match:
                 password = password_match.group(1).strip()
-                self.log.info(f"用户密码: {password}")
+                self.log.info(f"安全码: {password}")
                 
             # 提取安全密码
             security_match = re.search(r"安全密码\s*\|\s*([^\n]+)", text)
@@ -410,8 +433,8 @@ class EmbybossRegister:
     def _validate_credentials(self) -> bool:
         """验证用户名和安全码格式"""
         # 安全码验证：4-6位数字
-        if not re.fullmatch(r"\d{4,10}", self.password):
-            self.log.error(f"安全码格式错误: {self.password}（需4-10位数字）")
+        if not re.fullmatch(r"\d{4,6}", self.password):
+            self.log.error(f"安全码格式错误: {self.password}（需4-6位数字）")
             return False
 
         # 用户名验证
