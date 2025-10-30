@@ -116,26 +116,27 @@ class EmbybossRegister:
 
     async def _attempt_with_panel(self, panel: Message):
         """使用面板进行注册尝试"""
-        # 查找创建账户按钮的位置（行和列索引）
+        # 查找创建账户按钮 - 处理带 emoji 的情况
         buttons = panel.reply_markup.inline_keyboard
-        create_button_row = None
-        create_button_col = None
+        create_button = None
         
         self.log.debug(f"面板按钮结构: {[[btn.text for btn in row] for row in buttons]}")
         
-        for row_index, row in enumerate(buttons):
-            for col_index, button in enumerate(row):
-                # 更精确地匹配创建账户按钮
-                button_text = button.text.strip().lower()
-                if any(keyword in button_text for keyword in ["创建账户", "创建账号", "注册", "create"]):
-                    create_button_row = row_index
-                    create_button_col = col_index
-                    self.log.info(f"找到创建账户按钮: 行{row_index}, 列{col_index}, 文本: {button.text}")
+        # 查找创建账户按钮，处理带 emoji 的情况
+        for row in buttons:
+            for button in row:
+                button_text = button.text.strip()
+                self.log.debug(f"检查按钮: '{button_text}'")
+                
+                # 检查是否包含"创建账户"关键词，忽略前后的 emoji 和空格
+                if self._is_create_account_button(button_text):
+                    create_button = button.text  # 使用原始文本，包括 emoji
+                    self.log.info(f"找到创建账户按钮: '{button_text}'")
                     break
-            if create_button_row is not None:
+            if create_button:
                 break
 
-        if create_button_row is None:
+        if not create_button:
             self.log.warning("找不到创建账户按钮, 无法注册.")
             # 记录所有按钮文本以便调试
             all_buttons = []
@@ -148,12 +149,12 @@ class EmbybossRegister:
         # 随机延迟模拟人工操作
         await asyncio.sleep(random.uniform(0.5, 1.5))
 
-        # 点击创建账户按钮 - 使用行和列索引
+        # 点击创建账户按钮 - 使用包含 emoji 的原始按钮文本
         async with self.client.catch_reply(panel.chat.id) as f:
             try:
-                # 正确的调用方式：传入行和列索引
-                self.log.info(f"正在点击创建账户按钮 (行{create_button_row}, 列{create_button_col})")
-                answer: BotCallbackAnswer = await panel.click(create_button_row, create_button_col)
+                # 使用包含 emoji 的按钮文本进行点击
+                self.log.info(f"正在点击创建账户按钮: '{create_button}'")
+                answer: BotCallbackAnswer = await panel.click(create_button)
                 
                 # 检查回调答案
                 answer_message = answer.message or ""
@@ -203,6 +204,16 @@ class EmbybossRegister:
 
         # 等待并检查注册结果
         return await self._wait_for_register_result(panel)
+    
+    def _is_create_account_button(self, button_text: str) -> bool:
+        """判断按钮是否为创建账户按钮，处理带 emoji 的情况"""
+        # 移除可能的 emoji 和多余空格，只保留文字部分进行匹配
+        # 使用正则表达式移除 emoji（简单的 emoji 范围）
+        text_without_emoji = re.sub(r'[\U00010000-\U0010ffff]', '', button_text).strip()
+        
+        # 检查是否包含创建账户的关键词
+        create_keywords = ["创建账户", "创建账号", "注册账户", "注册账号"]
+        return any(keyword in text_without_emoji for keyword in create_keywords)
     
     def _is_wrong_button_clicked(self, msg: Message) -> bool:
         """检查是否点击了错误的按钮"""
