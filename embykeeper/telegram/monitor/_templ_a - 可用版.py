@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-import asyncio
 import random
 import re
 import string
@@ -105,70 +102,16 @@ class TemplateAMonitor(Monitor):
                 # 生成随机安全码（原方案）
                 register_code = "".join(random.choices(string.ascii_letters + string.digits, k=4))
                 self.log.info(f'未设置自定义安全码, 将使用自动生成的安全码 "{register_code}" 进行注册.')
-            
-            # 创建注册实例并执行注册
-            register_instance = EmbybossRegister(self.client, self.log, self.unique_name, register_code)
-            
-            # 执行注册并获取结果
-            register_result = await register_instance.run(self.t_config.try_register_bot)
-            
-            if register_result["success"]:
-                # 注册成功，发送即时通知
-                bot_name = register_result.get("bot", self.t_config.try_register_bot)
-                username = register_result.get("username", self.unique_name)
-                security_code = register_result.get("security_code", register_code)
-                details = register_result.get("details", {})
                 
-                # 构建成功消息
-                success_msg = (
-                    f"🎉 **注册成功通知** 🎉\n\n"
-                    f"**站点**: `{bot_name}`\n"
-                    f"**用户名**: `{username}`\n"
-                    f"**安全码**: `{security_code}`\n"
-                )
-                
-                # 添加额外详情
-                if details.get('user_password'):
-                    success_msg += f"**用户密码**: `{details['user_password']}`\n"
-                if details.get('expiry_time'):
-                    success_msg += f"**到期时间**: `{details['expiry_time']}`\n"
-                
-                success_msg += f"\n_注册时间: {self._get_current_time()}_"
-                
-                # 发送即时日志
-                self.log.bind(msg=True).info(f"🎉 注册成功 - 站点: {bot_name}, 用户名: {username}, 安全码: {security_code}")
-                
-                # 发送详细通知
-                await self._send_detailed_notification(success_msg)
-                
+            if await EmbybossRegister(self.client, self.log, self.unique_name, register_code).run(
+                self.t_config.try_register_bot
+            ):
                 self.log.bind(log=True).info(f"监控器成功注册机器人 {self.t_config.try_register_bot}.")
-            else:
-                # 注册失败
-                error_msg = register_result.get("error", "未知错误")
-                self.log.bind(msg=True).warning(f"❌ 注册失败 - 站点: {self.t_config.try_register_bot}, 错误: {error_msg}")
         else:
             if reply:
                 await self.client.send_message(message.chat.id, reply)
                 self.log.info(f"已向 {message.chat.username or message.chat.full_name} 发送: {reply}.")
                 return
-
-    async def _send_detailed_notification(self, message: str):
-        """发送详细的注册成功通知"""
-        try:
-            # 这里可以添加发送到特定聊天或频道的逻辑
-            # 例如：发送到管理员的私聊或特定的通知频道
-            # await self.client.send_message(chat_id=ADMIN_CHAT_ID, text=message)
-            
-            # 目前先记录到日志
-            self.log.info(f"注册成功详情: {message}")
-            
-        except Exception as e:
-            self.log.error(f"发送详细通知失败: {e}")
-
-    def _get_current_time(self):
-        """获取当前时间字符串"""
-        from datetime import datetime
-        return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     def get_unique_name(self):
         if not self.t_config.try_register_bot:

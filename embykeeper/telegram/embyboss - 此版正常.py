@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import random
 import re
-from typing import TYPE_CHECKING, Dict, Any
+from typing import TYPE_CHECKING
 
 from pyrogram.errors import MessageIdInvalid
 from pyrogram.types import Message
@@ -44,31 +44,31 @@ class EmbybossRegister:
             re.compile(r"🆗", re.IGNORECASE),  # 新增：匹配OK符号
         ]
 
-    async def run(self, bot: str) -> Dict[str, Any]:
-        """单次注册尝试，返回包含详细信息的字典"""
+    async def run(self, bot: str):
+        """单次注册尝试"""
         return await self._register_once(bot)
 
-    async def run_continuous(self, bot: str, interval_seconds: int = 1) -> Dict[str, Any]:
-        """连续注册尝试，返回包含详细信息的字典"""
+    async def run_continuous(self, bot: str, interval_seconds: int = 1):
+        """连续注册尝试"""
         try:
             panel = await self.client.wait_reply(bot, "/start")
         except asyncio.TimeoutError:
             self.log.warning("初始命令无响应, 无法注册.")
-            return {"success": False, "error": "初始命令无响应"}
+            return False
 
         while True:
             try:
                 result = await self._attempt_with_panel(panel)
-                if result["success"]:
+                if result:
                     self.log.info("注册成功")
-                    return result
+                    return True
 
                 if interval_seconds:
                     self.log.debug(f"注册失败, {interval_seconds} 秒后重试.")
                     await asyncio.sleep(interval_seconds)
                 else:
                     self.log.debug("注册失败, 即将重试.")
-                    return result
+                    return False
             except (MessageIdInvalid, ValueError, AttributeError):
                 # 面板失效或结构变化, 重新获取
                 self.log.debug("面板失效, 正在重新获取...")
@@ -81,21 +81,21 @@ class EmbybossRegister:
                         continue
                     else:
                         self.log.warning("重新获取面板失败, 无法注册.")
-                        return {"success": False, "error": "重新获取面板失败"}
+                        return False
             except asyncio.CancelledError:
                 break
             except Exception as e:
                 self.log.error(f"注册异常: {e}")
                 await asyncio.sleep(5)
-        return {"success": False, "error": "注册过程被取消"}
+        return False
 
-    async def _register_once(self, bot: str) -> Dict[str, Any]:
-        """单次注册流程，返回包含详细信息的字典"""
+    async def _register_once(self, bot: str):
+        """单次注册流程"""
         try:
             panel = await self.client.wait_reply(bot, "/start")
         except asyncio.TimeoutError:
             self.log.warning("初始命令无响应, 无法注册.")
-            return {"success": False, "error": "初始命令无响应"}
+            return False
 
         text = panel.text or panel.caption
         try:
@@ -104,22 +104,22 @@ class EmbybossRegister:
             available_slots = int(re.search(r"可注册席位 \| (\d+)", text).group(1))
         except (AttributeError, ValueError):
             self.log.warning("无法解析界面, 无法注册, 可能您已注册.")
-            return {"success": False, "error": "无法解析界面"}
+            return False
 
         if current_status != "未注册":
             self.log.warning("当前状态不是未注册, 无法注册.")
-            return {"success": False, "error": "当前状态不是未注册"}
+            return False
         if not register_status:
             self.log.debug("未开注, 将继续监控.")
-            return {"success": False, "error": "未开注"}
+            return False
         if available_slots <= 0:
             self.log.debug("可注册席位不足, 将继续监控.")
-            return {"success": False, "error": "可注册席位不足"}
+            return False
 
-        return await self._attempt_with_panel(panel, bot)
+        return await self._attempt_with_panel(panel)
 
-    async def _attempt_with_panel(self, panel: Message, bot: str = None) -> Dict[str, Any]:
-        """使用面板进行注册尝试，返回包含详细信息的字典"""
+    async def _attempt_with_panel(self, panel: Message):
+        """使用面板进行注册尝试"""
         # 查找创建账户按钮 - 处理带 emoji 的情况
         buttons = panel.reply_markup.inline_keyboard
         create_button = None
@@ -148,7 +148,7 @@ class EmbybossRegister:
                 for button in row:
                     all_buttons.append(button.text)
             self.log.debug(f"所有可用按钮: {all_buttons}")
-            return {"success": False, "error": "找不到创建账户按钮"}
+            return False
 
         # 随机延迟模拟人工操作
         await asyncio.sleep(random.uniform(0.5, 1.5))
@@ -173,7 +173,7 @@ class EmbybossRegister:
                     
                 if is_closed:
                     self.log.debug("创建账户功能未开放.")
-                    return {"success": False, "error": "创建账户功能未开放"}
+                    return False
                     
                 self.log.debug(f"按钮点击响应: message={answer_message}, alert={answer_alert}")
             except (TimeoutError, MessageIdInvalid) as e:
@@ -188,11 +188,11 @@ class EmbybossRegister:
                 # 检查是否点击了错误的按钮
                 if self._is_wrong_button_clicked(msg):
                     self.log.error("点击了错误的按钮，可能是'换绑TG'或其他非注册按钮")
-                    return {"success": False, "error": "点击了错误的按钮"}
+                    return False
                     
             except asyncio.TimeoutError:
                 self.log.warning("创建账户按钮点击无响应, 无法注册.")
-                return {"success": False, "error": "创建账户按钮点击无响应"}
+                return False
 
         # 检查是否已经进入注册状态
         text = msg.text or msg.caption or ""
@@ -203,11 +203,11 @@ class EmbybossRegister:
             # 循环检测注册状态提示
             register_prompt_msg = await self._wait_for_register_state(panel)
             if not register_prompt_msg:
-                return {"success": False, "error": "未能进入注册状态"}
+                return False
 
         # 验证凭据格式
         if not self._validate_credentials():
-            return {"success": False, "error": "凭据格式验证失败"}
+            return False
 
         # 发送凭据
         try:
@@ -218,10 +218,10 @@ class EmbybossRegister:
             self.log.debug(f"已发送凭据: {self.username} ****")
         except Exception as e:
             self.log.error(f"发送凭据失败: {e}")
-            return {"success": False, "error": f"发送凭据失败: {e}"}
+            return False
 
         # 等待并检查注册结果
-        return await self._wait_for_register_result(panel, bot)
+        return await self._wait_for_register_result(panel)
     
     def _is_create_account_button(self, button_text: str) -> bool:
         """判断按钮是否为创建账户按钮，处理带 emoji 的情况"""
@@ -285,8 +285,8 @@ class EmbybossRegister:
         self.log.warning(f"超过{total_timeout}秒未检测到有效注册状态提示，注册失败")
         return None
 
-    async def _wait_for_register_result(self, panel: Message, bot: str = None) -> Dict[str, Any]:
-        """等待注册结果，返回包含详细信息的字典"""
+    async def _wait_for_register_result(self, panel: Message) -> bool:
+        """等待注册结果"""
         try:
             # 等待机器人回复结果
             result_msg = await self.client.wait_reply(panel.chat.id, timeout=60)
@@ -297,26 +297,18 @@ class EmbybossRegister:
             if self._is_register_success(result_text):
                 self.log.info("注册成功!")
                 # 提取并记录注册详情
-                registration_details = self._extract_registration_details(result_text)
-                
-                # 返回成功结果和详细信息
-                return {
-                    "success": True,
-                    "bot": bot,
-                    "username": self.username,
-                    "security_code": self.password,
-                    "details": registration_details
-                }
+                self._log_registration_details(result_text)
+                return True
             elif "退出" in result_text or "cancel" in result_text.lower():
                 self.log.warning("用户取消了注册")
-                return {"success": False, "error": "用户取消了注册"}
+                return False
             else:
                 self.log.warning(f"注册失败: {result_text}")
-                return {"success": False, "error": result_text}
+                return False
                 
         except asyncio.TimeoutError:
             self.log.warning("等待注册结果超时.")
-            return {"success": False, "error": "等待注册结果超时"}
+            return False
 
     def _is_register_state(self, msg: Message) -> bool:
         """判断是否为注册状态提示"""
@@ -408,42 +400,39 @@ class EmbybossRegister:
             
         return False
 
-    def _extract_registration_details(self, text: str) -> Dict[str, Any]:
-        """提取注册详情并返回字典"""
-        details = {}
+    def _log_registration_details(self, text: str):
+        """提取并记录注册详情"""
         try:
             # 提取用户名
-            username_match = re.search(r"用户名：\s*([^\s\n]+)", text) or \
-                            re.search(r"用户名称\s*\|\s*([^\n]+)", text)
+            username_match = re.search(r"用户名：\s*([^\s]+)", text)
             if username_match:
-                details['username'] = username_match.group(1).strip()
-                
-            # 提取安全码
-            security_match = re.search(r"安全码：\s*(\d+)", text) or \
-                           re.search(r"安全密码\s*\|\s*([^\n]+)", text)
-            if security_match:
-                details['security_code'] = security_match.group(1).strip()
+                username = username_match.group(1).strip()
+                self.log.info(f"注册用户名: {username}")
                 
             # 提取用户密码
-            password_match = re.search(r"用户密码\s*\|\s*([^\n]+)", text)
+            password_match = re.search(r"安全码：\s*(\d+)", text)
             if password_match:
-                details['user_password'] = password_match.group(1).strip()
+                password = password_match.group(1).strip()
+                self.log.info(f"安全码: {password}")
+                
+            # 提取安全密码
+            security_match = re.search(r"安全密码\s*\|\s*([^\n]+)", text)
+            if security_match:
+                security_code = security_match.group(1).strip()
+                self.log.info(f"安全密码: {security_code} (仅发送一次，请妥善保存)")
                 
             # 提取到期时间
             expiry_match = re.search(r"到期时间\s*\|\s*([^\n]+)", text)
             if expiry_match:
-                details['expiry_time'] = expiry_match.group(1).strip()
-                
-            self.log.debug(f"提取的注册详情: {details}")
+                expiry_time = expiry_match.group(1).strip()
+                self.log.info(f"到期时间: {expiry_time}")
                 
         except Exception as e:
             self.log.warning(f"提取注册详情时出错: {e}")
-            
-        return details
 
     def _validate_credentials(self) -> bool:
         """验证用户名和安全码格式"""
-        # 安全码验证：4-11位数字
+        # 安全码验证：4-6位数字
         if not re.fullmatch(r"\d{4,11}", self.password):
             self.log.error(f"安全码格式错误: {self.password}（需4-11位数字）")
             return False
