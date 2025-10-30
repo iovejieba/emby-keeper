@@ -190,10 +190,16 @@ class EmbybossRegister:
                 self.log.warning("创建账户按钮点击无响应, 无法注册.")
                 return False
 
-        # 循环检测注册状态提示
-        register_prompt_msg = await self._wait_for_register_state(panel)
-        if not register_prompt_msg:
-            return False
+        # 检查是否已经进入注册状态
+        text = msg.text or msg.caption or ""
+        if self._is_register_state(msg):
+            self.log.info("成功进入注册状态，准备发送凭据")
+            register_prompt_msg = msg
+        else:
+            # 循环检测注册状态提示
+            register_prompt_msg = await self._wait_for_register_state(panel)
+            if not register_prompt_msg:
+                return False
 
         # 验证凭据格式
         if not self._validate_credentials():
@@ -338,6 +344,11 @@ class EmbybossRegister:
         if (self.REGISTER_PATTERNS["keyword"].search(text) and 
             self.REGISTER_PATTERNS["example"].search(text)):
             self.log.debug("使用回退匹配：包含核心关键词和示例")
+            return True
+            
+        # 简化匹配：如果包含"您已进入注册状态"核心关键词
+        if "您已进入注册状态" in text:
+            self.log.debug("使用简化匹配：包含'您已进入注册状态'")
             return True
             
         self.log.debug(f"状态检测失败，得分: {score}")
