@@ -156,10 +156,18 @@ class EmbybossRegister:
                 self.log.info(f"正在点击创建账户按钮: '{create_button}'")
                 answer: BotCallbackAnswer = await panel.click(create_button)
                 
-                # 检查回调答案
-                answer_message = answer.message or ""
-                answer_alert = answer.alert or ""
-                if "已关闭" in answer_message or "已关闭" in answer_alert:
+                # 检查回调答案 - 修复类型错误
+                answer_message = answer.message
+                answer_alert = answer.alert
+                
+                # 修复：添加类型检查，避免布尔值导致的 TypeError
+                is_closed = False
+                if isinstance(answer_message, str) and "已关闭" in answer_message:
+                    is_closed = True
+                if isinstance(answer_alert, str) and "已关闭" in answer_alert:
+                    is_closed = True
+                    
+                if is_closed:
                     self.log.debug("创建账户功能未开放.")
                     return False
                     
