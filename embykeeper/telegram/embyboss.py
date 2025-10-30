@@ -121,17 +121,28 @@ class EmbybossRegister:
         create_button_row = None
         create_button_col = None
         
+        self.log.debug(f"面板按钮结构: {[[btn.text for btn in row] for row in buttons]}")
+        
         for row_index, row in enumerate(buttons):
             for col_index, button in enumerate(row):
-                if "创建账户" in button.text:
+                # 更精确地匹配创建账户按钮
+                button_text = button.text.strip().lower()
+                if any(keyword in button_text for keyword in ["创建账户", "创建账号", "注册", "create"]):
                     create_button_row = row_index
                     create_button_col = col_index
+                    self.log.info(f"找到创建账户按钮: 行{row_index}, 列{col_index}, 文本: {button.text}")
                     break
             if create_button_row is not None:
                 break
 
         if create_button_row is None:
             self.log.warning("找不到创建账户按钮, 无法注册.")
+            # 记录所有按钮文本以便调试
+            all_buttons = []
+            for row in buttons:
+                for button in row:
+                    all_buttons.append(button.text)
+            self.log.debug(f"所有可用按钮: {all_buttons}")
             return False
 
         # 随机延迟模拟人工操作
@@ -141,13 +152,17 @@ class EmbybossRegister:
         async with self.client.catch_reply(panel.chat.id) as f:
             try:
                 # 正确的调用方式：传入行和列索引
+                self.log.info(f"正在点击创建账户按钮 (行{create_button_row}, 列{create_button_col})")
                 answer: BotCallbackAnswer = await panel.click(create_button_row, create_button_col)
+                
                 # 检查回调答案
                 answer_message = answer.message or ""
                 answer_alert = answer.alert or ""
                 if "已关闭" in answer_message or "已关闭" in answer_alert:
                     self.log.debug("创建账户功能未开放.")
                     return False
+                    
+                self.log.debug(f"按钮点击响应: message={answer_message}, alert={answer_alert}")
             except (TimeoutError, MessageIdInvalid) as e:
                 self.log.warning(f"点击创建账户按钮异常: {e}")
                 # 不立即返回，可能仍然能收到回复
@@ -156,6 +171,12 @@ class EmbybossRegister:
                 # 等待按钮点击响应
                 msg: Message = await asyncio.wait_for(f, 10)
                 self.log.debug(f"收到按钮响应消息: {msg.text[:100] if msg.text else '无文本内容'}")
+                
+                # 检查是否点击了错误的按钮
+                if self._is_wrong_button_clicked(msg):
+                    self.log.error("点击了错误的按钮，可能是'换绑TG'或其他非注册按钮")
+                    return False
+                    
             except asyncio.TimeoutError:
                 self.log.warning("创建账户按钮点击无响应, 无法注册.")
                 return False
@@ -182,6 +203,25 @@ class EmbybossRegister:
 
         # 等待并检查注册结果
         return await self._wait_for_register_result(panel)
+    
+    def _is_wrong_button_clicked(self, msg: Message) -> bool:
+        """检查是否点击了错误的按钮"""
+        text = msg.text or msg.caption or ""
+        if not text:
+            return False
+            
+        # 检测是否是换绑TG或其他非注册相关的响应
+        wrong_button_indicators = [
+            "换绑", "绑定", "更换", "tg", "telegram",
+            "已绑定", "当前绑定", "重新绑定"
+        ]
+        
+        for indicator in wrong_button_indicators:
+            if indicator.lower() in text.lower():
+                self.log.warning(f"检测到可能点击了错误按钮: 响应包含 '{indicator}'")
+                return True
+                
+        return False
 
     async def _wait_for_register_state(self, panel: Message) -> Message | None:
         """等待注册状态提示"""
