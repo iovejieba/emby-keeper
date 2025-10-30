@@ -116,28 +116,32 @@ class EmbybossRegister:
 
     async def _attempt_with_panel(self, panel: Message):
         """使用面板进行注册尝试"""
-        # 查找创建账户按钮
+        # 查找创建账户按钮的位置（行和列索引）
         buttons = panel.reply_markup.inline_keyboard
-        create_button = None
-        for row in buttons:
-            for button in row:
+        create_button_row = None
+        create_button_col = None
+        
+        for row_index, row in enumerate(buttons):
+            for col_index, button in enumerate(row):
                 if "创建账户" in button.text:
-                    create_button = button  # 存储按钮对象
+                    create_button_row = row_index
+                    create_button_col = col_index
                     break
-            if create_button:
+            if create_button_row is not None:
                 break
 
-        if not create_button:
+        if create_button_row is None:
             self.log.warning("找不到创建账户按钮, 无法注册.")
             return False
 
         # 随机延迟模拟人工操作
         await asyncio.sleep(random.uniform(0.5, 1.5))
 
-        # 点击创建账户按钮
+        # 点击创建账户按钮 - 使用行和列索引
         async with self.client.catch_reply(panel.chat.id) as f:
             try:
-                answer: BotCallbackAnswer = await panel.click(create_button)
+                # 正确的调用方式：传入行和列索引
+                answer: BotCallbackAnswer = await panel.click(create_button_row, create_button_col)
                 # 检查回调答案
                 answer_message = answer.message or ""
                 answer_alert = answer.alert or ""
@@ -151,6 +155,7 @@ class EmbybossRegister:
             try:
                 # 等待按钮点击响应
                 msg: Message = await asyncio.wait_for(f, 10)
+                self.log.debug(f"收到按钮响应消息: {msg.text[:100] if msg.text else '无文本内容'}")
             except asyncio.TimeoutError:
                 self.log.warning("创建账户按钮点击无响应, 无法注册.")
                 return False
