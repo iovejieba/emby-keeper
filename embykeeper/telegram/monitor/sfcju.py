@@ -11,50 +11,130 @@ __ignore__ = True
 
 
 class SfcjuMonitor(Monitor):
-    name = "非越"
-    chat_name = "lilililililiiilllll"
-    chat_keyword = r"FYEMBY-\d+-Register_[\w]+"
+    name = "非越抢码"
+    chat_name = -1002223997825
+    # 优化正则表达式，精确匹配10位邀请码
+    chat_keyword = r"FYEMBY-\d+-Register_[A-Za-z0-9]{10}"
     bot_username = "fyemby_bot"
     notify_create_name = True
     additional_auth = ["prime"]
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.has_registered = False  # 添加状态标记
 
     async def on_trigger(self, message: Message, key, reply):
+        # 如果已经成功注册，不再处理任何邀请码
+        if self.has_registered:
+            self.log.info("已有注册资格，跳过处理新邀请码")
+            return
+            
+        # 获取消息中的所有邀请码
+        import re
+        pattern = re.compile(self.chat_keyword)
+        all_codes = pattern.findall(message.text or message.caption or "")
+        
+        if not all_codes:
+            return
+            
+        self.log.info(f"检测到 {len(all_codes)} 个邀请码: {', '.join(all_codes)}")
+        
         wr = async_partial(self.client.wait_reply, self.bot_username)
-        for _ in range(3):
-            try:
-                msg = await wr("/start")
-                if "请确认好重试" in (msg.text or msg.caption):
-                    continue
-                elif "你好鸭" in (msg.text or msg.caption) and msg.reply_markup:
-                    keys = [k.text for r in msg.reply_markup.inline_keyboard for k in r]
-                    for k in keys:
-                        if "使用注册码" in k:
-                            async with self.client.catch_reply(
-                                self.bot_username, filter=filters.regex(".*对我发送.*")
-                            ) as f:
-                                try:
-                                    await msg.click(k)
-                                except (TimeoutError, MessageIdInvalid):
-                                    pass
-                                try:
-                                    await asyncio.wait_for(f, 10)
-                                except asyncio.TimeoutError:
-                                    continue
-                                else:
-                                    break
-                    else:
+        
+        # 按顺序尝试每个邀请码，直到成功获取一个注册资格
+        for code in all_codes:
+            self.log.info(f"正在尝试邀请码: {code}")
+            success = False  # 标记是否成功
+            
+            for attempt in range(3):
+                try:
+                    msg = await wr("/start")
+                    if "请确认好重试" in (msg.text or msg.caption):
+                        self.log.info("收到'请确认好重试'，继续尝试")
                         continue
-                    msg = await wr(key)
-                    if "注册码已被使用" in (msg.text or msg.caption):
-                        self.log.info(f'已向 Bot @{self.bot_username} 发送了邀请码: "{key}", 但是已被抢注了.')
-                    else:
-                        self.log.bind(msg=True).info(
-                            f'已向 Bot @{self.bot_username} 发送了邀请码: "{key}", 请查看.'
+                    elif "欢迎进入用户面板" in (msg.text or msg.caption) and msg.reply_markup:
+                        keys = [k.text for r in msg.reply_markup.inline_keyboard for k in r]
+                        for k in keys:
+                            if "使用注册码" in k:
+                                async with self.client.catch_reply(
+                                    self.bot_username, filter=filters.regex(".*对我发送.*")
+                                ) as f:
+                                    try:
+                                        await msg.click(k)
+                                    except (TimeoutError, MessageIdInvalid):
+                                        pass
+                                    try:
+                                        await asyncio.wait_for(f, 10)
+                                    except asyncio.TimeoutError:
+                                        continue
+                                    else:
+                                        break
+                        else:
+                            continue
+                        msg = await wr(code)
+                        
+                        # 去掉emoji和多余空格，提取纯文本进行判断
+                        response_text = re.sub(r'[^\w\s\u4e00-\u9fff]', '', msg.text or msg.caption or '')
+                        response_text = re.sub(r'\s+', ' ', response_text).strip()
+                        
+                        self.log.info(f"处理后的回复文本: {response_text}")
+                        
+                        # 更精确的成功检测逻辑
+                        # 检查是否包含成功的关键词
+                        has_success_keywords = (
+                            "少年郎" in response_text and 
+                            "恭喜" in response_text and 
+                            "已经收到了" in response_text and 
+                            "邀请注册资格" in response_text
                         )
-                    break
-                else:
-                    continue
-            except asyncio.TimeoutError:
-                pass
-        else:
-            self.log.bind(msg=True).warning(f"已监控到{self.name}的邀请码, 但自动使用失败, 请自行查看.")
+                        
+                        # 新增检测：已有注册资格的情况
+                        has_registration_qualification = (
+                            "已有注册资格" in response_text and
+                            "请先使用创建账户注册" in response_text
+                        )
+                        
+                        # 检查是否有"注册"和"取消"按钮（即使去掉emoji）
+                        has_buttons = False
+                        if msg.reply_markup:
+                            button_texts = [k.text for r in msg.reply_markup.inline_keyboard for k in r]
+                            button_texts_clean = [re.sub(r'[^\w\s\u4e00-\u9fff]', '', text) for text in button_texts]
+                            has_buttons = any("注册" in text for text in button_texts_clean) and any("取消" in text for text in button_texts_clean)
+                            self.log.info(f"检测到按钮: {button_texts_clean}")
+                        
+                        # 检查是否成功获取注册资格
+                        if has_success_keywords or has_registration_qualification:
+                            if has_success_keywords:
+                                success_msg = f'成功获取注册资格! 邀请码: "{code}", 请继续完成注册.'
+                            else:
+                                success_msg = f'已有注册资格! 邀请码: "{code}", 请使用创建账户功能完成注册.'
+                            
+                            self.log.bind(msg=True).info(success_msg)
+                            success = True
+                            self.has_registered = True  # 设置状态标记
+                            break  # 跳出重试循环
+                        elif "注册码已被使用" in response_text:
+                            self.log.info(f'邀请码 "{code}" 已被使用，尝试下一个.')
+                            break  # 这个码已被使用，跳出重试循环，尝试下一个码
+                        else:
+                            self.log.info(f'未知回复，继续尝试: "{response_text}"')
+                            # 其他情况，继续重试当前码
+                            continue
+                    else:
+                        self.log.info("未进入用户面板")
+                        continue
+                except asyncio.TimeoutError:
+                    if attempt == 2:  # 最后一次尝试也超时
+                        self.log.warning(f'处理邀请码 "{code}" 时超时')
+                except Exception as e:
+                    self.log.error(f"处理邀请码时发生错误: {e}")
+            
+            # 如果成功获取资格，直接返回，不再尝试其他邀请码
+            if success:
+                self.log.info("已成功获取注册资格，停止尝试其他邀请码")
+                return
+        
+        # 所有邀请码都尝试失败
+        self.log.bind(msg=True).warning(
+            f"已监控到{self.name}的邀请码, 但自动使用失败, 请自行查看."
+        )
