@@ -79,6 +79,12 @@ class WebshellMonitor(Monitor):
                             "邀请注册资格" in response_text
                         )
                         
+                        # 新增检测：已有注册资格的情况
+                        has_registration_qualification = (
+                            "已有注册资格" in response_text and
+                            "请先使用创建账户注册" in response_text
+                        )
+                        
                         # 检查是否有"注册"和"取消"按钮（即使去掉emoji）
                         has_buttons = False
                         if msg.reply_markup:
@@ -88,10 +94,13 @@ class WebshellMonitor(Monitor):
                             self.log.info(f"检测到按钮: {button_texts_clean}")
                         
                         # 检查是否成功获取注册资格
-                        if has_success_keywords:
-                            self.log.bind(msg=True).info(
-                                f'成功获取注册资格! 邀请码: "{code}", 请继续完成注册.'
-                            )
+                        if has_success_keywords or has_registration_qualification:
+                            if has_success_keywords:
+                                success_msg = f'成功获取注册资格! 邀请码: "{code}", 请继续完成注册.'
+                            else:
+                                success_msg = f'已有注册资格! 邀请码: "{code}", 请使用创建账户功能完成注册.'
+                            
+                            self.log.bind(msg=True).info(success_msg)
                             success = True
                             break  # 跳出重试循环
                         elif "注册码已被使用" in response_text:
@@ -112,6 +121,7 @@ class WebshellMonitor(Monitor):
             
             # 如果成功获取资格，直接返回，不再尝试其他邀请码
             if success:
+                self.log.info("已成功获取注册资格，停止尝试其他邀请码")
                 return
         
         # 所有邀请码都尝试失败
