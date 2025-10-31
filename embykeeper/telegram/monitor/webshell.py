@@ -11,7 +11,7 @@ from . import Monitor
 __ignore__ = True
 
 
-class TestMonitor(Monitor):
+class WebslellMonitor(Monitor):
     name = "测试抢码"
     chat_name = "webshell666666"
     chat_keyword = r"FYEMBY-\d+-Register_[\w]+"
