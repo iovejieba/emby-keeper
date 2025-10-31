@@ -13,7 +13,7 @@ __ignore__ = True
 
 class TestMonitor(Monitor):
     name = "测试抢码"
-    chat_name = "webshell666666"
+    chat_name = -1003202963047
     chat_keyword = r"FYEMBY-\d+-Register_[\w]+"
     bot_username = "webshell666666bot"
     notify_create_name = True
