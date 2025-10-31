@@ -13,8 +13,8 @@ __ignore__ = True
 class SfcjuMonitor(Monitor):
     name = "非越"
     chat_name = "lilililililiiilllll"
-    chat_keyword = r"SFCJ-\d+-Register_[\w]+"
-    bot_username = "sfcju_Bot"
+    chat_keyword = r"FYEMBY-\d+-Register_[\w]+"
+    bot_username = "fyemby_bot"
     notify_create_name = True
     additional_auth = ["prime"]
 
