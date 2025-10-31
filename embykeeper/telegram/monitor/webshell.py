@@ -35,6 +35,8 @@ class WebshellMonitor(Monitor):
         # 按顺序尝试每个邀请码，直到成功获取一个注册资格
         for code in all_codes:
             self.log.info(f"正在尝试邀请码: {code}")
+            success = False  # 标记是否成功
+            
             for attempt in range(3):
                 try:
                     msg = await wr("/start")
@@ -83,18 +85,15 @@ class WebshellMonitor(Monitor):
                             button_texts = [k.text for r in msg.reply_markup.inline_keyboard for k in r]
                             button_texts_clean = [re.sub(r'[^\w\s\u4e00-\u9fff]', '', text) for text in button_texts]
                             has_buttons = any("注册" in text for text in button_texts_clean) and any("取消" in text for text in button_texts_clean)
+                            self.log.info(f"检测到按钮: {button_texts_clean}")
                         
                         # 检查是否成功获取注册资格
-                        if has_success_keywords and has_buttons:
+                        if has_success_keywords:
                             self.log.bind(msg=True).info(
                                 f'成功获取注册资格! 邀请码: "{code}", 请继续完成注册.'
                             )
-                            return  # 成功获取资格，直接返回，不再尝试其他邀请码
-                        elif has_success_keywords:
-                            self.log.bind(msg=True).info(
-                                f'成功获取注册资格! 邀请码: "{code}", 请继续完成注册.'
-                            )
-                            return  # 成功获取资格，直接返回，不再尝试其他邀请码
+                            success = True
+                            break  # 跳出重试循环
                         elif "注册码已被使用" in response_text:
                             self.log.info(f'邀请码 "{code}" 已被使用，尝试下一个.')
                             break  # 这个码已被使用，跳出重试循环，尝试下一个码
@@ -108,6 +107,12 @@ class WebshellMonitor(Monitor):
                 except asyncio.TimeoutError:
                     if attempt == 2:  # 最后一次尝试也超时
                         self.log.warning(f'处理邀请码 "{code}" 时超时')
+                except Exception as e:
+                    self.log.error(f"处理邀请码时发生错误: {e}")
+            
+            # 如果成功获取资格，直接返回，不再尝试其他邀请码
+            if success:
+                return
         
         # 所有邀请码都尝试失败
         self.log.bind(msg=True).warning(
