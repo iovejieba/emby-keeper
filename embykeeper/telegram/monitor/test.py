@@ -4,8 +4,7 @@ from pyrogram.types import Message
 from pyrogram import filters
 from pyrogram.errors import MessageIdInvalid
 
-from embykeeper.utils import async_partial
-from embykeeper.utils import to_iterable
+from embykeeper.utils import async_partial, to_iterable
 
 from . import Monitor
 
@@ -20,74 +19,53 @@ class TestMonitor(Monitor):
     notify_create_name = True
     additional_auth = ["prime"]
 
+    async def start(self):
+        """重写 start 方法添加调试信息"""
+        self.log.info("!!! TestMonitor 开始启动 !!!")
+        self.log.info(f"配置的聊天名称: {self.chat_name}")
+        self.log.info(f"配置的关键词: {self.chat_keyword}")
+        
+        # 添加一个简单的全局消息监听器用于测试
+        @self.client.on_message()
+        async def debug_handler(client, message):
+            # 只记录目标聊天的消息
+            target_chats = [self.chat_name] if isinstance(self.chat_name, (str, int)) else self.chat_name
+            current_chat = message.chat.username or message.chat.id
+            
+            if any(str(target) == str(current_chat) for target in target_chats):
+                self.log.info(f"[调试] 收到目标聊天消息: {message.text}")
+        
+        result = await super().start()
+        self.log.info(f"!!! TestMonitor 启动完成 !!!")
+        return result
+
+    def keys(self, message: Message):
+        """重写 keys 方法添加详细调试信息"""
+        # 首先检查是否来自目标聊天
+        target_chats = [self.chat_name] if isinstance(self.chat_name, (str, int)) else self.chat_name
+        current_chat = message.chat.username or message.chat.id
+        chat_matched = any(str(target) == str(current_chat) for target in target_chats)
+        
+        if not chat_matched:
+            return
+        
+        self.log.info(f"[调试] 开始处理消息: {message.text}")
+        
+        # 调用父类的 keys 方法
+        for key in super().keys(message):
+            self.log.info(f"[调试] 找到匹配的key: {key}")
+            yield key
+        else:
+            self.log.info("[调试] 没有找到匹配的key")
+
     async def message_handler(self, client, message: Message):
-        """重写消息处理器添加详细调试"""
-        # 添加详细的调试信息
-        chat_info = f"{message.chat.username or message.chat.id} ({message.chat.title})"
-        self.log.info(f"收到消息 - 聊天: {chat_info}")
-        self.log.info(f"消息内容: {message.text}")
-        self.log.info(f"消息类型: text={bool(message.text)}, caption={bool(message.caption)}")
-        self.log.info(f"是否 outgoing: {message.outgoing}")
-        
-        # 检查聊天匹配
-        chat_matched = False
-        if self.chat_name:
-            chat_ids = [self.chat_name] if isinstance(self.chat_name, (str, int)) else self.chat_name
-            current_chat_id = message.chat.username or message.chat.id
-            chat_matched = any(str(chat_id) == str(current_chat_id) for chat_id in chat_ids)
-            self.log.info(f"聊天匹配: {chat_matched} (期望: {chat_ids}, 实际: {current_chat_id})")
-        
-        # 检查关键词匹配
-        keys_found = []
-        for key in self.keys(message):
-            keys_found.append(key)
-        
-        self.log.info(f"关键词匹配结果: {keys_found}")
-        
-        if keys_found:
-            self.log.info("!!! 准备触发监控器 !!!")
+        """重写消息处理器添加调试信息"""
+        self.log.info(f"[调试] 进入消息处理器 - 聊天: {message.chat.username}, 消息: {message.text}")
         
         # 调用父类处理
         await super().message_handler(client, message)
-
-    def keys(self, message: Message):
-        """重写 keys 方法添加调试"""
-        sender = message.from_user
-        self.log.info(f"发送者: {sender.username if sender else 'None'} (ID: {sender.id if sender else 'None'})")
         
-        # 检查用户过滤
-        if sender and self.chat_user:
-            user_matched = any(i in to_iterable(self.chat_user) for i in (sender.id, sender.username))
-            self.log.info(f"用户过滤: {user_matched} (期望用户: {self.chat_user})")
-            if not user_matched:
-                return
-        
-        text = message.text or message.caption
-        self.log.info(f"处理文本: {text}")
-        
-        # 检查排除关键词
-        if text and self.chat_except_keyword:
-            for k in to_iterable(self.chat_except_keyword):
-                if re.search(k, text, re.IGNORECASE):
-                    self.log.info(f"被排除关键词过滤: {k}")
-                    return
-        
-        # 检查目标关键词
-        if self.chat_keyword:
-            for k in to_iterable(self.chat_keyword):
-                self.log.info(f"检查关键词模式: {k}")
-                if k is None or text is None:
-                    if k is None and text is None:
-                        self.log.info("匹配: 双方均为 None")
-                        yield None
-                else:
-                    matches = list(re.findall(k, text, re.IGNORECASE))
-                    self.log.info(f"正则匹配结果: {matches}")
-                    for m in matches:
-                        yield m
-        else:
-            self.log.info("无关键词过滤，返回完整文本")
-            yield text
+        self.log.info("[调试] 消息处理器执行完成")
 
     async def on_trigger(self, message: Message, key, reply):
         """触发时的处理"""
