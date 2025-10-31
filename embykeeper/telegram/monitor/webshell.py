@@ -11,7 +11,7 @@ __ignore__ = True
 
 
 class WebshellMonitor(Monitor):
-    name = "叔服"
+    name = "测试抢码"
     chat_name = -1003202963047
     chat_keyword = r"FYEMBY-\d+-Register_[\w]+"
     bot_username = "webshell666666bot"
@@ -19,7 +19,7 @@ class WebshellMonitor(Monitor):
     additional_auth = ["prime"]
     
     # 测试模式开关 - 设置为True时监听自己发送的信息，便于调试
-    test_mode = True
+    test_mode = false
 
     async def on_trigger(self, message: Message, key, reply):
         # 如果不是测试模式，并且消息是自己发送的，则忽略
@@ -40,10 +40,12 @@ class WebshellMonitor(Monitor):
         
         # 按顺序尝试每个邀请码，直到成功获取一个注册资格
         for code in all_codes:
+            self.log.info(f"正在尝试邀请码: {code}")
             for attempt in range(3):
                 try:
                     msg = await wr("/start")
                     if "请确认好重试" in (msg.text or msg.caption):
+                        self.log.info("收到'请确认好重试'，继续尝试")
                         continue
                     elif "欢迎进入用户面板" in (msg.text or msg.caption) and msg.reply_markup:
                         keys = [k.text for r in msg.reply_markup.inline_keyboard for k in r]
@@ -70,8 +72,31 @@ class WebshellMonitor(Monitor):
                         response_text = re.sub(r'[^\w\s\u4e00-\u9fff]', '', msg.text or msg.caption or '')
                         response_text = re.sub(r'\s+', ' ', response_text).strip()
                         
-                        # 检查是否成功获取注册资格 - 使用关键词判断
-                        if any(keyword in response_text for keyword in ["少年郎恭喜你", "已经收到了", "邀请注册资格"]):
+                        self.log.info(f"处理后的回复文本: {response_text}")
+                        
+                        # 更精确的成功检测逻辑
+                        # 检查是否包含成功的关键词
+                        has_success_keywords = (
+                            "少年郎" in response_text and 
+                            "恭喜" in response_text and 
+                            "已经收到了" in response_text and 
+                            "邀请注册资格" in response_text
+                        )
+                        
+                        # 检查是否有"注册"和"取消"按钮（即使去掉emoji）
+                        has_buttons = False
+                        if msg.reply_markup:
+                            button_texts = [k.text for r in msg.reply_markup.inline_keyboard for k in r]
+                            button_texts_clean = [re.sub(r'[^\w\s\u4e00-\u9fff]', '', text) for text in button_texts]
+                            has_buttons = any("注册" in text for text in button_texts_clean) and any("取消" in text for text in button_texts_clean)
+                        
+                        # 检查是否成功获取注册资格
+                        if has_success_keywords and has_buttons:
+                            self.log.bind(msg=True).info(
+                                f'成功获取注册资格! 邀请码: "{code}", 请继续完成注册.'
+                            )
+                            return  # 成功获取资格，直接返回，不再尝试其他邀请码
+                        elif has_success_keywords:
                             self.log.bind(msg=True).info(
                                 f'成功获取注册资格! 邀请码: "{code}", 请继续完成注册.'
                             )
@@ -80,9 +105,11 @@ class WebshellMonitor(Monitor):
                             self.log.info(f'邀请码 "{code}" 已被使用，尝试下一个.')
                             break  # 这个码已被使用，跳出重试循环，尝试下一个码
                         else:
+                            self.log.info(f'未知回复，继续尝试: "{response_text}"')
                             # 其他情况，继续重试当前码
                             continue
                     else:
+                        self.log.info("未进入用户面板")
                         continue
                 except asyncio.TimeoutError:
                     if attempt == 2:  # 最后一次尝试也超时
