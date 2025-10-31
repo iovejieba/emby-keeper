@@ -18,8 +18,17 @@ class WebshellMonitor(Monitor):
     bot_username = "webshell666666bot"
     notify_create_name = True
     additional_auth = ["prime"]
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.has_registered = False  # 添加状态标记
 
     async def on_trigger(self, message: Message, key, reply):
+        # 如果已经成功注册，不再处理任何邀请码
+        if self.has_registered:
+            self.log.info("已有注册资格，跳过处理新邀请码")
+            return
+            
         # 获取消息中的所有邀请码
         import re
         pattern = re.compile(self.chat_keyword)
@@ -102,6 +111,7 @@ class WebshellMonitor(Monitor):
                             
                             self.log.bind(msg=True).info(success_msg)
                             success = True
+                            self.has_registered = True  # 设置状态标记
                             break  # 跳出重试循环
                         elif "注册码已被使用" in response_text:
                             self.log.info(f'邀请码 "{code}" 已被使用，尝试下一个.')
