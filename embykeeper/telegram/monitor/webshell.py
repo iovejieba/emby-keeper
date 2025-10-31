@@ -11,21 +11,15 @@ __ignore__ = True
 
 
 class WebshellMonitor(Monitor):
-    name = "测试抢码"
+    name = "抢码测试"
     chat_name = -1003202963047
-    chat_keyword = r"FYEMBY-\d+-Register_[\w]+"
+    # 优化正则表达式，精确匹配10位邀请码
+    chat_keyword = r"FYEMBY-\d+-Register_[A-Za-z0-9]{10}"
     bot_username = "webshell666666bot"
     notify_create_name = True
     additional_auth = ["prime"]
-    
-    # 测试模式开关 - 设置为True时监听自己发送的信息，便于调试
-    test_mode = false
 
     async def on_trigger(self, message: Message, key, reply):
-        # 如果不是测试模式，并且消息是自己发送的，则忽略
-        if not self.test_mode and message.from_user and message.from_user.id == self.client.me.id:
-            return
-            
         # 获取消息中的所有邀请码
         import re
         pattern = re.compile(self.chat_keyword)
