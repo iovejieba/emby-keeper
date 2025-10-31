@@ -1,4 +1,5 @@
 import asyncio
+import re
 from pyrogram.types import Message
 from pyrogram import filters
 from pyrogram.errors import MessageIdInvalid
@@ -19,6 +20,9 @@ class TestMonitor(Monitor):
     additional_auth = ["prime"]
 
     async def on_trigger(self, message: Message, key, reply):
+        self.log.info(f"监控器被触发! 消息内容: {message.text}")
+        self.log.info(f"提取到的key: {key}")
+        
         # 处理多个邀请码的情况
         if isinstance(key, str):
             # 如果 key 是字符串，按换行符分割
@@ -31,6 +35,7 @@ class TestMonitor(Monitor):
         
         self.log.info(f"检测到 {len(keys)} 个邀请码，开始尝试注册...")
         
+        # 其余代码保持不变...
         wr = async_partial(self.client.wait_reply, self.bot_username)
         used_keys = []
         success_keys = []
